@@ -1,0 +1,29 @@
+{
+  "simulation_time": 100,
+  "frame_length": 0.5,
+  "alarm_nodes": 10,
+  "control_nodes": 10,
+  "control_node_buffer": 5,
+  "pilots": 10,
+  "default_alarm_arrival_distribution": "poisson",
+  "default_control_arrival_distribution": "deterministic",
+  "alarm_pilot_share": 1,
+
+  "alarm_arrival_distributions": {
+    "poisson": {
+      "mean": 0.01
+    },
+    "deterministic": {
+      "mean": 0.01
+    }
+  },
+
+  "control_arrival_distributions": {
+    "poisson": {
+      "mean": 1
+    },
+    "deterministic": {
+      "mean": 1
+    }
+  }
+}
