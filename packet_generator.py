@@ -10,11 +10,16 @@ class PacketGenerator:
 
         self.mapping = {
             'poisson': self.poisson(),
+            'deterministic': self.deterministic()
         }
 
     def number_of_packets(self):
         return self.mapping.get(self.distribution)
 
-    # Poisson arrival process
+    # Poisson process
     def poisson(self):
         return np.random.poisson(self.settings.get('mean'))
+
+    # Deterministic process
+    def deterministic(self):
+        return self.settings.get('mean')
