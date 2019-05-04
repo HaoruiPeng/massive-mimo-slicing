@@ -1,0 +1,31 @@
+{
+  "simulation_length": 10000,
+  "max_attempts": 10,
+  "no_alarm_nodes": 10,
+  "no_control_nodes": 10,
+  "control_node_buffer": 5,
+  "no_pilots": 10,
+  "active_alarm_arrival_distribution": "exponential",
+  "active_control_arrival_distribution": "exponential",
+  "base_alarm_pilot_share": 0.1,
+  "frame_length": 1,
+  "measurement_period": 5,
+
+  "alarm_arrival_distributions": {
+    "exponential": {
+      "mean_time": 100
+    },
+    "deterministic": {
+      "mean_time": 100
+    }
+  },
+
+  "control_arrival_distributions": {
+    "exponential": {
+      "mean_time": 10
+    },
+    "deterministic": {
+      "mean_time": 1
+    }
+  }
+}
