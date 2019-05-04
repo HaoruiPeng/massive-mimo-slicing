@@ -1,5 +1,5 @@
 {
-  "simulation_length": 100000,
+  "simulation_length": 10000,
   "max_attempts": 10,
   "no_alarm_nodes": 10,
   "no_control_nodes": 10,
@@ -22,7 +22,7 @@
 
   "control_arrival_distributions": {
     "exponential": {
-      "mean_time": 1
+      "mean_time": 10
     },
     "deterministic": {
       "mean_time": 1

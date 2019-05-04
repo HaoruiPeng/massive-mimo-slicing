@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 
 from event_list import EventList
@@ -7,8 +9,8 @@ from event_generator import EventGenerator
 class Simulation:
     ALARM_ARRIVAL = 1
     CONTROL_ARRIVAL = 2
-    DEPARTURE = 2
-    MEASURE = 3
+    DEPARTURE = 3
+    MEASURE = 4
 
     def __init__(self, config, logger, stats):
         # Declare all variables
@@ -88,11 +90,14 @@ class Simulation:
 
     # Check for pilot contamination
     def check_collisions(self):
-        for i in range(max(0, len(self.send_queue) - 2)):
+        send_queue_length = len(self.send_queue)
+        remove_indices = []
+
+        for i in range(send_queue_length - 2):
             event = self.send_queue[i]
             collision = False
 
-            for j in range(i + 1, len(self.send_queue) - 1):
+            for j in range(i + 1, send_queue_length - 1):
                 cmp_event = self.send_queue[j]
 
                 if event.pilot_id == cmp_event.pilot_id:
@@ -103,7 +108,11 @@ class Simulation:
 
             if not collision:
                 self.stats.no_departures += 1
-                self.send_queue.pop(i)
+                remove_indices.append(i)
+
+        # Actually remove the events from the event queue
+        for i in sorted(remove_indices, reverse=True):
+            del self.send_queue[i]
 
     # NOTE: the receiving base station does not know how many nodes want to send
     def assign_pilots(self):
@@ -152,7 +161,10 @@ class Simulation:
                         event.pilot_id = pilot_id
 
     def remove_expired_events(self):
-        for i in range(len(self.send_queue) - 1):
+        send_queue_length = len(self.send_queue)
+        remove_indices = []
+
+        for i in range(send_queue_length - 1):
             event = self.send_queue[i]
 
             # Remove events with passed deadlines
@@ -163,7 +175,7 @@ class Simulation:
                 else:
                     self.stats.missed_controls += 1
                     # Only remove control events
-                    self.send_queue.pop(i)
+                    remove_indices.append(i)
 
                 continue
 
@@ -171,7 +183,7 @@ class Simulation:
                 continue
 
             # Remove events with a new version (assuming old control signals should be discarded)
-            for j in range(i + 1, len(self.send_queue) - 1):
+            for j in range(i + 1, send_queue_length - 1):
                 cmp_event = self.send_queue[j]
 
                 if event.node_id == cmp_event.node_id:
@@ -180,7 +192,11 @@ class Simulation:
                     else:
                         self.stats.missed_controls += 1
 
-                    self.send_queue.pop(j)
+                    remove_indices.append(j)
+
+        # Actually remove the events from the event queue
+        for i in sorted(remove_indices, reverse=True):
+            del self.send_queue[i]
 
     def handle_measurement(self, event):
         del event
