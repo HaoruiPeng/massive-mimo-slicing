@@ -2,24 +2,23 @@ import numpy as np
 
 
 # Packet generator class for different distributions
-# Primary function is to return the next event_time
-class PacketGenerator:
+class EventGenerator:
     def __init__(self, distribution, settings):
         self.distribution = distribution
         self.settings = settings
 
         self.mapping = {
-            'poisson': self.poisson(),
+            'exponential': self.exponential(),
             'deterministic': self.deterministic()
         }
 
-    def number_of_packets(self):
-        return self.mapping.get(self.distribution)
+    def get_next(self):
+        return self.mapping[self.distribution]
 
     # Poisson process
-    def poisson(self):
-        return np.random.poisson(self.settings.get('mean'))
+    def exponential(self):
+        return np.random.exponential(self.settings.get('mean_time'))
 
     # Deterministic process
     def deterministic(self):
-        return self.settings.get('mean')
+        return self.settings.get('mean_time')

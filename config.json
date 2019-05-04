@@ -1,29 +1,31 @@
 {
-  "simulation_time": 100,
-  "frame_length": 0.5,
-  "alarm_nodes": 10,
-  "control_nodes": 10,
+  "simulation_length": 100000,
+  "max_attempts": 10,
+  "no_alarm_nodes": 10,
+  "no_control_nodes": 10,
   "control_node_buffer": 5,
-  "pilots": 10,
-  "alarm_arrival_distribution": "poisson",
-  "control_arrival_distribution": "poisson",
-  "alarm_pilot_share": 0.1,
+  "no_pilots": 10,
+  "active_alarm_arrival_distribution": "exponential",
+  "active_control_arrival_distribution": "exponential",
+  "base_alarm_pilot_share": 0.1,
+  "frame_length": 1,
+  "measurement_period": 5,
 
   "alarm_arrival_distributions": {
-    "poisson": {
-      "mean": 0.1
+    "exponential": {
+      "mean_time": 100
     },
     "deterministic": {
-      "mean": 0.1
+      "mean_time": 100
     }
   },
 
   "control_arrival_distributions": {
-    "poisson": {
-      "mean": 1
+    "exponential": {
+      "mean_time": 1
     },
     "deterministic": {
-      "mean": 1
+      "mean_time": 1
     }
   }
 }
