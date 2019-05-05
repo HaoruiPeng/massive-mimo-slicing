@@ -3,7 +3,7 @@
   "simulation_length": 10,
   "max_attempts": 8,
   "no_alarm_nodes": 500,
-  "no_control_nodes": 100,
+  "no_control_nodes": 200,
   "no_pilots": 30,
   "control_nodes_buffer": 5,
   "active_alarm_arrival_distribution": "exponential",
