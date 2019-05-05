@@ -13,19 +13,19 @@
 
   "alarm_arrival_distributions": {
     "exponential": {
-      "mean_time": 100
+      "mean_arrival_time": 100
     },
-    "deterministic": {
-      "mean_time": 100
+    "constant": {
+      "arrival_time": 100
     }
   },
 
   "control_arrival_distributions": {
     "exponential": {
-      "mean_time": 10
+      "mean_arrival_time": 10
     },
-    "deterministic": {
-      "mean_time": 1
+    "constant": {
+      "arrival_time": 1
     }
   }
 }
