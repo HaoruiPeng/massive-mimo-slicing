@@ -6,13 +6,12 @@ from logger import Logger
 from simulation import Simulation
 
 if __name__ == '__main__':
-    # Set a custom simulation name, stats for simulations with the same name will be saved to the same file
-    simulation_name = 'original'
-    time_string = time.strftime('%Y%m%d_%H%M%S')
-
     # Load simulation parameters
     with open('config.json') as f:
         config = json.load(f)
+
+    time_string = time.strftime('%Y%m%d_%H%M%S')
+    simulation_name = config.get('simulation_name')
 
     # Initialize a new logger
     log_file_path = 'logs/' + time_string + '_' + simulation_name + '_queue_log.csv'

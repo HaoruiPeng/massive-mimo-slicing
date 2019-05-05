@@ -21,6 +21,7 @@ Within the repository, run: `python main.py`
 
 The different design parameters are:
 
+  * `simulation_name` name of the simulation (groups statistics)
   * `simulation_length` simulation length in seconds
   * `max_attempts` deadline for packets in frames
   * `no_alarm_nodes` number of alarm nodes
