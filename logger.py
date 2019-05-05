@@ -20,7 +20,8 @@ class Logger:
 
         self.file = open(file_path, 'w')
 
-        self.file.write('Alarm events,Control events,Avg. alarm wait,Avg. control wait,Max alarm wait,Max control wait')
+        self.file.write(
+            'Alarm events,Control events,Avg. alarm wait,Avg. control wait,Max alarm wait,Max control wait\n')
 
     def write(self, message):
         """

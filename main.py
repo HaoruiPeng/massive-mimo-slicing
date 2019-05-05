@@ -15,7 +15,7 @@ if __name__ == '__main__':
         config = json.load(f)
 
     # Initialize a new logger
-    log_file_path = 'logs/' + time_string + simulation_name + '_queue_log.csv'
+    log_file_path = 'logs/' + time_string + '_' + simulation_name + '_queue_log.csv'
     logger = Logger(log_file_path)
 
     # Initialize a new statistics object

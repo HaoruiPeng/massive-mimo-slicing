@@ -7,7 +7,7 @@ class EventList:
 
     Attributes
     ----------
-    first : Node
+    __first : Node
         First node in the linked list, i.e. the wrapper for the next event in time
     max_attempts : int
         Maximum number of attempts (in frames) before a event deadline should be considered missed
@@ -24,8 +24,8 @@ class EventList:
             Maximum number of attempts (in frames) before a event deadline should be considered missed
         """
 
-        self.first = None
-        self.max_attempts = max_attempts
+        self.__first = None
+        self.__max_attempts = max_attempts
 
     def insert(self, event_type, event_time, node_id):
         """
@@ -38,29 +38,39 @@ class EventList:
         event_time : float
             Positive float (presumably greater than the current time in the simulation)
         node_id : int
-            What node (think machine/device) this event belongs to
+            What node (i.e. machine/device) this event belongs to
         """
 
-        new_event = Event(event_type, event_time, node_id, self.max_attempts)
+        new_event = Event(event_type, event_time, node_id, self.__max_attempts)
         new_node = self.__Node(new_event)
 
-        if self.first is None:
-            self.first = new_node
-        elif self.first.next is None:
-            self.first.next = new_node
+        if self.__first is None:
+            self.__first = new_node
+        elif self.__first.next is None:
+            if self.__first.val.time < event_time:
+                self.__first.next = new_node
+            else:
+                tmp = self.__first
+                self.__first = new_node
+                self.__first.next = tmp
         else:
-            prev_node = self.first
-            curr_node = self.first.next
+            if event_time < self.__first.val.time:
+                tmp = self.__first
+                self.__first = new_node
+                self.__first.next = tmp
+            else:
+                prev_node = self.__first
+                curr_node = self.__first.next
 
-            while curr_node.val.time < event_time:
-                prev_node = curr_node
-                curr_node = curr_node.next
+                while curr_node.val.time < event_time:
+                    prev_node = curr_node
+                    curr_node = curr_node.next
 
-                if curr_node is None:
-                    break
+                    if curr_node is None:
+                        break
 
-            prev_node.next = new_node
-            new_node.next = curr_node
+                prev_node.next = new_node
+                new_node.next = curr_node
 
     def fetch(self):
         """
@@ -72,12 +82,12 @@ class EventList:
             The next event in time
         """
 
-        if self.first is not None:
-            tmp = self.first
-            self.first = self.first.next
+        if self.__first is not None:
+            tmp = self.__first
+            self.__first = self.__first.next
             return tmp.val
 
-        return self.first
+        return self.__first
 
     class __Node:
         # Inner class describing a node in the linked list

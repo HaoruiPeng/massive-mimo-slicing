@@ -33,8 +33,8 @@ class EventGenerator:
         self.settings = settings
 
         self.mapping = {
-            'exponential': self.__exponential(),
-            'constant': self.__constant()
+            'exponential': self.__exponential,
+            'constant': self.__constant
         }
 
     def get_next(self):
@@ -46,7 +46,7 @@ class EventGenerator:
         float
             A float with the next event time
         """
-        return self.mapping[self.distribution]
+        return self.mapping[self.distribution]()
 
     def __exponential(self):
         # Returns float from an exponential distribution

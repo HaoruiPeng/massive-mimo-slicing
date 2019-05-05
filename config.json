@@ -1,31 +1,31 @@
 {
-  "simulation_length": 10000,
-  "max_attempts": 10,
-  "no_alarm_nodes": 10,
-  "no_control_nodes": 10,
-  "no_pilots": 10,
+  "simulation_length": 10,
+  "max_attempts": 8,
+  "no_alarm_nodes": 1000,
+  "no_control_nodes": 100,
+  "no_pilots": 30,
   "control_nodes_buffer": 5,
   "active_alarm_arrival_distribution": "exponential",
-  "active_control_arrival_distribution": "exponential",
+  "active_control_arrival_distribution": "constant",
   "base_alarm_pilot_share": 0.1,
   "frame_length": 1,
   "measurement_period": 5,
 
   "alarm_arrival_distributions": {
     "exponential": {
-      "mean_arrival_time": 100
+      "mean_arrival_time": 1000
     },
     "constant": {
-      "arrival_time": 100
+      "arrival_time": 1000
     }
   },
 
   "control_arrival_distributions": {
     "exponential": {
-      "mean_arrival_time": 10
+      "mean_arrival_time": 30
     },
     "constant": {
-      "arrival_time": 1
+      "arrival_time": 30
     }
   }
 }

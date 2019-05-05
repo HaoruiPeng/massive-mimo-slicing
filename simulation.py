@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 
 from event_list import EventList
@@ -78,14 +79,14 @@ class Simulation:
 
         self.logger = logger
         self.stats = stats
-        self.time = 0
+        self.time = 0.0
 
         self.max_attempts = config.get('max_attempts')
         self.base_alarm_pilot_share = config.get('base_alarm_pilot_share')
         self.no_alarm_nodes = config.get('no_alarm_nodes')
         self.no_control_nodes = config.get('no_control_nodes')
         self.no_pilots = config.get('no_pilots')
-        self.simulation_length = config.get('simulation_length')
+        self.simulation_length = config.get('simulation_length')*1000
         self.frame_length = config.get('frame_length')
         self.measurement_period = config.get('measurement_period')
         self.control_node_buffer = config.get('control_nodes_buffer')
@@ -100,7 +101,7 @@ class Simulation:
 
         # Set control arrival distribution function
         control_arrival_distribution = config.get('active_control_arrival_distribution')
-        control_arrival_parameters = config.get('control_arrival_distributions').get(alarm_arrival_distribution)
+        control_arrival_parameters = config.get('control_arrival_distributions').get(control_arrival_distribution)
         self.control_arrival = EventGenerator(control_arrival_distribution, control_arrival_parameters)
 
         # Initialize nodes and their arrival times
@@ -130,7 +131,6 @@ class Simulation:
 
     def __handle_alarm_arrival(self, event):
         # Handle an alarm arrival event
-
         self.stats.no_alarm_arrivals += 1
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
@@ -160,25 +160,33 @@ class Simulation:
         # Check for pilot contamination, i.e. more than one node assigned the same pilot
 
         send_queue_length = len(self.send_queue)
+        pilot_collisions = []
         remove_indices = []
 
-        for i in range(send_queue_length - 2):
+        # Check for contaminated pilots
+        for i in range(send_queue_length - 1):
             event = self.send_queue[i]
-            collision = False
 
-            for j in range(i + 1, send_queue_length - 1):
+            for j in range(i + 1, send_queue_length):
                 cmp_event = self.send_queue[j]
 
                 if event.pilot_id == cmp_event.pilot_id:
-                    collision = True
-                    event.attempts_left -= 1
-                    cmp_event.attempts_left -= 1
-                    self.stats.no_collisions += 1
+                    if event.pilot_id not in pilot_collisions:
+                        pilot_collisions.append(event.pilot_id)
 
-            # Only remove events from send queue if no collision has occurred
-            if not collision:
-                self.stats.no_departures += 1
+        self.stats.no_collisions += len(pilot_collisions)
+
+        # Handle events with contaminated pilots
+        for i in range(send_queue_length):
+            event = self.send_queue[i]
+
+            if event.pilot_id in pilot_collisions:
+                event.attempts_left -= 1
+            else:
                 remove_indices.append(i)
+
+            # Reset pilot id to handle case where no pilots where assigned
+            event.pilot_id = -1
 
         # Remove the events in reversed order to not shift subsequent indices
         for i in sorted(remove_indices, reverse=True):
@@ -199,18 +207,23 @@ class Simulation:
                 if event.type == self.__ALARM_ARRIVAL:
                     missed_alarm_attempts = max(self.max_attempts - event.attempts_left, missed_alarm_attempts)
 
+            # Limit the number of missed attempts, will cause overflow otherwise
+            missed_alarm_attempts = min(10, missed_alarm_attempts)
+
             # Exponential back-off is used to assign dedicated pilots to alarm packets, at most 100%
-            alarm_pilot_share = max(self.base_alarm_pilot_share * np.power(2, missed_alarm_attempts), 1)
-            alarm_pilots = int(alarm_pilot_share * self.no_pilots)
+            alarm_pilot_share = min(self.base_alarm_pilot_share * np.power(2, max(missed_alarm_attempts - 1, 0)), 1)
+
+            # At least one alarm pilot if dedicated resources is used
+            alarm_pilots = max(int(alarm_pilot_share * self.no_pilots), 1)
             control_pilots = self.no_pilots - alarm_pilots
 
             # Assign alarm pilots
             for i in range(self.no_alarm_nodes):
                 # Only used dedicated alarm pilots if a collision has occurred
                 if missed_alarm_attempts > 0:
-                    pilot_id = i % alarm_pilots
+                    pilot_id = i + 1 % alarm_pilots
                 else:
-                    pilot_id = i % self.no_pilots
+                    pilot_id = i + 1 % self.no_pilots
 
                 # Assign pilots to the events/nodes in the send queue
                 for event in self.send_queue:
@@ -218,17 +231,18 @@ class Simulation:
                         event.pilot_id = pilot_id
 
             # Assign control pilots
-            for i in range(self.no_control_nodes):
-                # Only used dedicated alarm pilots if a collision has occurred
-                if missed_alarm_attempts > 0:
-                    pilot_id = alarm_pilots + i % control_pilots
-                else:
-                    pilot_id = i % self.no_pilots
+            if control_pilots > 0:
+                for i in range(self.no_control_nodes):
+                    # Only used dedicated alarm pilots if a collision has occurred
+                    if missed_alarm_attempts > 0:
+                        pilot_id = alarm_pilots + i + 1 % control_pilots
+                    else:
+                        pilot_id = i + 1 % self.no_pilots
 
-                # Assign pilots to the events/nodes in the send queue
-                for event in self.send_queue:
-                    if i == event.node_id and event.type == self.__CONTROL_ARRIVAL:
-                        event.pilot_id = pilot_id
+                    # Assign pilots to the events/nodes in the send queue
+                    for event in self.send_queue:
+                        if i == event.node_id and event.type == self.__CONTROL_ARRIVAL:
+                            event.pilot_id = pilot_id
 
     def __handle_expired_events(self):
         # Handle expired alarm and control events
@@ -236,7 +250,7 @@ class Simulation:
         send_queue_length = len(self.send_queue)
         remove_indices = []
 
-        for i in range(send_queue_length - 1):
+        for i in range(send_queue_length):
             event = self.send_queue[i]
 
             # Check for events with missed deadlines
@@ -247,18 +261,19 @@ class Simulation:
                     self.stats.no_missed_alarms += 1
                 else:
                     self.stats.no_missed_controls += 1
-                    remove_indices.append(i)
+                    if i not in remove_indices:
+                        remove_indices.append(i)
 
                 continue
 
-            # If last event in send queue, no more other events to compare to
-            if i == len(self.send_queue) - 1:
+            # If last event in send queue, no more other events to compare with
+            if i == send_queue_length - 1:
                 continue
 
             # Disregard control events if the buffer is full, logic is that too old control signals are not relevant
             # Alarm signals should always be handled and never removed from the send queue
             event_matches = 0
-            for j in range(i + 1, send_queue_length - 1):
+            for j in range(i + 1, send_queue_length):
                 cmp_event = self.send_queue[j]
 
                 if event.type == self.__CONTROL_ARRIVAL and event.node_id == cmp_event.node_id:
@@ -299,10 +314,10 @@ class Simulation:
                 total_control_wait += wait
 
         if not no_alarm_events == 0:
-            avg_alarm_wait = float(total_alarm_wait / no_alarm_events)
+            avg_alarm_wait = round(float(total_alarm_wait / no_alarm_events), 2)
 
         if not no_control_events == 0:
-            avg_control_wait = float(total_control_wait / no_control_events)
+            avg_control_wait = round(float(total_control_wait / no_control_events), 2)
 
         return no_alarm_events, no_control_events, avg_alarm_wait, avg_control_wait, max_alarm_wait, max_control_wait
 
@@ -327,10 +342,22 @@ class Simulation:
 
     def run(self):
         """ Runs the simulation """
+        current_progress = 0
 
         while self.time < self.simulation_length:
             next_event = self.event_list.fetch()
 
             # Advance time before handling event
             self.time = next_event.time
+
+            progress = round(100 * self.time / self.simulation_length)
+
+            if progress > current_progress:
+                current_progress = progress
+                str1 = "\r Progress [{0}]".format('#' * (progress + 1) + ' ' * (100 - progress))
+                sys.stdout.write(str1)
+                sys.stdout.flush()
+
             self.__handle_event(next_event)
+
+        print('\n Simulation complete. Results: \n')
