@@ -16,7 +16,7 @@ if __name__ == '__main__':
     stats = Stats()
 
     simulation = Simulation(config, logger, stats)
-    simulation.start()
+    simulation.run()
 
     stats.print()
     logger.close()
