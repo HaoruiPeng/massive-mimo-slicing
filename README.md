@@ -21,16 +21,16 @@ Within the repository, run: `python main.py`
 
 The different design parameters are:
 
-  * `simulation_length` : simulation length in seconds
-  * `max_attempts` : deadline for packets in frames
-  * `no_alarm_nodes` : *number of alarm nodes
-  * `no_control_nodes` : number of control nodes
-  * `no_pilots` : number of available pilots
-  * `control_nodes_buffer` : control node buffer before packets expiring
-  * `active_alarm_arrival_distribution` : alarm arrival distribution (exponential, constant) 
-  * `active_control_arrival_distribution` : control arrival distribution (exponential, constant)
-  * `base_alarm_pilot_share` : Base share of dedicated resources for alarm packets in decimals
-  * `frame_length` : length of one simulation frame, i.e. determines the departure,
-  * `measurement_period` : how often measurements should be taken,
+  * `simulation_length` simulation length in seconds
+  * `max_attempts` deadline for packets in frames
+  * `no_alarm_nodes` number of alarm nodes
+  * `no_control_nodes` number of control nodes
+  * `no_pilots` number of available pilots
+  * `control_nodes_buffer` control node buffer before packets expiring
+  * `active_alarm_arrival_distribution` alarm arrival distribution (exponential, constant) 
+  * `active_control_arrival_distribution` control arrival distribution (exponential, constant)
+  * `base_alarm_pilot_share` Base share of dedicated resources for alarm packets in decimals
+  * `frame_length` length of one simulation frame, i.e. determines the departure,
+  * `measurement_period` how often measurements should be taken,
 
 Please see config file for the distributions' parameters, e.g. mean arrival rate.
