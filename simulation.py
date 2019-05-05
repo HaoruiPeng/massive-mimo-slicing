@@ -281,6 +281,8 @@ class Simulation:
         max_control_wait = 0
         total_alarm_wait = 0
         total_control_wait = 0
+        avg_alarm_wait = 0
+        avg_control_wait = 0
 
         for event in self.send_queue:
             if event.type == self.__ALARM_ARRIVAL:
@@ -296,8 +298,11 @@ class Simulation:
                 max_control_wait = max(max_control_wait, wait)
                 total_control_wait += wait
 
-        avg_alarm_wait = float(total_alarm_wait / no_alarm_events)
-        avg_control_wait = float(total_control_wait / no_control_events)
+        if not no_alarm_events == 0:
+            avg_alarm_wait = float(total_alarm_wait / no_alarm_events)
+
+        if not no_control_events == 0:
+            avg_control_wait = float(total_control_wait / no_control_events)
 
         return no_alarm_events, no_control_events, avg_alarm_wait, avg_control_wait, max_alarm_wait, max_control_wait
 
