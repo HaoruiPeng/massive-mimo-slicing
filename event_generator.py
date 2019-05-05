@@ -15,7 +15,6 @@ class EventGenerator:
             Dictionary of parameters for the specified distribution. Needed parameters are:
                 - Exponential: mean_arrival_time (mean arrival time)
                 - Constant: arrival_time (arrival time)
-
     """
 
     def __init__(self, distribution, settings):

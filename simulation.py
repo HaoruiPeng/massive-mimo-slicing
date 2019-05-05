@@ -44,7 +44,7 @@ class Simulation:
         Number of control events allowed in send queue for a certain node
     event_list : EventList
         List of all signalling events (arrivals, departures and measurements)
-    send_queue : list of Event
+    send_queue : list of __Event
         List of all events that need to be processed
     alarm_arrival : EventGenerator
         Class for generating alarm event times with a specific distribution (determined from config file)
@@ -75,6 +75,7 @@ class Simulation:
         stats : Stats
             Statistics object for keeping track for measurements
         """
+
         self.logger = logger
         self.stats = stats
         self.time = 0
@@ -243,9 +244,9 @@ class Simulation:
                 # Alarm events need to be handled regardless if the event has expired, i.e. do not
                 # remove the event from the send queue
                 if event.type == self.__ALARM_ARRIVAL:
-                    self.stats.missed_alarms += 1
+                    self.stats.no_missed_alarms += 1
                 else:
-                    self.stats.missed_controls += 1
+                    self.stats.no_missed_controls += 1
                     remove_indices.append(i)
 
                 continue
@@ -264,7 +265,7 @@ class Simulation:
                     event_matches += 1
 
                     if event_matches > self.control_node_buffer and j not in remove_indices:
-                        self.stats.missed_controls += 1
+                        self.stats.no_missed_controls += 1
                         remove_indices.append(j)
 
         # Remove the events in reversed order to not shift subsequent indices
@@ -313,16 +314,14 @@ class Simulation:
             log_string += str(m) + ','
 
         log_string = log_string[:-1]
+        log_string += '\n'
         self.logger.write(log_string)
 
         # Add a new measure event to the event list
         self.event_list.insert(self.__MEASURE, self.time + self.measurement_period, 0)
 
     def run(self):
-        """
-        Runs the simulation
-
-        """
+        """ Runs the simulation """
 
         while self.time < self.simulation_length:
             next_event = self.event_list.fetch()

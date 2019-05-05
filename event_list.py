@@ -1,44 +1,87 @@
+from event import Event
+
+
 class EventList:
+    """
+    Custom linked list that keeps track of events in chronological orders
+
+    Attributes
+    ----------
+    first : Node
+        First node in the linked list, i.e. the wrapper for the next event in time
+    max_attempts : int
+        Maximum number of attempts (in frames) before a event deadline should be considered missed
+
+    """
+
     def __init__(self, max_attempts):
+        """
+        Initializes a new event linked list
+
+        Parameters
+        ----------
+        max_attempts : int
+            Maximum number of attempts (in frames) before a event deadline should be considered missed
+        """
+
         self.first = None
         self.max_attempts = max_attempts
 
-    # Inserts an event at the correct time
     def insert(self, event_type, event_time, node_id):
-        event = self.Event(event_type, event_time, node_id, self.max_attempts)
+        """
+        Inserts a new event at the correct time in the event list
+
+        Parameters
+        ----------
+        event_type : int
+            Event type, e.g. arrival or departure
+        event_time : float
+            Positive float (presumably greater than the current time in the simulation)
+        node_id : int
+            What node (think machine/device) this event belongs to
+        """
+
+        new_event = Event(event_type, event_time, node_id, self.max_attempts)
+        new_node = self.__Node(new_event)
 
         if self.first is None:
-            self.first = event
+            self.first = new_node
         elif self.first.next is None:
-            self.first.next = event
+            self.first.next = new_node
         else:
-            prev = self.first
-            curr = self.first.next
+            prev_node = self.first
+            curr_node = self.first.next
 
-            while curr.time < event_time:
-                prev = curr
-                curr = curr.next
+            while curr_node.val.time < event_time:
+                prev_node = curr_node
+                curr_node = curr_node.next
 
-                if curr is None:
+                if curr_node is None:
                     break
 
-            prev.next = event
-            event.next = curr
+            prev_node.next = new_node
+            new_node.next = curr_node
 
-    # Fetch the next event in time
     def fetch(self):
+        """
+        Fetches the next event in time
+
+        Returns
+        -------
+        Event
+            The next event in time
+        """
+
         if self.first is not None:
             tmp = self.first
             self.first = self.first.next
-            return tmp
+            return tmp.val
 
         return self.first
 
-    class Event:
-        def __init__(self, event_type, event_time, node_id, max_attempts):
-            self.type = event_type
-            self.time = event_time
-            self.node_id = node_id
-            self.attempts_left = max_attempts
-            self.pilot_id = -1
+    class __Node:
+        # Inner class describing a node in the linked list
+
+        def __init__(self, val):
+            self.val = val
             self.next = None
