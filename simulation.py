@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 
-from event_list import EventList
+from event_heap import EventHeap
 from event_generator import EventGenerator
 
 
@@ -43,8 +43,8 @@ class Simulation:
         Time in ms of how often measurements of the system should be taken
     control_node_buffer : int
         Number of control events allowed in send queue for a certain node
-    event_list : EventList
-        List of all signalling events (arrivals, departures and measurements)
+    event_heap : EventHeap
+        Binary heap of all signalling events (arrivals, departures and measurements)
     send_queue : list of __Event
         List of all events that need to be processed
     alarm_arrival : EventGenerator
@@ -91,7 +91,7 @@ class Simulation:
         self.measurement_period = config.get('measurement_period')
         self.control_node_buffer = config.get('control_nodes_buffer')
 
-        self.event_list = EventList(self.max_attempts)
+        self.event_heap = EventHeap(self.max_attempts)
         self.send_queue = []
 
         # Set alarm arrival distribution function
@@ -106,8 +106,8 @@ class Simulation:
 
         # Initialize nodes and their arrival times
         self.__initialize_arrival_nodes()
-        self.event_list.insert(self.__DEPARTURE, self.time + self.frame_length, 0)
-        self.event_list.insert(self.__MEASURE, self.time + self.measurement_period, 0)
+        self.event_heap.push(self.__DEPARTURE, self.time + self.frame_length, 0)
+        self.event_heap.push(self.__MEASURE, self.time + self.measurement_period, 0)
 
     def __initialize_arrival_nodes(self):
         # Initialize event times for all alarm and control nodes
@@ -118,7 +118,7 @@ class Simulation:
             if self.alarm_arrival_distribution == 'constant':
                 next_arrival = next_arrival * np.random.rand()
 
-            self.event_list.insert(self.__ALARM_ARRIVAL, next_arrival, i)
+            self.event_heap.push(self.__ALARM_ARRIVAL, next_arrival, i)
 
         for i in range(self.no_control_nodes):
             next_arrival = self.control_arrival.get_next()
@@ -127,7 +127,7 @@ class Simulation:
             if self.control_arrival_distribution == 'constant':
                 next_arrival = next_arrival * np.random.rand()
 
-            self.event_list.insert(self.__CONTROL_ARRIVAL, self.time + next_arrival, i)
+            self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + next_arrival, i)
 
     def __handle_event(self, event):
         # Event switcher to determine correct action for an event
@@ -146,7 +146,7 @@ class Simulation:
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add a new alarm arrival event to the event list
-        self.event_list.insert(self.__ALARM_ARRIVAL, self.time + self.alarm_arrival.get_next(), event.node_id)
+        self.event_heap.push(self.__ALARM_ARRIVAL, self.time + self.alarm_arrival.get_next(), event.node_id)
 
     def __handle_control_arrival(self, event):
         # Handle a control arrival event
@@ -155,7 +155,7 @@ class Simulation:
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add new control arrival event to the event list
-        self.event_list.insert(self.__CONTROL_ARRIVAL, self.time + self.control_arrival.get_next(), event.node_id)
+        self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + self.control_arrival.get_next(), event.node_id)
 
     def __handle_departure(self, event):
         # Handle a departure event
@@ -165,7 +165,7 @@ class Simulation:
         self.__assign_pilots()
         self.__check_collisions()
         # Add new departure event to the event list
-        self.event_list.insert(self.__DEPARTURE, self.time + self.frame_length, 0)
+        self.event_heap.push(self.__DEPARTURE, self.time + self.frame_length, 0)
 
     def __check_collisions(self):
         # Check for pilot contamination, i.e. more than one node assigned the same pilot
@@ -370,14 +370,14 @@ class Simulation:
         self.logger.write(log_string)
 
         # Add a new measure event to the event list
-        self.event_list.insert(self.__MEASURE, self.time + self.measurement_period, 0)
+        self.event_heap.push(self.__MEASURE, self.time + self.measurement_period, 0)
 
     def run(self):
         """ Runs the simulation """
         current_progress = 0
 
         while self.time < self.simulation_length:
-            next_event = self.event_list.fetch()
+            next_event = self.event_heap.pop()
 
             # Advance time before handling event
             self.time = next_event.time
