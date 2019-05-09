@@ -17,7 +17,7 @@ class EventGenerator:
             Dictionary of parameters for the specified distribution. Needed parameters are:
                 - Exponential: mean_arrival_time (mean arrival time)
                 - Constant: arrival_time (arrival time)
-        seed : bool
+        use_seed : bool
             Specifies if a seed should be used for the random number generation
 
     """
@@ -45,7 +45,7 @@ class EventGenerator:
             'constant': self.__constant
         }
 
-    def get_next(self, seed=None):
+    def get_next(self):
         """
         Generates a new event time given specified distribution
 
@@ -54,11 +54,6 @@ class EventGenerator:
         float
             A float with the next event time
         """
-        if self.__use_seed:
-            if seed is not None:
-                np.random.seed(seed)
-            else:
-                np.random.seed(0)
 
         return self.mapping[self.__distribution]()
 

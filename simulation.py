@@ -82,7 +82,7 @@ class Simulation:
         self.logger = logger
         self.stats = stats
         self.time = 0.0
-        self.custom_seed = custom_seed
+        self.seed_counter = 0
 
         self.use_seed = config.get('use_seed')
         self.max_attempts = config.get('max_attempts')
@@ -118,30 +118,22 @@ class Simulation:
         # Initialize event times for all alarm and control nodes
 
         for i in range(self.no_alarm_nodes):
-            next_arrival = self.alarm_arrival.get_next(self.custom_seed)
+            self.__handle_seed()
+            next_arrival = self.alarm_arrival.get_next()
             # We need to spread the initialization of the events if the arrival rate is constant
             if self.alarm_arrival_distribution == 'constant':
-                if self.use_seed:
-                    if self.custom_seed is not None:
-                        np.random.seed(self.custom_seed)
-                    else:
-                        np.random.seed(0)
-
+                self.__handle_seed()
                 next_arrival = next_arrival * np.random.rand()
 
             self.event_heap.push(self.__ALARM_ARRIVAL, next_arrival, i)
 
         for i in range(self.no_control_nodes):
-            next_arrival = self.control_arrival.get_next(self.custom_seed)
+            self.__handle_seed()
+            next_arrival = self.control_arrival.get_next()
 
             # We need to spread the initialization of the events
             if self.control_arrival_distribution == 'constant':
-                if self.use_seed:
-                    if self.custom_seed is not None:
-                        np.random.seed(self.custom_seed)
-                    else:
-                        np.random.seed(0)
-
+                self.__handle_seed()
                 next_arrival = next_arrival * np.random.rand()
 
             self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + next_arrival, i)
@@ -163,7 +155,8 @@ class Simulation:
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add a new alarm arrival event to the event list
-        self.event_heap.push(self.__ALARM_ARRIVAL, self.time + self.alarm_arrival.get_next(self.custom_seed),
+        self.__handle_seed()
+        self.event_heap.push(self.__ALARM_ARRIVAL, self.time + self.alarm_arrival.get_next(),
                              event.node_id)
 
     def __handle_control_arrival(self, event):
@@ -173,7 +166,8 @@ class Simulation:
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add new control arrival event to the event list
-        self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + self.control_arrival.get_next(self.custom_seed),
+        self.__handle_seed()
+        self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + self.control_arrival.get_next(),
                              event.node_id)
 
     def __handle_departure(self, event):
@@ -385,6 +379,11 @@ class Simulation:
 
         # Add a new measure event to the event list
         self.event_heap.push(self.__MEASURE, self.time + self.measurement_period, 0)
+
+    def __handle_seed(self):
+        if self.use_seed:
+            np.random.seed(self.seed_counter)
+            self.seed_counter += 1
 
     def run(self):
         """ Runs the simulation """

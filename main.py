@@ -16,7 +16,7 @@ __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
 
 if __name__ == '__main__':
     # Load simulation parameters
-    with open('config.json') as f:
+    with open('default_config.json') as f:
         config = json.load(f)
 
     time_string = time.strftime('%Y%m%d_%H%M%S')
