@@ -47,10 +47,14 @@ class Simulation:
         Binary heap of all signalling events (arrivals, departures and measurements)
     send_queue : list of __Event
         List of all events that need to be processed
-    alarm_arrival : EventGenerator
-        Class for generating alarm event times with a specific distribution (determined from config file)
-    control_arrival : EventGenerator
-        Class for generating control event times with a specific distribution (determined from config file)
+    alarm_arrivals : list
+        (List of) object for generating alarm event times with a specific distribution
+    control_arrivals : list
+        (List of) object for generating control event times with a specific distribution
+    custom_alarm_arrivals : list
+        Optional list for per node specific arrival distribution and deadline
+    custom_control_arrivals : list
+        Optional list for per node specific arrival distribution and deadline
 
     Methods
     -------
@@ -63,7 +67,7 @@ class Simulation:
     __DEPARTURE = 3
     __MEASURE = 4
 
-    def __init__(self, config, stats):
+    def __init__(self, config, stats, custom_alarm_arrivals=None, custom_control_arrivals=None):
         """
         Initialize simulation object
 
@@ -78,7 +82,8 @@ class Simulation:
         self.stats = stats
         self.time = 0.0
         self.seed_counter = 0
-
+        self.custom_alarm_arrivals = custom_alarm_arrivals
+        self.custom_control_arrivals = custom_control_arrivals
         self.use_seed = config.get('use_seed')
         self.max_attempts = config.get('max_attempts')
         self.base_alarm_pilot_share = config.get('base_alarm_pilot_share')
@@ -89,20 +94,40 @@ class Simulation:
         self.frame_length = config.get('frame_length')
         self.measurement_period = config.get('measurement_period')
         self.control_node_buffer = config.get('control_nodes_buffer')
-
         self.event_heap = EventHeap(self.max_attempts)
         self.send_queue = []
 
-        # Set alarm arrival distribution function
-        self.alarm_arrival_distribution = config.get('active_alarm_arrival_distribution')
-        alarm_arrival_parameters = config.get('alarm_arrival_distributions').get(self.alarm_arrival_distribution)
-        self.alarm_arrival = EventGenerator(self.alarm_arrival_distribution, alarm_arrival_parameters, self.use_seed)
+        # If custom alarm arrivals specified, initialize these
+        if self.custom_alarm_arrivals is not None:
+            self.alarm_arrivals = []
 
-        # Set control arrival distribution function
-        self.control_arrival_distribution = config.get('active_control_arrival_distribution')
-        control_arrival_parameters = config.get('control_arrival_distributions').get(self.control_arrival_distribution)
-        self.control_arrival = EventGenerator(self.control_arrival_distribution, control_arrival_parameters,
-                                              self.use_seed)
+            for i in range(self.no_alarm_nodes):
+                d = self.custom_alarm_arrivals[i].get('distribution')
+                d_settings = self.custom_alarm_arrivals[i].get('settings')
+                self.alarm_arrivals.append(EventGenerator(d, d_settings, self.use_seed))
+        else:
+            # Set default alarm arrival distribution
+            self.alarm_arrival_distribution = config.get('default_alarm_arrival_distribution')
+            alarm_arrival_parameters = config.get('alarm_arrival_distributions').get(self.alarm_arrival_distribution)
+
+            self.alarm_arrivals = EventGenerator(self.alarm_arrival_distribution, alarm_arrival_parameters,
+                                                 self.use_seed)
+
+        # If custom control arrivals specified, initialize these
+        if self.custom_control_arrivals is not None:
+            self.control_arrivals = []
+
+            for i in range(self.no_control_nodes):
+                d = self.custom_control_arrivals[i].get('distribution')
+                d_settings = self.custom_control_arrivals[i].get('settings')
+                self.control_arrivals.append(EventGenerator(d, d_settings, self.use_seed))
+        else:
+            # Set default control arrival distribution
+            self.control_arrival_distribution = config.get('default_control_arrival_distribution')
+            control_arrival_parameters = config.get('control_arrival_distributions').get(
+                self.control_arrival_distribution)
+            self.control_arrivals = EventGenerator(self.control_arrival_distribution, control_arrival_parameters,
+                                                   self.use_seed)
 
         # Initialize nodes and their arrival times
         self.__initialize_arrival_nodes()
@@ -113,25 +138,50 @@ class Simulation:
         # Initialize event times for all alarm and control nodes
 
         for i in range(self.no_alarm_nodes):
+            max_attempts = None
             self.__handle_seed()
-            next_arrival = self.alarm_arrival.get_next()
-            # We need to spread the initialization of the events if the arrival rate is constant
-            if self.alarm_arrival_distribution == 'constant':
-                self.__handle_seed()
-                next_arrival = next_arrival * np.random.rand()
 
-            self.event_heap.push(self.__ALARM_ARRIVAL, next_arrival, i)
+            # Extract custom arrival distribution
+            if self.custom_alarm_arrivals is not None:
+                max_attempts = self.custom_alarm_arrivals[i].get('max_attempts')
+                next_arrival = self.alarm_arrivals[i].get_next()
+
+                # Spread if distribution is constant
+                if self.custom_alarm_arrivals[i].get('distribution') == 'constant':
+                    self.__handle_seed()
+                    next_arrival *= np.random.rand()
+            else:
+                next_arrival = self.alarm_arrivals.get_next()
+
+                # Spread if distribution is constant
+                if self.alarm_arrival_distribution == 'constant':
+                    self.__handle_seed()
+                    next_arrival *= np.random.rand()
+
+            self.event_heap.push(self.__ALARM_ARRIVAL, next_arrival, i, max_attempts)
 
         for i in range(self.no_control_nodes):
+            max_attempts = None
             self.__handle_seed()
-            next_arrival = self.control_arrival.get_next()
 
-            # We need to spread the initialization of the events
-            if self.control_arrival_distribution == 'constant':
-                self.__handle_seed()
-                next_arrival = next_arrival * np.random.rand()
+            # Extract custom arrival distribution
+            if self.custom_control_arrivals is not None:
+                max_attempts = self.custom_control_arrivals[i].get('max_attempts')
+                next_arrival = self.control_arrivals[i].get_next()
 
-            self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + next_arrival, i)
+                # Spread if distribution is constant
+                if self.custom_control_arrivals[i].get('distribution') == 'constant':
+                    self.__handle_seed()
+                    next_arrival *= np.random.rand()
+            else:
+                next_arrival = self.control_arrivals.get_next()
+
+                # Spread if distribution is constant
+                if self.control_arrival_distribution == 'constant':
+                    self.__handle_seed()
+                    next_arrival *= np.random.rand()
+
+            self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + next_arrival, i, max_attempts)
 
     def __handle_event(self, event):
         # Event switcher to determine correct action for an event
@@ -151,8 +201,16 @@ class Simulation:
         self.send_queue.insert(0, event)
         # Add a new alarm arrival event to the event list
         self.__handle_seed()
-        self.event_heap.push(self.__ALARM_ARRIVAL, self.time + self.alarm_arrival.get_next(),
-                             event.node_id)
+
+        max_attempts = None
+
+        if self.custom_alarm_arrivals is not None:
+            max_attempts = self.custom_alarm_arrivals[event.node_id].get('max_attempts')
+            next_arrival = self.alarm_arrivals[event.node_id].get_next()
+        else:
+            next_arrival = self.alarm_arrivals.get_next()
+
+        self.event_heap.push(self.__ALARM_ARRIVAL, self.time + next_arrival, event.node_id, max_attempts)
 
     def __handle_control_arrival(self, event):
         # Handle a control arrival event
@@ -162,8 +220,16 @@ class Simulation:
         self.send_queue.insert(0, event)
         # Add new control arrival event to the event list
         self.__handle_seed()
-        self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + self.control_arrival.get_next(),
-                             event.node_id)
+
+        max_attempts = None
+
+        if self.custom_control_arrivals is not None:
+            max_attempts = self.custom_control_arrivals[event.node_id].get('max_attempts')
+            next_arrival = self.control_arrivals[event.node_id].get_next()
+        else:
+            next_arrival = self.control_arrivals.get_next()
+
+        self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + next_arrival, event.node_id, max_attempts)
 
     def __handle_departure(self, event):
         # Handle a departure event
@@ -218,59 +284,58 @@ class Simulation:
         # Assign pilots to all alarm and control nodes. Note that the receiving base station
         # does not on before hand how many nodes want to send
 
-        # If more pilots than total nodes -> handle all events
-        if self.no_pilots >= self.no_control_nodes + self.no_alarm_nodes:
-            self.stats.stats['no_departures'] += len(self.send_queue)
-            self.send_queue = []
+        # Check for any missed alarms
+        missed_alarm_attempts = 0
+        for event in self.send_queue:
+            if event.type == self.__ALARM_ARRIVAL:
+                missed_alarm_attempts = max(self.max_attempts - event.attempts_left, missed_alarm_attempts)
+
+        # Limit the number of missed attempts, will cause overflow otherwise
+        missed_alarm_attempts = min(10, missed_alarm_attempts)
+
+        # Exponential back-off is used to assign dedicated pilots to alarm packets, at most 100%
+        alarm_pilot_share = min(self.base_alarm_pilot_share * np.power(2, max(missed_alarm_attempts - 1, 0)), 1)
+
+        # At least one alarm pilot if dedicated resources is used
+        alarm_pilots = max(int(alarm_pilot_share * self.no_pilots), 1)
+        control_pilots = self.no_pilots - alarm_pilots
+
+        # Only used dedicated alarm pilots if a collision has occurred
+        # Dedicated pilots is possible since all nodes in a collision know about the collision,
+        # all other nodes can be informed by the base station since they have successfully received a pilot
+        if missed_alarm_attempts == 0:
+            alarm_pilots = self.no_pilots
+            control_pilots = self.no_pilots
+            base_control_pilots = 0
         else:
-            # Check for any missed alarms
-            missed_alarm_attempts = 0
+            # If missed alarm, use pilots AFTER alarm pilots for the control nodes
+            base_control_pilots = alarm_pilots
+
+        # Randomly assign pilots
+        alarm_pilot_assignments = self.__generate_pilot_assignments(alarm_pilots, self.no_alarm_nodes)
+
+        # Assign alarm pilots to the events/nodes in the send queue
+        for i in range(self.no_alarm_nodes):
             for event in self.send_queue:
-                if event.type == self.__ALARM_ARRIVAL:
-                    missed_alarm_attempts = max(self.max_attempts - event.attempts_left, missed_alarm_attempts)
+                if i == event.node_id and event.type == self.__ALARM_ARRIVAL:
+                    event.pilot_id = alarm_pilot_assignments[i]
 
-            # Limit the number of missed attempts, will cause overflow otherwise
-            missed_alarm_attempts = min(10, missed_alarm_attempts)
+        # Assign control pilots
+        if control_pilots > 0:
+            control_pilot_assignments = self.__generate_pilot_assignments(control_pilots, self.no_control_nodes,
+                                                                          base=base_control_pilots)
 
-            # Exponential back-off is used to assign dedicated pilots to alarm packets, at most 100%
-            alarm_pilot_share = min(self.base_alarm_pilot_share * np.power(2, max(missed_alarm_attempts - 1, 0)), 1)
-
-            # At least one alarm pilot if dedicated resources is used
-            alarm_pilots = max(int(alarm_pilot_share * self.no_pilots), 1)
-            control_pilots = self.no_pilots - alarm_pilots
-
-            # Only used dedicated alarm pilots if a collision has occurred
-            if missed_alarm_attempts == 0:
-                alarm_pilots = self.no_pilots
-                control_pilots = self.no_pilots
-                base_control_pilots = 0
-            else:
-                # If missed alarm, use pilots after alarm pilots for the control nodes
-                base_control_pilots = alarm_pilots
-
-            # Randomly spread the pilots on the nodes in balanced way (minimizing duplicated pilots)
-            alarm_pilot_assignments = self.__generate_pilot_assignments(alarm_pilots, self.no_alarm_nodes)
-
-            # Assign alarm pilots to the events/nodes in the send queue
-            for i in range(self.no_alarm_nodes):
+            # Assign pilots to the events/nodes in the send queue
+            for i in range(self.no_control_nodes):
                 for event in self.send_queue:
-                    if i == event.node_id and event.type == self.__ALARM_ARRIVAL:
-                        event.pilot_id = alarm_pilot_assignments[i]
-
-            # Assign control pilots
-            if control_pilots > 0:
-                control_pilot_assignments = self.__generate_pilot_assignments(control_pilots, self.no_control_nodes,
-                                                                              base=base_control_pilots)
-
-                for i in range(self.no_control_nodes):
-                    # Assign pilots to the events/nodes in the send queue
-                    for event in self.send_queue:
-                        if i == event.node_id and event.type == self.__CONTROL_ARRIVAL:
-                            event.pilot_id = control_pilot_assignments[i]
+                    if i == event.node_id and event.type == self.__CONTROL_ARRIVAL:
+                        event.pilot_id = control_pilot_assignments[i]
 
     @staticmethod
     def __generate_pilot_assignments(pilots, no_nodes, base=0):
-        # Randomly assign pilots to the nodes
+        # Randomly assign pilots to the nodes, note that nodes cannot communicate with each other without pilots,
+        # i.e. if node 1 uses pilot 1, node 2 DOES NOT KNOW THIS and is equally likely (in base case) to select pilot 1
+        # as well
 
         pilot_assignments = []
 
@@ -376,12 +441,18 @@ class Simulation:
         self.event_heap.push(self.__MEASURE, self.time + self.measurement_period, 0)
 
     def __handle_seed(self):
+        # If use of seed is specified this will ensure the same seed pattern is used every simulations, but without
+        # using the same random number every time a new event is generated in the heap
+        # Since event signaling is used this is the only way to recreate results (alternative is to pre-calculate all
+        # events which)
+
         if self.use_seed:
             np.random.seed(self.seed_counter)
             self.seed_counter += 1
 
     def run(self):
         """ Runs the simulation """
+
         current_progress = 0
 
         while self.time < self.simulation_length:

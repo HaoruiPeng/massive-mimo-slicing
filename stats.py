@@ -28,7 +28,7 @@ class Stats:
         self.__stats_file = open(stats_file_path, 'w')
         self.__log_file = open(log_file_path, 'w+')
 
-        # Write the headers to the csv file
+        # Write the headers to the csv files
         self.__stats_file.write(
             'Config No,Measurements,Alarm arrivals,Control arrivals,Departures,Missed alarms,Missed controls,Collisions,'
             'Avg. alarm queue,Alarm queue delta,Avg. control queue,Control queue delta,Avg. alarm wait,Alarm wait delta,'
@@ -78,12 +78,14 @@ class Stats:
         self.__stats_file.write(stats_str)
 
     def clear_stats(self):
+        """ Clear the stats for the current simulation """
+
         for key in self.stats:
             if not key == 'config_no':
                 self.stats[key] = 0
 
     def process_results(self):
-        """ Process the simulations results, calculating confidence 95% intervals for relevant parameters """
+        """ Process the simulations results, calculating 95% confidence intervals for relevant parameters """
 
         self.__log_file.seek(0)
 
@@ -129,7 +131,7 @@ class Stats:
 
     def write_log(self, message):
         """
-        Write to the file
+        Write to the log file (used for queue stats)
 
         Parameters
         ----------
@@ -141,7 +143,7 @@ class Stats:
 
     @staticmethod
     def __calc_confidence_interval(v):
-        # Calculate confidence interval
+        # Calculate 95% confidence interval
 
         if len(v) == 0:
             print('Empty vector')

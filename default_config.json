@@ -1,18 +1,20 @@
 {
   "simulation_name": "original",
   "simulation_length": 1,
-  "max_attempts": 8,
+  "max_attempts": 10,
   "no_alarm_nodes": 100,
   "no_control_nodes": 100,
   "no_pilots": 30,
   "control_nodes_buffer": 5,
-  "active_alarm_arrival_distribution": "exponential",
-  "active_control_arrival_distribution": "exponential",
+  "default_alarm_arrival_distribution": "exponential",
+  "default_control_arrival_distribution": "exponential",
   "base_alarm_pilot_share": 0.2,
   "frame_length": 1,
   "measurement_period": 5,
-  "use_seed": 0,
-  "use_default_config": 0,
+  "use_seed": 1,
+  "multi_run": 1,
+  "custom_alarm_arrivals": 0,
+  "custom_control_arrivals": 1,
 
   "alarm_arrival_distributions": {
     "exponential": {

@@ -33,7 +33,7 @@ class EventHeap:
         self.__heap = []
         self.__max_attempts = max_attempts
 
-    def push(self, event_type, event_time, node_id):
+    def push(self, event_type, event_time, node_id, max_attempts=None):
         """
         Inserts a new event at the correct time in the event heap
 
@@ -45,9 +45,14 @@ class EventHeap:
             Positive float (presumably greater than the current time in the simulation)
         node_id : int
             What node (i.e. machine/device) this event belongs to
+        max_attempts : int
+            Custom max amount of attempts
         """
 
-        new_event = Event(event_type, event_time, node_id, self.__max_attempts)
+        if max_attempts is None:
+            max_attempts = self.__max_attempts
+
+        new_event = Event(event_type, event_time, node_id, max_attempts)
         heapq.heappush(self.__heap, (event_time, self.__key, new_event))
         self.__key += 1
 
