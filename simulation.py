@@ -21,8 +21,6 @@ class Simulation:
         Type id for a departure event
     __MEASURE : int
         Type id for a measure event
-    logger : Logger
-        Logging object for writing measurements to file
     stats : Stats
         Statistics object for keeping track for measurements
     time : int
@@ -65,7 +63,7 @@ class Simulation:
     __DEPARTURE = 3
     __MEASURE = 4
 
-    def __init__(self, config, logger, stats, custom_seed=None):
+    def __init__(self, config, stats):
         """
         Initialize simulation object
 
@@ -73,13 +71,10 @@ class Simulation:
         ----------
         config : dict
             Dictionary containing all configuration parameters
-        logger : Logger
-            Logging object for writing measurements to file
         stats : Stats
             Statistics object for keeping track for measurements
         """
 
-        self.logger = logger
         self.stats = stats
         self.time = 0.0
         self.seed_counter = 0
@@ -151,7 +146,7 @@ class Simulation:
 
     def __handle_alarm_arrival(self, event):
         # Handle an alarm arrival event
-        self.stats.no_alarm_arrivals += 1
+        self.stats.stats['no_alarm_arrivals'] += 1
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add a new alarm arrival event to the event list
@@ -162,7 +157,7 @@ class Simulation:
     def __handle_control_arrival(self, event):
         # Handle a control arrival event
 
-        self.stats.no_control_arrivals += 1
+        self.stats.stats['no_control_arrivals'] += 1
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add new control arrival event to the event list
@@ -197,7 +192,7 @@ class Simulation:
                     if event.pilot_id not in pilot_collisions:
                         pilot_collisions.append(event.pilot_id)
 
-        self.stats.no_collisions += len(pilot_collisions)
+        self.stats.stats['no_collisions'] += len(pilot_collisions)
 
         handled_nodes = []
 
@@ -216,7 +211,7 @@ class Simulation:
 
         # Remove the events in reversed order to not shift subsequent indices
         for i in sorted(remove_indices, reverse=True):
-            self.stats.no_departures += 1
+            self.stats.stats['no_departures'] += 1
             del self.send_queue[i]
 
     def __assign_pilots(self):
@@ -225,7 +220,7 @@ class Simulation:
 
         # If more pilots than total nodes -> handle all events
         if self.no_pilots >= self.no_control_nodes + self.no_alarm_nodes:
-            self.stats.no_departures += len(self.send_queue)
+            self.stats.stats['no_departures'] += len(self.send_queue)
             self.send_queue = []
         else:
             # Check for any missed alarms
@@ -298,9 +293,9 @@ class Simulation:
                 # Alarm events need to be handled regardless if the event has expired, i.e. do not
                 # remove the event from the send queue
                 if event.type == self.__ALARM_ARRIVAL:
-                    self.stats.no_missed_alarms += 1
+                    self.stats.stats['no_missed_alarms'] += 1
                 else:
-                    self.stats.no_missed_controls += 1
+                    self.stats.stats['no_missed_controls'] += 1
                     if i not in remove_indices:
                         remove_indices.append(i)
 
@@ -320,7 +315,7 @@ class Simulation:
                     event_matches += 1
 
                     if event_matches > self.control_node_buffer and j not in remove_indices:
-                        self.stats.no_missed_controls += 1
+                        self.stats.stats['no_missed_controls'] += 1
                         remove_indices.append(j)
 
         # Remove the events in reversed order to not shift subsequent indices
@@ -365,7 +360,7 @@ class Simulation:
         # Take measurement of the send queue
 
         del event
-        self.stats.no_measurements += 1
+        self.stats.stats['no_measurements'] += 1
 
         measurements = self.__get_send_queue_info()
         log_string = ''
@@ -375,7 +370,7 @@ class Simulation:
 
         log_string = log_string[:-1]
         log_string += '\n'
-        self.logger.write(log_string)
+        self.stats.write_log(log_string)
 
         # Add a new measure event to the event list
         self.event_heap.push(self.__MEASURE, self.time + self.measurement_period, 0)

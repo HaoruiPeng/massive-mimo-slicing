@@ -9,32 +9,51 @@ import json
 import time
 
 from stats import Stats
-from logger import Logger
 from simulation import Simulation
 
 __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
 
 if __name__ == '__main__':
     # Load simulation parameters
-    with open('default_config.json') as f:
-        config = json.load(f)
+    with open('default_config.json') as config_file:
+        config = json.load(config_file)
 
     time_string = time.strftime('%Y%m%d_%H%M%S')
     simulation_name = config.get('simulation_name')
 
-    # Initialize a new logger
     log_file_path = 'logs/' + time_string + '_' + simulation_name + '_queue_log.csv'
-    logger = Logger(log_file_path)
+    stats_file_path = 'stats/' + time_string + '_' + simulation_name + '_stats.csv'
 
-    # Initialize a new statistics object
-    stats_file_path = 'stats/' + simulation_name + '_stats.csv'
-    stats = Stats(stats_file_path)
+    # Initialize stats
+    stats = Stats(stats_file_path, log_file_path)
 
-    # Run the simulation
-    simulation = Simulation(config, logger, stats)
-    simulation.run()
+    # Override the default config and run multiple simulations
+    if not config.get("use_default_config"):
+        configurations = 10
 
-    # Close files and save results
-    logger.close()
-    stats.print()
-    stats.save_and_close()
+        for i in range(configurations):
+            # Update the run configuration number, should start with zero
+            stats.stats['config_no'] = i
+
+            # Set new config parameters here
+
+            # Run the simulation with new parameters
+            simulation = Simulation(config, stats)
+            simulation.run()
+
+            # Process, save and print the results
+            stats.process_results()
+            stats.save_stats()
+            stats.print_stats()
+            stats.clear_stats()
+
+    else:
+        # Run a single simulation with default parameters
+        simulation = Simulation(config, stats)
+        simulation.run()
+        stats.process_results()
+        stats.save_stats()
+        stats.print_stats()
+
+    # Close files
+    stats.close()
