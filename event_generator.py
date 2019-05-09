@@ -17,9 +17,12 @@ class EventGenerator:
             Dictionary of parameters for the specified distribution. Needed parameters are:
                 - Exponential: mean_arrival_time (mean arrival time)
                 - Constant: arrival_time (arrival time)
+        seed : bool
+            Specifies if a seed should be used for the random number generation
+
     """
 
-    def __init__(self, distribution, settings):
+    def __init__(self, distribution, settings, use_seed):
         """
         Initializes a new event generator. See class documentation for parameters explanation.
 
@@ -29,17 +32,20 @@ class EventGenerator:
             See class documentation
         settings : dict
             See class documentation
+        use_seed : bool
+            See class documentation
         """
 
-        self.distribution = distribution
-        self.settings = settings
+        self.__distribution = distribution
+        self.__settings = settings
+        self.__use_seed = use_seed
 
         self.mapping = {
             'exponential': self.__exponential,
             'constant': self.__constant
         }
 
-    def get_next(self):
+    def get_next(self, seed=None):
         """
         Generates a new event time given specified distribution
 
@@ -48,14 +54,20 @@ class EventGenerator:
         float
             A float with the next event time
         """
-        return self.mapping[self.distribution]()
+        if self.__use_seed:
+            if seed is not None:
+                np.random.seed(seed)
+            else:
+                np.random.seed(0)
+
+        return self.mapping[self.__distribution]()
 
     def __exponential(self):
         # Returns float from an exponential distribution
 
-        return np.random.exponential(self.settings.get('mean_arrival_time'))
+        return np.random.exponential(self.__settings.get('mean_arrival_time'))
 
     def __constant(self):
         # Returns a float from a constant distribution
 
-        return self.settings.get('arrival_time')
+        return self.__settings.get('arrival_time')

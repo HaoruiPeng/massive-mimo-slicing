@@ -65,7 +65,7 @@ class Simulation:
     __DEPARTURE = 3
     __MEASURE = 4
 
-    def __init__(self, config, logger, stats):
+    def __init__(self, config, logger, stats, custom_seed=None):
         """
         Initialize simulation object
 
@@ -82,7 +82,9 @@ class Simulation:
         self.logger = logger
         self.stats = stats
         self.time = 0.0
+        self.custom_seed = custom_seed
 
+        self.use_seed = config.get('use_seed')
         self.max_attempts = config.get('max_attempts')
         self.base_alarm_pilot_share = config.get('base_alarm_pilot_share')
         self.no_alarm_nodes = config.get('no_alarm_nodes')
@@ -99,12 +101,13 @@ class Simulation:
         # Set alarm arrival distribution function
         self.alarm_arrival_distribution = config.get('active_alarm_arrival_distribution')
         alarm_arrival_parameters = config.get('alarm_arrival_distributions').get(self.alarm_arrival_distribution)
-        self.alarm_arrival = EventGenerator(self.alarm_arrival_distribution, alarm_arrival_parameters)
+        self.alarm_arrival = EventGenerator(self.alarm_arrival_distribution, alarm_arrival_parameters, self.use_seed)
 
         # Set control arrival distribution function
         self.control_arrival_distribution = config.get('active_control_arrival_distribution')
         control_arrival_parameters = config.get('control_arrival_distributions').get(self.control_arrival_distribution)
-        self.control_arrival = EventGenerator(self.control_arrival_distribution, control_arrival_parameters)
+        self.control_arrival = EventGenerator(self.control_arrival_distribution, control_arrival_parameters,
+                                              self.use_seed)
 
         # Initialize nodes and their arrival times
         self.__initialize_arrival_nodes()
@@ -115,18 +118,30 @@ class Simulation:
         # Initialize event times for all alarm and control nodes
 
         for i in range(self.no_alarm_nodes):
-            next_arrival = self.alarm_arrival.get_next()
+            next_arrival = self.alarm_arrival.get_next(self.custom_seed)
             # We need to spread the initialization of the events if the arrival rate is constant
             if self.alarm_arrival_distribution == 'constant':
+                if self.use_seed:
+                    if self.custom_seed is not None:
+                        np.random.seed(self.custom_seed)
+                    else:
+                        np.random.seed(0)
+
                 next_arrival = next_arrival * np.random.rand()
 
             self.event_heap.push(self.__ALARM_ARRIVAL, next_arrival, i)
 
         for i in range(self.no_control_nodes):
-            next_arrival = self.control_arrival.get_next()
+            next_arrival = self.control_arrival.get_next(self.custom_seed)
 
             # We need to spread the initialization of the events
             if self.control_arrival_distribution == 'constant':
+                if self.use_seed:
+                    if self.custom_seed is not None:
+                        np.random.seed(self.custom_seed)
+                    else:
+                        np.random.seed(0)
+
                 next_arrival = next_arrival * np.random.rand()
 
             self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + next_arrival, i)
@@ -148,7 +163,8 @@ class Simulation:
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add a new alarm arrival event to the event list
-        self.event_heap.push(self.__ALARM_ARRIVAL, self.time + self.alarm_arrival.get_next(), event.node_id)
+        self.event_heap.push(self.__ALARM_ARRIVAL, self.time + self.alarm_arrival.get_next(self.custom_seed),
+                             event.node_id)
 
     def __handle_control_arrival(self, event):
         # Handle a control arrival event
@@ -157,7 +173,8 @@ class Simulation:
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add new control arrival event to the event list
-        self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + self.control_arrival.get_next(), event.node_id)
+        self.event_heap.push(self.__CONTROL_ARRIVAL, self.time + self.control_arrival.get_next(self.custom_seed),
+                             event.node_id)
 
     def __handle_departure(self, event):
         # Handle a departure event
@@ -264,17 +281,12 @@ class Simulation:
 
     @staticmethod
     def __generate_pilot_assignments(pilots, no_nodes, base=0):
-        # Randomly spread the pilots on the nodes in balanced way (minimizing duplicates pilots)
+        # Randomly assign pilots to the nodes
 
-        shuffled_pilots = []
         pilot_assignments = []
 
         while len(pilot_assignments) < no_nodes:
-            if len(shuffled_pilots) == 0:
-                shuffled_pilots = np.random.permutation(list(range(pilots)))
-
-            last, shuffled_pilots = shuffled_pilots[-1], shuffled_pilots[:-1]
-            pilot_assignments.append(base + last)
+            pilot_assignments.append(base + np.random.randint(pilots))
 
         return pilot_assignments
 
@@ -379,7 +391,7 @@ class Simulation:
         current_progress = 0
 
         while self.time < self.simulation_length:
-            next_event = self.event_heap.pop()
+            next_event = self.event_heap.pop()[2]
 
             # Advance time before handling event
             self.time = next_event.time
