@@ -35,3 +35,7 @@ The different design parameters are:
   * `measurement_period` how often measurements should be taken,
 
 Please see config file for the distributions' parameters, e.g. mean arrival rate.
+
+### License
+This repository is maintained under *GNU General Public License v3.0*.
+

@@ -1,3 +1,6 @@
+__author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
+
+
 class Logger:
     """
     Logger instance to write continuous measurements to file

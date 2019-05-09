@@ -1,3 +1,6 @@
+__author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
+
+
 class Stats:
     """
     Statistics object to keep track of simulation measurements

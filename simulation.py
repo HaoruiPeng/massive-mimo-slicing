@@ -4,6 +4,8 @@ import numpy as np
 from event_heap import EventHeap
 from event_generator import EventGenerator
 
+__author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
+
 
 class Simulation:
     """
