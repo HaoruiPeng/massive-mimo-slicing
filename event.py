@@ -1,3 +1,6 @@
+__author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
+
+
 class Event:
     """
     Describes an event (i.e. packet/signal)

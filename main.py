@@ -1,9 +1,18 @@
+"""
+Massive MIMO factory simulation
+
+This library provides a network simulator for a factory floor with a number of machines with control traffic and a
+number of alarm nodes with alarm traffic. The library is built to be highly configurable.
+"""
+
 import json
 import time
 
 from stats import Stats
 from logger import Logger
 from simulation import Simulation
+
+__author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
 
 if __name__ == '__main__':
     # Load simulation parameters
