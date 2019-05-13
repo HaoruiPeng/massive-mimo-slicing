@@ -1,20 +1,20 @@
 {
-  "simulation_name": "original",
+  "simulation_name": "substation_automation",
   "simulation_length": 1,
   "max_attempts": 10,
-  "no_alarm_nodes": 100,
-  "no_control_nodes": 100,
+  "no_alarm_nodes": 5,
+  "no_control_nodes": 5,
   "no_pilots": 30,
   "control_nodes_buffer": 5,
   "default_alarm_arrival_distribution": "exponential",
   "default_control_arrival_distribution": "exponential",
-  "base_alarm_pilot_share": 0.2,
+  "base_alarm_pilot_share": 0.1,
   "frame_length": 1,
   "measurement_period": 5,
   "use_seed": 1,
   "multi_run": 1,
   "custom_alarm_arrivals": 0,
-  "custom_control_arrivals": 1,
+  "custom_control_arrivals": 0,
 
   "alarm_arrival_distributions": {
     "exponential": {
@@ -27,10 +27,10 @@
 
   "control_arrival_distributions": {
     "exponential": {
-      "mean_arrival_time": 30
+      "mean_arrival_time": 10
     },
     "constant": {
-      "arrival_time": 30
+      "arrival_time": 10
     }
   }
 }
