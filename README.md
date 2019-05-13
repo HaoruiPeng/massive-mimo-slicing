@@ -31,8 +31,12 @@ The different design parameters are:
   * `active_alarm_arrival_distribution` alarm arrival distribution (exponential, constant) 
   * `active_control_arrival_distribution` control arrival distribution (exponential, constant)
   * `base_alarm_pilot_share` Base share of dedicated resources for alarm packets in decimals
-  * `frame_length` length of one simulation frame, i.e. determines the departure,
-  * `measurement_period` how often measurements should be taken,
+  * `frame_length` length of one simulation frame, i.e. determines the departure
+  * `measurement_period` how often measurements should be taken
+  * `use_seed` use a seed for the random generator (to recreate simulation results) \[0, 1]
+  * `multi_run` run multiple simulations with changing parameters (configure in main.py) \[0, 1]
+  * `custom_alarm_arrivals` custom alarm arrivals (distribution settings and deadline) for every node \[0, 1]
+  * `custom_control_arrivals` custom control arrivals (distribution settings and deadline) for every node \[0, 1]
 
 Please see config file for the distributions' parameters, e.g. mean arrival rate.
 
