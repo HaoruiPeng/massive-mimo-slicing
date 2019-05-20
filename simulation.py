@@ -1,4 +1,6 @@
 import sys
+import time
+
 import numpy as np
 
 from event_heap import EventHeap
@@ -67,7 +69,7 @@ class Simulation:
     __DEPARTURE = 3
     __MEASURE = 4
 
-    def __init__(self, config, stats, custom_alarm_arrivals=None, custom_control_arrivals=None):
+    def __init__(self, config, stats, custom_alarm_arrivals=None, custom_control_arrivals=None, seed=None):
         """
         Initialize simulation object
 
@@ -81,7 +83,13 @@ class Simulation:
 
         self.stats = stats
         self.time = 0.0
-        self.seed_counter = 0
+
+        if seed is None:
+            self.base_seed = int(time.time())
+        else:
+            self.base_seed = seed
+
+        self.seed_counter = self.base_seed
         self.custom_alarm_arrivals = custom_alarm_arrivals
         self.custom_control_arrivals = custom_control_arrivals
         self.use_seed = config.get('use_seed')

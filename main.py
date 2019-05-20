@@ -81,6 +81,8 @@ if __name__ == '__main__':
             simulation = Simulation(config, stats, custom_alarm_arrivals, custom_control_arrivals)
             simulation.run()
 
+            print('Seed: {}'.format(simulation.base_seed))
+
             # Process, save and print the results
             stats.process_results()
             stats.save_stats()
