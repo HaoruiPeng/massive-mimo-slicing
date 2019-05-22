@@ -8,8 +8,8 @@ number of alarm nodes with alarm traffic. The library is built to be highly conf
 import json
 import time
 
-from stats import Stats
-from simulation import Simulation
+from utilities.stats import Stats
+from binary.binary_simulation import BinarySimulation as Simulation
 
 __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
             stats.stats['config_no'] = i - 1
 
             # Set new config parameters here by overriding the config file
-            # e.g. config['max_attempts'] = 2*(i+1)
+            # e.g. config['max_attempts'] =R 2*(i+1)
             config['no_alarm_nodes'] = base_no_nodes * i
             config['no_control_nodes'] = base_no_nodes * i
 
