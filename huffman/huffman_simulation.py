@@ -38,7 +38,7 @@ class HuffmanSimulation(Simulation):
             if n.prob < np.random.rand() and n.consumed is False:
                 self.stats.stats['no_alarm_arrivals'] += 1
                 n.consumed = True
-                self.send_queue.insert(0, Event(self._ALARM_ARRIVAL, event.event_time, n.node_id, self.max_attempts))
+                self.send_queue.insert(0, Event(self._ALARM_ARRIVAL, event.time, n.node_id, self.max_attempts))
 
     def _assign_pilots(self):
         # Assign pilots to all alarm and control nodes. Note that the receiving base station
@@ -66,7 +66,7 @@ class HuffmanSimulation(Simulation):
                         # Adjust the sequence number so that IF a new event arrives in a frame where there have already
                         # been collisions there is no new collisions, i.e. allocate one more pilot than Huffman tells us
                         # to
-                        pilot += base_pilot[seq_i]
+                        #pilot += base_pilot[seq_i]
 
                         used_alarm_pilots.append(pilot)
                         event.pilot_id = pilot

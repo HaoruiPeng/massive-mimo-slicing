@@ -16,7 +16,7 @@ class HuffmanTree:
             # Extract nodes with lowest priority
             n1 = heapq.heappop(self.node_queue)
             n2 = heapq.heappop(self.node_queue)
-            cn = self.__Node(0, 1 - (1 - n1.val) * (1 - n2.val))
+            cn = self.__Node(0, 1 - (1 - n1.prob) * (1 - n2.prob))
             cn.right = n1
             cn.left = n2
 
@@ -39,7 +39,7 @@ class HuffmanTree:
         # Tree should be balanced, so only need to check one child
         if child.left is not None:
             self.__generate_pilot_sequences(child.left, child, left=True)
-            self.__generate_pilot_sequences(child.left, child, left=False)
+            self.__generate_pilot_sequences(child.right, child, left=False)
 
     def __extract_pilot_sequences(self, current):
         if current.left is None:
@@ -56,12 +56,12 @@ class HuffmanTree:
             return combined_list
 
     class __Node:
-        def __init__(self, i, val):
+        def __init__(self, i, prob):
             self.seq = 0
             self.node = i
-            self.val = val
+            self.prob = prob
             self.right = None
             self.left = None
 
         def __lt__(self, other):
-            return self.val < other.val
+            return self.prob < other.prob

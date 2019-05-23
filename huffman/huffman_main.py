@@ -18,14 +18,14 @@ __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
 
 if __name__ == '__main__':
     # Load simulation parameters
-    with open('default_config.json') as config_file:
+    with open('../default_config.json') as config_file:
         config = json.load(config_file)
 
     time_string = time.strftime('%Y%m%d_%H%M%S')
     simulation_name = config.get('simulation_name')
 
-    log_file_path = 'logs/' + time_string + '_' + simulation_name + '_queue_log.csv'
-    stats_file_path = 'stats/' + time_string + '_' + simulation_name + '_stats.csv'
+    log_file_path = '../logs/' + time_string + '_' + simulation_name + '_queue_log.csv'
+    stats_file_path = '../stats/' + time_string + '_' + simulation_name + '_stats.csv'
 
     # Initialize stats and logger
     stats = Stats(stats_file_path, log_file_path)
@@ -36,19 +36,21 @@ if __name__ == '__main__':
     seed += 1
     alarm_node_probabilities = np.random.rand(config.get('no_alarm_nodes'), 1) * 0.5
 
+    # Change to per frame probabilities
+    alarm_node_probabilities = alarm_node_probabilities / (
+                config.get('simulation_length') * 1000 / config.get('frame_length'))
+
     # Generate pilot sequences based on huffman tree
     huffman_tree = HuffmanTree(alarm_node_probabilities)
     alarm_node_pilot_sequences = huffman_tree.pilot_sequences
 
-    # Change to per frame probabilities
-    alarm_node_probabilities = alarm_node_probabilities / (
-                config.get('simulation_length') * 1000 / config.get('frame_length'))
+    print(alarm_node_pilot_sequences)
 
     huffman_alarm_arrivals = []
 
     # Create Huffman nodes
     for i in range(len(alarm_node_probabilities)):
-        huffman_alarm_arrivals.append(HuffmanNode)
+        huffman_alarm_arrivals.append(HuffmanNode(i, alarm_node_probabilities[i], alarm_node_pilot_sequences[i]))
 
     # Override the default config and run multiple simulations
     if config.get("multi_run"):
