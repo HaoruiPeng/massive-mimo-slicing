@@ -18,9 +18,9 @@ class BinarySimulation(Simulation):
         """
 
         super(BinarySimulation, self).__init__(config, stats, custom_alarm_arrivals, custom_control_arrivals, seed)
-        self.__initialize_alarm_arrival_nodes()
+        self._initialize_alarm_arrival_nodes()
 
-    def __initialize_alarm_arrival_nodes(self):
+    def _initialize_alarm_arrival_nodes(self):
         # Initialize event times for all alarm and control nodes
 
         for i in range(self.no_alarm_nodes):
@@ -46,7 +46,7 @@ class BinarySimulation(Simulation):
 
             self.event_heap.push(self._ALARM_ARRIVAL, next_arrival, i, max_attempts)
 
-    def __handle_alarm_arrival(self, event):
+    def _handle_alarm_arrival(self, event):
         # Handle an alarm arrival event
         self.stats.stats['no_alarm_arrivals'] += 1
         # Store event in send queue until departure (as LIFO)
@@ -64,7 +64,7 @@ class BinarySimulation(Simulation):
 
         self.event_heap.push(self._ALARM_ARRIVAL, self.time + next_arrival, event.node_id, max_attempts)
 
-    def __assign_pilots(self):
+    def _assign_pilots(self):
         # Assign pilots to all alarm and control nodes. Note that the receiving base station
         # does not on before hand how many nodes want to send
 

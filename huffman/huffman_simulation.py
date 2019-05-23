@@ -29,7 +29,7 @@ class HuffmanSimulation(Simulation):
         self.huffman_alarm_arrivals = huffman_alarm_arrivals
         self.event_heap.push(self._ALARM_ARRIVAL, self.time + self.frame_length, 0)
 
-    def __handle_alarm_arrival(self, event):
+    def _handle_alarm_arrival(self, event):
         # Handle alarm arrival event
 
         # Loop through alarm nodes and check for events
@@ -40,7 +40,7 @@ class HuffmanSimulation(Simulation):
                 n.consumed = True
                 self.send_queue.insert(0, Event(self._ALARM_ARRIVAL, event.event_time, n.node_id, self.max_attempts))
 
-    def __assign_pilots(self):
+    def _assign_pilots(self):
         # Assign pilots to all alarm and control nodes. Note that the receiving base station
         # does not on before hand how many nodes want to send
 

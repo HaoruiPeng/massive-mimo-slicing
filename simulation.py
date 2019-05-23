@@ -146,13 +146,13 @@ class Simulation:
         self.event_heap.push(self._MEASURE, self.time + self.measurement_period, 0)
 
     # The following methods should be overwritten in a child class
-    def __initialize_alarm_arrival_nodes(self):
+    def _initialize_alarm_arrival_nodes(self):
         pass
 
-    def __assign_pilots(self):
+    def _assign_pilots(self):
         pass
 
-    def __handle_alarm_arrival(self, event):
+    def _handle_alarm_arrival(self, event):
         pass
 
     def __initialize_control_arrival_nodes(self):
@@ -185,7 +185,7 @@ class Simulation:
         # Event switcher to determine correct action for an event
 
         event_actions = {
-            self._ALARM_ARRIVAL: self.__handle_alarm_arrival,
+            self._ALARM_ARRIVAL: self._handle_alarm_arrival,
             self._CONTROL_ARRIVAL: self.__handle_control_arrival,
             self._DEPARTURE: self.__handle_departure,
             self._MEASURE: self.__handle_measurement}
@@ -216,7 +216,7 @@ class Simulation:
 
         del event
         self.__handle_expired_events()
-        self.__assign_pilots()
+        self._assign_pilots()
         self.__check_collisions()
         # Add new departure event to the event list
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, 0)
