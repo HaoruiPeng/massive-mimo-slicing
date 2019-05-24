@@ -28,8 +28,8 @@ The different design parameters are:
   * `no_control_nodes` number of control nodes
   * `no_pilots` number of available pilots
   * `control_nodes_buffer` control node buffer before packets expiring
-  * `active_alarm_arrival_distribution` alarm arrival distribution (exponential, constant) 
-  * `active_control_arrival_distribution` control arrival distribution (exponential, constant)
+  * `active_alarm_arrival_distribution` alarm arrival distribution (exponential, uniform, constant) 
+  * `active_control_arrival_distribution` control arrival distribution (exponential, uniform, constant)
   * `base_alarm_pilot_share` Base share of dedicated resources for alarm packets in decimals
   * `frame_length` length of one simulation frame, i.e. determines the departure
   * `measurement_period` how often measurements should be taken
