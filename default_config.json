@@ -6,7 +6,7 @@
   "no_control_nodes": 60,
   "no_pilots": 30,
   "control_nodes_buffer": 5,
-  "default_alarm_arrival_distribution": "exponential",
+  "default_alarm_arrival_distribution": "uniform",
   "default_control_arrival_distribution": "exponential",
   "base_alarm_pilot_share": 0.1,
   "frame_length": 1,
@@ -22,6 +22,9 @@
     },
     "constant": {
       "arrival_time": 1000
+    },
+    "uniform": {
+      "max_arrival_time": 4000
     }
   },
 

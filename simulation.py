@@ -114,15 +114,14 @@ class Simulation:
             for i in range(self.no_alarm_nodes):
                 d = self.custom_alarm_arrivals[i].get('distribution')
                 d_settings = self.custom_alarm_arrivals[i].get('settings')
-                self.alarm_arrivals.append(EventGenerator(d, d_settings, self.use_seed))
+                self.alarm_arrivals.append(EventGenerator(d, d_settings))
         else:
             # Set default alarm arrival distribution
             self.alarm_arrival_distribution = config.get('default_alarm_arrival_distribution')
             alarm_arrival_parameters = config.get('alarm_arrival_distributions').get(
                 self.alarm_arrival_distribution)
 
-            self.alarm_arrivals = EventGenerator(self.alarm_arrival_distribution, alarm_arrival_parameters,
-                                                 self.use_seed)
+            self.alarm_arrivals = EventGenerator(self.alarm_arrival_distribution, alarm_arrival_parameters)
 
         # If custom control arrivals specified, initialize these
         if self.custom_control_arrivals is not None:
@@ -131,14 +130,13 @@ class Simulation:
             for i in range(self.no_control_nodes):
                 d = self.custom_control_arrivals[i].get('distribution')
                 d_settings = self.custom_control_arrivals[i].get('settings')
-                self.control_arrivals.append(EventGenerator(d, d_settings, self.use_seed))
+                self.control_arrivals.append(EventGenerator(d, d_settings))
         else:
             # Set default control arrival distribution
             self.control_arrival_distribution = config.get('default_control_arrival_distribution')
             control_arrival_parameters = config.get('control_arrival_distributions').get(
                 self.control_arrival_distribution)
-            self.control_arrivals = EventGenerator(self.control_arrival_distribution, control_arrival_parameters,
-                                                   self.use_seed)
+            self.control_arrivals = EventGenerator(self.control_arrival_distribution, control_arrival_parameters)
 
         # Initialize nodes and their arrival times
         self.__initialize_control_arrival_nodes()

@@ -32,10 +32,10 @@ if __name__ == '__main__':
 
     # Only use multi run
     if config.get("multi_run"):
-        stopping_criteria = 0
+        stopping_criteria = 1
         iteration = 1
 
-        while stats.stats['no_missed_alarms'] == stopping_criteria:
+        while stats.stats['no_missed_alarms'] < stopping_criteria:
             stats.clear_stats()
 
             print('{} alarm nodes'.format(config.get('no_alarm_nodes')))

@@ -58,24 +58,20 @@ if __name__ == '__main__':
 
     # Override the default config and run multiple simulations
     if config.get("multi_run"):
-        stopping_criteria = 1 * 10 ** -9
-        base_no_nodes = config.get('no_control_nodes')
+        stopping_criteria = 1
         i = 1
 
-        stats.stats['no_control_arrivals'] = 1  # avoid dividing by zero first time
-        while float(stats.stats.get('no_missed_controls') / stats.stats.get('no_control_arrivals')) < stopping_criteria:
+        while stats.stats.get('no_missed_alarms') < stopping_criteria:
             stats.clear_stats()
-
-            print('{} square meters'.format(i))
-            print('{} control nodes'.format(base_no_nodes * i))
 
             # Update the run configuration number, should start with zero
             stats.stats['config_no'] = i - 1
 
             # Set new config parameters here by overriding the config file
             # e.g. config['max_attempts'] =R 2*(i+1)
-            config['no_alarm_nodes'] = base_no_nodes * i
-            config['no_control_nodes'] = base_no_nodes * i
+            config['no_alarm_nodes'] = i * 500
+
+            print('{} alarm nodes'.format(config.get('no_alarm_nodes')))
 
             # Run the simulation with new parameters
             simulation = Simulation(config, stats, custom_alarm_arrivals, custom_control_arrivals)
