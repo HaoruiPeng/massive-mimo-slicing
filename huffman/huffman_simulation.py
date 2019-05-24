@@ -46,7 +46,8 @@ class HuffmanSimulation(Simulation):
         # Assign pilots to all alarm and control nodes. Note that the receiving base station
         # does not on before hand how many nodes want to send
 
-        used_alarm_pilots = []
+        # Always use one pilot for alarm traffic
+        used_alarm_pilots = [0]
 
         # If no missed alarm attempts, start with normal index
         base_pilots = {0: 0}
@@ -64,7 +65,7 @@ class HuffmanSimulation(Simulation):
                         # this chance increases since we are generating a random number in the pilot range
                         if missed_alarm_attempts not in base_pilots.keys():
                             self._handle_seed()
-                            base_pilots[missed_alarm_attempts] = np.random.randint(1, self.no_pilots)
+                            base_pilots[missed_alarm_attempts] = max(base_pilots.values()) + 5
 
                         # This should only be able to occur when there are more alarm nodes than pilots
                         if missed_alarm_attempts >= len(node.seq):

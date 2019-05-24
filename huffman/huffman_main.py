@@ -38,8 +38,6 @@ if __name__ == '__main__':
         while stats.stats['no_missed_alarms'] < stopping_criteria:
             stats.clear_stats()
 
-            print('{} alarm nodes'.format(config.get('no_alarm_nodes')))
-
             # Generate random alarm probabilities
             seed = int(time.time())
             np.random.seed(seed)
@@ -66,7 +64,9 @@ if __name__ == '__main__':
 
             # Set new config parameters here by overriding the config file
             # e.g. config['max_attempts'] =R 2*(i+1)
-            config['no_alarm_nodes'] = iteration * 500
+            config['no_alarm_nodes'] = iteration * 150
+
+            print('{} alarm nodes'.format(config.get('no_alarm_nodes')))
 
             # Run the simulation with new parameters
             simulation = Simulation(config, stats, huffman_alarm_arrivals, seed=seed)
