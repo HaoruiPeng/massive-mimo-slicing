@@ -40,6 +40,9 @@ The different design parameters are:
 
 Please see config file for the distributions' parameters, e.g. mean arrival rate.
 
+### Pilot assignment approaches
+The main `simulation` class should be inherited required method implemented for the simulation to work. There currently exists two pilot assignment approaches, one reactive and pro-active (named `binary` and `huffman` respectively). Please see in-code comments for implementation details
+
 ### License
 This repository is maintained under *GNU General Public License v3.0*.
 
