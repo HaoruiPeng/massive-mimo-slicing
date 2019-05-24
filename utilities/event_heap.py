@@ -1,5 +1,5 @@
 import heapq
-from event import Event
+from utilities.event import Event
 
 __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
 
@@ -53,7 +53,7 @@ class EventHeap:
             max_attempts = self.__max_attempts
 
         new_event = Event(event_type, event_time, node_id, max_attempts)
-        heapq.heappush(self.__heap, (event_time, self.__key, new_event))
+        heapq.heappush(self.__heap, (event_time, event_type, self.__key, new_event))
         self.__key += 1
 
     def pop(self):

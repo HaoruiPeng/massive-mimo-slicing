@@ -1,12 +1,12 @@
 {
-  "simulation_name": "substation_automation",
+  "simulation_name": "factory_automation_huffman",
   "simulation_length": 1,
   "max_attempts": 10,
   "no_alarm_nodes": 5,
-  "no_control_nodes": 5,
+  "no_control_nodes": 500,
   "no_pilots": 30,
   "control_nodes_buffer": 5,
-  "default_alarm_arrival_distribution": "exponential",
+  "default_alarm_arrival_distribution": "uniform",
   "default_control_arrival_distribution": "exponential",
   "base_alarm_pilot_share": 0.1,
   "frame_length": 1,
@@ -22,15 +22,18 @@
     },
     "constant": {
       "arrival_time": 1000
+    },
+    "uniform": {
+      "max_arrival_time": 4000
     }
   },
 
   "control_arrival_distributions": {
     "exponential": {
-      "mean_arrival_time": 10
+      "mean_arrival_time": 50
     },
     "constant": {
-      "arrival_time": 10
+      "arrival_time": 50
     }
   }
 }

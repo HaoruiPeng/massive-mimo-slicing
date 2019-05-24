@@ -39,4 +39,5 @@ class Event:
         self.time = event_time
         self.node_id = node_id
         self.attempts_left = max_attempts
+        self.max_attempts = max_attempts
         self.pilot_id = -1

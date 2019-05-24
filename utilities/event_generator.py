@@ -22,7 +22,7 @@ class EventGenerator:
 
     """
 
-    def __init__(self, distribution, settings, use_seed):
+    def __init__(self, distribution, settings):
         """
         Initializes a new event generator. See class documentation for parameters explanation.
 
@@ -32,16 +32,14 @@ class EventGenerator:
             See class documentation
         settings : dict
             See class documentation
-        use_seed : bool
-            See class documentation
         """
 
         self.__distribution = distribution
         self.__settings = settings
-        self.__use_seed = use_seed
 
         self.mapping = {
             'exponential': self.__exponential,
+            'uniform': self.__uniform,
             'constant': self.__constant
         }
 
@@ -61,6 +59,11 @@ class EventGenerator:
         # Returns float from an exponential distribution
 
         return np.random.exponential(self.__settings.get('mean_arrival_time'))
+
+    def __uniform(self):
+        # Return float from a uniform distribution
+
+        return np.random.uniform(0, self.__settings.get('max_arrival_time'))
 
     def __constant(self):
         # Returns a float from a constant distribution
