@@ -35,17 +35,21 @@ class HuffmanSimulation(Simulation):
         # Loop through alarm nodes and check for events
         for n in self.huffman_alarm_arrivals:
             self._handle_seed()
-            if n.prob < np.random.rand() and n.consumed is False:
+            if np.random.rand() <= n.prob and n.consumed is False:
                 self.stats.stats['no_alarm_arrivals'] += 1
                 n.consumed = True
                 self.send_queue.insert(0, Event(self._ALARM_ARRIVAL, event.time, n.node_id, self.max_attempts))
+
+        self.event_heap.push(self._ALARM_ARRIVAL, self.time + self.frame_length, 0)
 
     def _assign_pilots(self):
         # Assign pilots to all alarm and control nodes. Note that the receiving base station
         # does not on before hand how many nodes want to send
 
         used_alarm_pilots = []
-        base_pilot = []
+
+        # If no missed alarm attempts, start with normal index
+        base_pilots = {0: 0}
 
         # Check for any missed alarms
         for event in self.send_queue:
@@ -54,19 +58,25 @@ class HuffmanSimulation(Simulation):
                     if event.node_id == node.node_id:
                         missed_alarm_attempts = event.max_attempts - event.attempts_left
 
+                        # Tries to avoid that pilot 0 is occupied if one or more collisions
+                        # it may happen when the number of alarm nodes are more than the number of pilots
+                        # that the sequence will start over due to running out of pilots
+                        # this chance increases since we are generating a random number in the pilot range
+                        if missed_alarm_attempts not in base_pilots.keys():
+                            self._handle_seed()
+                            base_pilots[missed_alarm_attempts] = np.random.randint(1, self.no_pilots)
+
                         # This should only be able to occur when there are more alarm nodes than pilots
-                        if missed_alarm_attempts > len(node.seq):
+                        if missed_alarm_attempts >= len(node.seq):
                             print('Complete Huffman sequence without success..., potential fail')
 
                         # Ensure simulation does not crash if the sequence runs out, this can happen if there are
                         # more alarm nodes than available pilots
                         seq_i = missed_alarm_attempts % len(node.seq)
-                        pilot = node.seq[seq_i]
 
-                        # Adjust the sequence number so that IF a new event arrives in a frame where there have already
-                        # been collisions there is no new collisions, i.e. allocate one more pilot than Huffman tells us
-                        # to
-                        #pilot += base_pilot[seq_i]
+                        # If selecting a pilot that's not available, loop around
+                        # Only way to ensure success having less alarm nodes than pilots
+                        pilot = (base_pilots[missed_alarm_attempts] + node.seq[seq_i]) % self.no_pilots
 
                         used_alarm_pilots.append(pilot)
                         event.pilot_id = pilot
