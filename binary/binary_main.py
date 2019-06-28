@@ -7,6 +7,10 @@ number of alarm nodes with alarm traffic. The library is built to be highly conf
 
 import json
 import time
+import sys
+import os
+
+sys.path.append(os.path.abspath('../'))
 
 from utilities.stats import Stats
 from binary.binary_simulation import BinarySimulation as Simulation
@@ -15,14 +19,14 @@ __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
 
 if __name__ == '__main__':
     # Load simulation parameters
-    with open('default_config.json') as config_file:
+    with open('../default_config.json') as config_file:
         config = json.load(config_file)
 
     time_string = time.strftime('%Y%m%d_%H%M%S')
     simulation_name = config.get('simulation_name')
 
-    log_file_path = 'logs/' + time_string + '_' + simulation_name + '_queue_log.csv'
-    stats_file_path = 'stats/' + time_string + '_' + simulation_name + '_stats.csv'
+    log_file_path = '../logs/' + time_string + '_' + simulation_name + '_queue_log.csv'
+    stats_file_path = '../stats/' + time_string + '_' + simulation_name + '_stats.csv'
 
     # Initialize stats and logger
     stats = Stats(stats_file_path, log_file_path)
