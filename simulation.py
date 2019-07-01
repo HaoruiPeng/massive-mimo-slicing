@@ -5,6 +5,8 @@ import numpy as np
 
 from utilities.event_heap import EventHeap
 from utilities.event_generator import EventGenerator
+from slices.slice import Slice
+from slices.node import Node
 
 __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
 
@@ -82,6 +84,9 @@ class Simulation:
         stats : Stats
             Statistics object for keeping track for measurements
         """
+
+        #TODO: Initialize slice objects and generate events in the nodes that subscribe to each slice
+        #TODO: Complete event genertation in simulation first then in the nodes
 
         self.stats = stats
         self.time = 0.0
