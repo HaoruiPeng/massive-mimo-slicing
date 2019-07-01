@@ -4,6 +4,9 @@ Define customers subscribe to the underlying slices
 
 __author__ = "Haorui Peng"
 
+import utilities.event_generator as EventGenerator
+import json
+
 class Node:
 
     """
@@ -35,25 +38,27 @@ class Node:
     _URLLC = 1
     _mMTC = 2
 
-    def __init__(self, slice_id):
+    #the nodes generator the event periodically
+    def __init__(self, slice_id, config):
+        with open('node_config.json') as config_file:
+            config = json.load(config_file)
         self.slice = slice_id
-        self.packet_size = None
-        self.arrival = None
-        self.deadline = None
-        self.pilot_samples = 1
-        self.setup()
 
-    def setup(self):
         if self.slice == Node._URLLC:
-            self.packet_size = 4
             self.data_rate = 10
-            self.arrival = None  #TODO: Define arrival distribution here
+            self.arrival = config.get('urllc_arrival_distribution')
             self.deadline = Node.LONG_DEADLINE
             self.pilot_samples = Node.LOW_RELIABILITY
+            self.arrival_parameter = config.get('urllc_arrival_distributions_par').get(self.arrival)
+            self.event_generator = EventGenerator(self.arrival, self.arrival_parameter)
+
         elif self.slice == Node._mMTC:
-            self.packet_size = 4
             self.data_rate = 10
-            self.arrival = None  # TODO: Define arrival distribution here
+            self.arrival = config.get("mmtc_arrival_distribution")  # TODO: Define arrival distribution here
             self.deadline = 100
             self.pilot_samples = Node.LOW_RELIABILITY
+            self.arrival_parameter = config.get('mmtc_arrival_distributions_par').get(self.arrival)
+            self.event_generator = EventGenerator(self.arrival, self.arrival_parameter)
+
+
 

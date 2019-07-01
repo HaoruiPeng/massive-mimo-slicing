@@ -1,0 +1,23 @@
+{
+  "urllc_arrival_distribution": "constant",
+  "mmtc_arrival_distribution": "exponential",
+  "urllc_arrival_distributions_par": {
+    "exponential": {
+      "mean_arrival_time": 1000
+    },
+    "constant": {
+      "arrival_time": 1000
+    },
+    "uniform": {
+      "max_arrival_time": 4000
+    }
+  },
+  "mmtc_arrival_distribution_par": {
+    "exponential": {
+      "mean_arrival_time": 50
+    },
+    "constant": {
+      "arrival_time": 50
+    }
+  }
+}
