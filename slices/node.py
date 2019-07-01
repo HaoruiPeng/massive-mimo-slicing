@@ -4,8 +4,8 @@ Define customers subscribe to the underlying slices
 
 __author__ = "Haorui Peng"
 
-import utilities.event_generator as EventGenerator
-import utilities.event as Event
+from utilities.event_generator import EventGenerator
+from utilities.event import Event
 import json
 
 class Node:
