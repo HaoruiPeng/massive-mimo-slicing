@@ -4,10 +4,10 @@ Define customers subscribe to the underlying slices
 
 __author__ = "Haorui Peng"
 
-class Customer:
+class Node:
 
     """
-    Define individual customers subscribe to slices
+    Define individual Node subscribe to slices
     Each one have specific traffic profile requirements
 
     Common traffic profile
@@ -44,16 +44,16 @@ class Customer:
         self.setup()
 
     def setup(self):
-        if self.slice == Customer._URLLC:
+        if self.slice == Node._URLLC:
             self.packet_size = 4
             self.data_rate = 10
             self.arrival = None  #TODO: Define arrival distribution here
-            self.deadline = Customer.LONG_DEADLINE
-            self.pilot_samples = Customer.LOW_RELIABILITY
-        elif self.slice == Customer._mMTC:
+            self.deadline = Node.LONG_DEADLINE
+            self.pilot_samples = Node.LOW_RELIABILITY
+        elif self.slice == Node._mMTC:
             self.packet_size = 4
             self.data_rate = 10
             self.arrival = None  # TODO: Define arrival distribution here
             self.deadline = 100
-            self.pilot_samples = Customer.LOW_RELIABILITY
+            self.pilot_samples = Node.LOW_RELIABILITY
 

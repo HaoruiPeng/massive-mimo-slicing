@@ -5,7 +5,7 @@ Define slice types for customer groups: URLLC and mMTC
 __author__ = "Haorui Peng"
 
 import numpy as np
-import slices.customer as customer
+import slices.node as node
 
 
 class Slice:
@@ -24,4 +24,4 @@ class Slice:
 
     def __init__(self, slice_type):
         self.type = slice_type
-        self.pool = np.array(customer(self.type))
+        self.pool = np.array(node(self.type))
