@@ -66,8 +66,8 @@ class Simulation:
         Runs the simulation the full simulation length with specified parameters
     """
 
-    _ALARM_ARRIVAL = 1
-    _CONTROL_ARRIVAL = 2
+    _URLLC_ARRIVAL = 1
+    _mMTC_ARRIVAL = 2
     _DEPARTURE = 3
     _MEASURE = 4
 
