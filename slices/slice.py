@@ -4,8 +4,8 @@ Define slice types for customer groups: URLLC and mMTC
 
 __author__ = "Haorui Peng"
 
-import numpy as np
 import slices.node as node
+import utilities.event as event
 import json
 
 
@@ -33,4 +33,8 @@ class Slice:
         elif self.type == Slice.mMTC:
             self.no_nodes = config.get("no_mmtc_nodes")
         self.pool = [node(self.type) for i in range(self.no_nodes)]
+
+    def generate(self):
+        for n in self.pool:
+            event = n.generate(self.pool.index(n))
 
