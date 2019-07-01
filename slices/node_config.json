@@ -7,8 +7,8 @@
 
   "mmtc" :{
     "distribution": "exponential",
-    "realibility": "low",
-    "dealine": "mmtc"
+    "reliability": "low",
+    "deadline": "mmtc"
   },
 
   "arrival_distributions_par": {
