@@ -15,25 +15,11 @@ class Node:
 
     Common traffic profile
     ----------------------
-    packet size
     data rate
     arrival distribution
     pilot_samples
-
-
-
-    URLLC specific
-    --------------
-    LOW_RELIABILITY: 1 pilot samples
-    HIGH_RELIABILITY: 3 pilot samples
-    SHORT_DEADLINE: 3ms
-    LONG_DEALINE: 10ms
+    deadline
     """
-
-    LOW_RELIABILITY = 1
-    HIGH_RELIABILITY = 2
-    SHORT_DEADLINE = 1
-    LONG_DEADLINE = 10
 
     _URLLC = 1
     _mMTC = 2
@@ -44,21 +30,26 @@ class Node:
             config = json.load(config_file)
         self.slice = slice_id
 
-        if self.slice == Node._URLLC:
-            self.data_rate = 10
-            self.arrival = config.get('urllc_arrival_distribution')
-            self.deadline = Node.LONG_DEADLINE
-            self.pilot_samples = Node.LOW_RELIABILITY
-            self.arrival_parameter = config.get('urllc_arrival_distributions_par').get(self.arrival)
-            self.event_generator = EventGenerator(self.arrival, self.arrival_parameter)
+        if slice_id == Node._URLLC:
+            self.slice_name = "urllc"
+        elif slice_id == Node._mMTC:
+            self.slice_name = "mmtc"
 
-        elif self.slice == Node._mMTC:
-            self.data_rate = 10
-            self.arrival = config.get("mmtc_arrival_distribution")  # TODO: Define arrival distribution here
-            self.deadline = 100
-            self.pilot_samples = Node.LOW_RELIABILITY
-            self.arrival_parameter = config.get('mmtc_arrival_distributions_par').get(self.arrival)
-            self.event_generator = EventGenerator(self.arrival, self.arrival_parameter)
+        self.data_rate = 10
+        self.arrival = config.get(self.slice_name).get(
+            'distribution')
+        deadline_profile = config.get(self.slice_name).get(
+            'deadline')
+        reliability_profile = config.get(self.slice_name).get(
+            'reliability')
+        self.deadline = config.get('deadline_par').get(
+            deadline_profile)
+        self.pilot_samples = config.get('reliability_par').get(
+            reliability_profile)
+        self.arrival_parameter = config.get('arrival_distributions_par').get(
+            self.slice_name).get(
+            self.arrival)
+        self.event_generator = EventGenerator(self.arrival, self.arrival_parameter)
 
 
 
