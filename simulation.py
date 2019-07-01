@@ -92,22 +92,26 @@ class Simulation:
             self.base_seed = seed
 
         self.seed_counter = self.base_seed
+        #arrivals distribirion and deadlines
         self.custom_alarm_arrivals = custom_alarm_arrivals
         self.custom_control_arrivals = custom_control_arrivals
         self.use_seed = config.get('use_seed')
         self.max_attempts = config.get('max_attempts')
         self.base_alarm_pilot_share = config.get('base_alarm_pilot_share')
+        #number of customers
         self.no_alarm_nodes = config.get('no_alarm_nodes')
         self.no_control_nodes = config.get('no_control_nodes')
         self.no_pilots = config.get('no_pilots')
         self.simulation_length = config.get('simulation_length') * 1000
         self.frame_length = config.get('frame_length')
         self.measurement_period = config.get('measurement_period')
+        #number of control nodes
         self.control_node_buffer = config.get('control_nodes_buffer')
         self.event_heap = EventHeap(self.max_attempts)
         self.send_queue = []
 
         # If custom alarm arrivals specified, initialize these
+        #TODO: Specofy the event generator for every customer
         if self.custom_alarm_arrivals is not None:
             self.alarm_arrivals = []
 
@@ -120,10 +124,12 @@ class Simulation:
             self.alarm_arrival_distribution = config.get('default_alarm_arrival_distribution')
             alarm_arrival_parameters = config.get('alarm_arrival_distributions').get(
                 self.alarm_arrival_distribution)
-
+            #generate the events from the specified distribution
+            #Check Event generator
             self.alarm_arrivals = EventGenerator(self.alarm_arrival_distribution, alarm_arrival_parameters)
 
         # If custom control arrivals specified, initialize these
+        #arrivals -> list of event generators for each customer
         if self.custom_control_arrivals is not None:
             self.control_arrivals = []
 
@@ -161,6 +167,7 @@ class Simulation:
             self._handle_seed()
 
             # Extract custom arrival distribution
+            # Next arrival, current + next arrival is the next arrival time
             if self.custom_control_arrivals is not None:
                 max_attempts = self.custom_control_arrivals[i].get('max_attempts')
                 next_arrival = self.control_arrivals[i].get_next()
@@ -168,7 +175,7 @@ class Simulation:
                 # Spread if distribution is constant
                 if self.custom_control_arrivals[i].get('distribution') == 'constant':
                     self._handle_seed()
-                    next_arrival *= np.random.rand()
+                    next_arrival *= np.random.rand()  #TODO:noise?
             else:
                 next_arrival = self.control_arrivals.get_next()
 
