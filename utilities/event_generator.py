@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
 
@@ -43,6 +44,8 @@ class EventGenerator:
             'constant': self.__constant
         }
 
+        self.seed_counter = None
+
     def get_next(self):
         """
         Generates a new event time given specified distribution
@@ -66,6 +69,10 @@ class EventGenerator:
         return np.random.uniform(0, self.__settings.get('max_arrival_time'))
 
     def __constant(self):
-        # Returns a float from a constant distribution
-
-        return self.__settings.get('arrival_time')
+        # Returns a float from a constant distribution with noise
+        if self.__settings.get('seed'):
+            self.seed_counter = int(time.time())
+            np.random.seed(self.seed_counter)
+            return self.__settings.get('arrival_time') * np.random.rand()
+        else:
+            return self.__settings.get('arrival_time')

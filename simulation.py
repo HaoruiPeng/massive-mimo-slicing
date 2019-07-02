@@ -68,12 +68,15 @@ class Simulation:
         Runs the simulation the full simulation length with specified parameters
     """
 
+    _URLLC = 1
+    _mMTC = 2
+
     _URLLC_ARRIVAL = 1
     _mMTC_ARRIVAL = 2
     _DEPARTURE = 3
     _MEASURE = 4
 
-    def __init__(self, config, stats, custom_alarm_arrivals=None, custom_control_arrivals=None, seed=None):
+    def __init__(self, config, stats, seed=None):
         """
         Initialize simulation object
 
@@ -91,21 +94,14 @@ class Simulation:
         self.stats = stats
         self.time = 0.0
 
-        if seed is None:
-            self.base_seed = int(time.time())
-        else:
-            self.base_seed = seed
+        # self.seed_counter = self.base_seed
 
-        self.seed_counter = self.base_seed
-        #arrivals distribirion and deadlines
-        self.custom_alarm_arrivals = custom_alarm_arrivals
-        self.custom_control_arrivals = custom_control_arrivals
-        self.use_seed = config.get('use_seed')
+
+        # self.use_seed = config.get('use_seed')
         self.max_attempts = config.get('max_attempts')
         self.base_alarm_pilot_share = config.get('base_alarm_pilot_share')
         #number of customers
-        self.no_alarm_nodes = config.get('no_alarm_nodes')
-        self.no_control_nodes = config.get('no_control_nodes')
+
         self.no_pilots = config.get('no_pilots')
         self.simulation_length = config.get('simulation_length') * 1000
         self.frame_length = config.get('frame_length')
@@ -115,42 +111,48 @@ class Simulation:
         self.event_heap = EventHeap(self.max_attempts)
         self.send_queue = []
 
+        #The simulation slices parameters can be passed from the main fuction
+        self.Slice = [Slice(Simulation._URLLC), Slice(Simulation._mMTC)]
+        for s in self.Slice:
+            self.__initialize_nodes(s)
+
         # If custom alarm arrivals specified, initialize these
         #TODO: Specofy the event generator for every customer
-        if self.custom_alarm_arrivals is not None:
-            self.alarm_arrivals = []
+        # if self.custom_alarm_arrivals is not None:
+        #     self.alarm_arrivals = []
+        #
+        #     for i in range(self.no_alarm_nodes):
+        #         d = self.custom_alarm_arrivals[i].get('distribution')
+        #         d_settings = self.custom_alarm_arrivals[i].get('settings')
+        #         self.alarm_arrivals.append(EventGenerator(d, d_settings))
+        # else:
+        #     # Set default alarm arrival distribution
+        #     self.alarm_arrival_distribution = config.get('default_alarm_arrival_distribution')
+        #     alarm_arrival_parameters = config.get('alarm_arrival_distributions').get(
+        #         self.alarm_arrival_distribution)
+        #     #generate the events from the specified distribution
+        #     #Check Event generator
+        #     self.alarm_arrivals = EventGenerator(self.alarm_arrival_distribution, alarm_arrival_parameters)
+        #
+        # # If custom control arrivals specified, initialize these
+        # #arrivals -> list of event generators for each customer
+        # if self.custom_control_arrivals is not None:
+        #     self.control_arrivals = []
+        #
+        #     for i in range(self.no_control_nodes):
+        #         d = self.custom_control_arrivals[i].get('distribution')
+        #         d_settings = self.custom_control_arrivals[i].get('settings')
+        #         self.control_arrivals.append(EventGenerator(d, d_settings))
+        # else:
+        #     # Set default control arrival distribution
+        #     self.control_arrival_distribution = config.get('default_control_arrival_distribution')
+        #     control_arrival_parameters = config.get('control_arrival_distributions').get(
+        #         self.control_arrival_distribution)
+        #     self.control_arrivals = EventGenerator(self.control_arrival_distribution, control_arrival_parameters)
 
-            for i in range(self.no_alarm_nodes):
-                d = self.custom_alarm_arrivals[i].get('distribution')
-                d_settings = self.custom_alarm_arrivals[i].get('settings')
-                self.alarm_arrivals.append(EventGenerator(d, d_settings))
-        else:
-            # Set default alarm arrival distribution
-            self.alarm_arrival_distribution = config.get('default_alarm_arrival_distribution')
-            alarm_arrival_parameters = config.get('alarm_arrival_distributions').get(
-                self.alarm_arrival_distribution)
-            #generate the events from the specified distribution
-            #Check Event generator
-            self.alarm_arrivals = EventGenerator(self.alarm_arrival_distribution, alarm_arrival_parameters)
-
-        # If custom control arrivals specified, initialize these
-        #arrivals -> list of event generators for each customer
-        if self.custom_control_arrivals is not None:
-            self.control_arrivals = []
-
-            for i in range(self.no_control_nodes):
-                d = self.custom_control_arrivals[i].get('distribution')
-                d_settings = self.custom_control_arrivals[i].get('settings')
-                self.control_arrivals.append(EventGenerator(d, d_settings))
-        else:
-            # Set default control arrival distribution
-            self.control_arrival_distribution = config.get('default_control_arrival_distribution')
-            control_arrival_parameters = config.get('control_arrival_distributions').get(
-                self.control_arrival_distribution)
-            self.control_arrivals = EventGenerator(self.control_arrival_distribution, control_arrival_parameters)
 
         # Initialize nodes and their arrival times
-        self.__initialize_control_arrival_nodes()
+        # self.__initialize_control_arrival_nodes()
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, 0)
         self.event_heap.push(self._MEASURE, self.time + self.measurement_period, 0)
 
@@ -164,30 +166,26 @@ class Simulation:
     def _handle_alarm_arrival(self, event):
         pass
 
-    def __initialize_control_arrival_nodes(self):
+    def __initialize_nodes(self, _slice):
         # Initialize event times for all control nodes
-
-        for i in range(self.no_control_nodes):
+        nodes = _slice.pool
+        for _node in nodes:# TODO:<----
             max_attempts = None
-            self._handle_seed()
+            # self._handle_seed()
 
             # Extract custom arrival distribution
             # Next arrival, current + next arrival is the next arrival time
-            if self.custom_control_arrivals is not None:
-                max_attempts = self.custom_control_arrivals[i].get('max_attempts')
-                next_arrival = self.control_arrivals[i].get_next()
-
-                # Spread if distribution is constant
-                if self.custom_control_arrivals[i].get('distribution') == 'constant':
-                    self._handle_seed()
-                    next_arrival *= np.random.rand()  #TODO:noise?
-            else:
-                next_arrival = self.control_arrivals.get_next()
-
-                # Spread if distribution is constant
-                if self.control_arrival_distribution == 'constant':
-                    self._handle_seed()
-                    next_arrival *= np.random.rand()
+            # if self.custom_control_arrivals is not None:
+            #     max_attempts = self.custom_control_arrivals[i].get('max_attempts')
+            #     next_arrival = self.control_arrivals[i].get_next()
+            #
+            #     # Spread if distribution is constant
+            #     if self.custom_control_arrivals[i].get('distribution') == 'constant':
+            #         self._handle_seed()
+            #         next_arrival *= np.random.rand()  #TODO:noise?
+            # else:
+            next_arrival = _node.event_generator.get_next()
+            if _node.
 
             self.event_heap.push(self._CONTROL_ARRIVAL, self.time + next_arrival, i, max_attempts)
 
@@ -209,7 +207,7 @@ class Simulation:
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add new control arrival event to the event list
-        self._handle_seed()
+        # self._handle_seed()
 
         max_attempts = None
 
@@ -366,15 +364,15 @@ class Simulation:
         # Add a new measure event to the event list
         self.event_heap.push(self._MEASURE, self.time + self.measurement_period, 0)
 
-    def _handle_seed(self):
-        # If use of seed is specified this will ensure the same seed pattern is used every simulations, but without
-        # using the same random number every time a new event is generated in the heap
-        # Since event signaling is used this is the only way to recreate results (alternative is to pre-calculate all
-        # events which)
-
-        if self.use_seed:
-            np.random.seed(self.seed_counter)
-            self.seed_counter += 1
+    # def _handle_seed(self):
+    #     # If use of seed is specified this will ensure the same seed pattern is used every simulations, but without
+    #     # using the same random number every time a new event is generated in the heap
+    #     # Since event signaling is used this is the only way to recreate results (alternative is to pre-calculate all
+    #     # events which)
+    #
+    #     if self.use_seed:
+    #         np.random.seed(self.seed_counter)
+    #         self.seed_counter += 1
 
     def run(self):
         """ Runs the simulation """
