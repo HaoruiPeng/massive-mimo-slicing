@@ -151,15 +151,15 @@ class Simulation:
 
 
         # Initialize nodes and their arrival times
-        self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, 0)
-        self.event_heap.push(self._MEASURE, self.time + self.measurement_period, 0)
+        self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, None, 0)
+        self.event_heap.push(self._MEASURE, self.time + self.measurement_period, None, 0)
 
     def __initialize_nodes(self, _slice):
         # Initialize event times for all control nodes
         nodes = _slice.pool
         for _node in nodes:
             next_arrival = _node.event_generator.get_next()
-            self.event_heap.push(_slice.type, self.time + next_arrival, nodes.index(_node), self.max_attempts)
+            self.event_heap.push(_slice.type, self.time + next_arrival, self.time + _node.deadline, nodes.index(_node))
 
     def __handle_event(self, event):
         # Event switcher to determine correct action for an event
