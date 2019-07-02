@@ -98,7 +98,6 @@ class Simulation:
 
 
         # self.use_seed = config.get('use_seed')
-        self.max_attempts = config.get('max_attempts')
         self.base_alarm_pilot_share = config.get('base_alarm_pilot_share')
         #number of customers
 
@@ -152,32 +151,18 @@ class Simulation:
 
 
         # Initialize nodes and their arrival times
-        # self.__initialize_control_arrival_nodes()
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, 0)
         self.event_heap.push(self._MEASURE, self.time + self.measurement_period, 0)
-
-    # The following methods should be overwritten in a child class
-    # def _initialize_alarm_arrival_nodes(self):
-    #     pass
-
-    def _assign_pilots(self):
-        pass
-
-    def _handle_urllc_arrival(self, event):
-        pass
 
     def __initialize_nodes(self, _slice):
         # Initialize event times for all control nodes
         nodes = _slice.pool
-        for _node in nodes:# TODO:<----
-            max_attempts = None
+        for _node in nodes:
             next_arrival = _node.event_generator.get_next()
-
             self.event_heap.push(_slice.type, self.time + next_arrival, nodes.index(_node), self.max_attempts)
 
     def __handle_event(self, event):
         # Event switcher to determine correct action for an event
-
         event_actions = {
             self._URLLC_ARRIVAL: self._handle_urllc_arrival,
             self._mMTC_ARRIVAL: self.__handle_mmtc_arrival,
@@ -186,6 +171,18 @@ class Simulation:
 
         event_actions[event.type](event)
 
+    def _handle_urllc_arrival(self, event):
+        # Handle an alarm arrival event
+        self.stats.stats['no_alarm_arrivals'] += 1
+        # Store event in send queue until departure (as LIFO)
+        self.send_queue.insert(0, event)
+        # Add a new alarm arrival event to the event list
+        node = self.Slice[Simulation._URLLC-1].pool[event.node_id]
+        next_arrival = node.event_generator.get_next()
+
+        self.event_heap.push(self._URLLC_ARRIVAL, self.time + next_arrival, self.time + node.deadline, event.node_id)
+
+
     def __handle_mmtc_arrival(self, event):
         # Handle a control arrival event
 
@@ -193,17 +190,11 @@ class Simulation:
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add new control arrival event to the event list
-        # self._handle_seed()
 
-        max_attempts = None
+        node = self.Slice[Simulation._mMTC-1].pool[event.node_id]
+        next_arrival = node.event_generator.get_next()
 
-        if self.custom_control_arrivals is not None:
-            max_attempts = self.custom_control_arrivals[event.node_id].get('max_attempts')
-            next_arrival = self.control_arrivals[event.node_id].get_next()
-        else:
-            next_arrival = self.control_arrivals.get_next()
-
-        self.event_heap.push(self._CONTROL_ARRIVAL, self.time + next_arrival, event.node_id, max_attempts)
+        self.event_heap.push(self._mMTC_ARRIVAL, self.time + next_arrival, self.time + node.deadline, event.node_id)
 
     def __handle_departure(self, event):
         # Handle a departure event
@@ -213,46 +204,26 @@ class Simulation:
         self._assign_pilots()
         self.__check_collisions()
         # Add new departure event to the event list
-        self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, 0)
+        self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, None, 0)
 
-    def __check_collisions(self):
-        # Check for pilot contamination, i.e. more than one node assigned the same pilot
-        send_queue_length = len(self.send_queue)
-        pilot_collisions = []
-        remove_indices = []
+    def __handle_measurement(self, event):
+        # Take measurement of the send queue
 
-        # Check for contaminated pilots
-        for i in range(send_queue_length - 1):
-            event = self.send_queue[i]
+        del event
+        self.stats.stats['no_measurements'] += 1
 
-            for j in range(i + 1, send_queue_length):
-                cmp_event = self.send_queue[j]
+        measurements = self.__get_send_queue_info()
+        log_string = ''
 
-                if event.pilot_id == cmp_event.pilot_id and not event.node_id == cmp_event.node_id:
-                    if event.pilot_id not in pilot_collisions:
-                        pilot_collisions.append(event.pilot_id)
+        for m in measurements:
+            log_string += str(m) + ','
 
-        self.stats.stats['no_collisions'] += len(pilot_collisions)
+        log_string = log_string[:-1]
+        log_string += '\n'
+        self.stats.write_log(log_string)
 
-        handled_nodes = []
-
-        # Handle events with contaminated pilots, start with the first events in time (e.g. last in list)
-        for i in reversed(range(send_queue_length)):
-            event = self.send_queue[i]
-
-            if event.pilot_id in pilot_collisions:
-                event.attempts_left -= 1
-            elif i not in handled_nodes:
-                handled_nodes.append(i)
-                remove_indices.append(i)
-
-            # Reset pilot id to handle case where no pilots where assigned
-            event.pilot_id = -1
-
-        # Remove the events in reversed order to not shift subsequent indices
-        for i in sorted(remove_indices, reverse=True):
-            self.stats.stats['no_departures'] += 1
-            del self.send_queue[i]
+        # Add a new measure event to the event list
+        self.event_heap.push(self._MEASURE, self.time + self.measurement_period, None, 0)
 
     def __handle_expired_events(self):
         # Handle expired alarm and control events
@@ -297,6 +268,109 @@ class Simulation:
         for i in sorted(remove_indices, reverse=True):
             del self.send_queue[i]
 
+    def __check_collisions(self):
+        # Check for pilot contamination, i.e. more than one node assigned the same pilot
+        send_queue_length = len(self.send_queue)
+        pilot_collisions = []
+        remove_indices = []
+
+        # Check for contaminated pilots
+        for i in range(send_queue_length - 1):
+            event = self.send_queue[i]
+
+            for j in range(i + 1, send_queue_length):
+                cmp_event = self.send_queue[j]
+
+                if event.pilot_id == cmp_event.pilot_id and not event.node_id == cmp_event.node_id:
+                    if event.pilot_id not in pilot_collisions:
+                        pilot_collisions.append(event.pilot_id)
+
+        self.stats.stats['no_collisions'] += len(pilot_collisions)
+
+        handled_nodes = []
+
+        # Handle events with contaminated pilots, start with the first events in time (e.g. last in list)
+        for i in reversed(range(send_queue_length)):
+            event = self.send_queue[i]
+
+            if event.pilot_id in pilot_collisions:
+                event.attempts_left -= 1
+            elif i not in handled_nodes:
+                handled_nodes.append(i)
+                remove_indices.append(i)
+
+            # Reset pilot id to handle case where no pilots where assigned
+            event.pilot_id = -1
+
+        # Remove the events in reversed order to not shift subsequent indices
+        for i in sorted(remove_indices, reverse=True):
+            self.stats.stats['no_departures'] += 1
+            del self.send_queue[i]
+
+    def _assign_pilots(self):
+        # Assign pilots to all alarm and control nodes. Note that the receiving base station
+        # does not on before hand how many nodes want to send
+
+        # Check for any missed alarms
+        missed_alarm_attempts = 0
+        for event in self.send_queue:
+            if event.type == self._ALARM_ARRIVAL:
+                missed_alarm_attempts = max(event.max_attempts - event.attempts_left, missed_alarm_attempts)
+
+        # Limit the number of missed attempts, will cause overflow otherwise
+        missed_alarm_attempts = min(10, missed_alarm_attempts)
+
+        # Exponential back-off is used to assign dedicated pilots to alarm packets, at most 100%
+        alarm_pilot_share = min(self.base_alarm_pilot_share * np.power(2, max(missed_alarm_attempts - 1, 0)), 1)
+
+        # At least one alarm pilot if dedicated resources is used
+        alarm_pilots = max(int(alarm_pilot_share * self.no_pilots), 1)
+        control_pilots = self.no_pilots - alarm_pilots
+
+        # Only used dedicated alarm pilots if a collision has occurred
+        # Dedicated pilots is possible since all nodes in a collision know about the collision,
+        # all other nodes can be informed by the base station since they have successfully received a pilot
+        if missed_alarm_attempts == 0:
+            alarm_pilots = self.no_pilots
+            control_pilots = self.no_pilots
+            base_control_pilots = 0
+        else:
+            # If missed alarm, use pilots AFTER alarm pilots for the control nodes
+            base_control_pilots = alarm_pilots
+
+        # Randomly assign pilots
+        alarm_pilot_assignments = self.__generate_pilot_assignments(alarm_pilots, self.no_alarm_nodes)
+
+        # Assign alarm pilots to the events/nodes in the send queue
+        for i in range(self.no_alarm_nodes):
+            for event in self.send_queue:
+                if i == event.node_id and event.type == self._ALARM_ARRIVAL:
+                    event.pilot_id = alarm_pilot_assignments[i]
+
+        # Assign control pilots
+        if control_pilots > 0:
+            control_pilot_assignments = self.__generate_pilot_assignments(control_pilots, self.no_control_nodes,
+                                                                          base=base_control_pilots)
+
+            # Assign pilots to the events/nodes in the send queue
+            for i in range(self.no_control_nodes):
+                for event in self.send_queue:
+                    if i == event.node_id and event.type == self._CONTROL_ARRIVAL:
+                        event.pilot_id = control_pilot_assignments[i]
+
+    @staticmethod
+    def __generate_pilot_assignments(pilots, no_nodes, base=0):
+        # Randomly assign pilots to the nodes, note that nodes cannot communicate with each other without pilots,
+        # i.e. if node 1 uses pilot 1, node 2 DOES NOT KNOW THIS and is equally likely (in base case) to select pilot 1
+        # as well
+
+        pilot_assignments = []
+
+        while len(pilot_assignments) < no_nodes:
+            pilot_assignments.append(base + np.random.randint(pilots))
+
+        return pilot_assignments
+
     def __get_send_queue_info(self):
         # Extract statistics from the send queue
 
@@ -330,25 +404,6 @@ class Simulation:
             avg_control_wait = round(float(total_control_wait / no_control_events), 2)
 
         return no_alarm_events, no_control_events, avg_alarm_wait, avg_control_wait, max_alarm_wait, max_control_wait
-
-    def __handle_measurement(self, event):
-        # Take measurement of the send queue
-
-        del event
-        self.stats.stats['no_measurements'] += 1
-
-        measurements = self.__get_send_queue_info()
-        log_string = ''
-
-        for m in measurements:
-            log_string += str(m) + ','
-
-        log_string = log_string[:-1]
-        log_string += '\n'
-        self.stats.write_log(log_string)
-
-        # Add a new measure event to the event list
-        self.event_heap.push(self._MEASURE, self.time + self.measurement_period, 0)
 
     # def _handle_seed(self):
     #     # If use of seed is specified this will ensure the same seed pattern is used every simulations, but without
