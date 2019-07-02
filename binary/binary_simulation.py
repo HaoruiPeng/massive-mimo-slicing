@@ -20,31 +20,31 @@ class BinarySimulation(Simulation):
         super(BinarySimulation, self).__init__(config, stats, custom_alarm_arrivals, custom_control_arrivals, seed)
         self._initialize_alarm_arrival_nodes()
 
-    def _initialize_alarm_arrival_nodes(self):
-        # Initialize event times for all alarm and control nodes
-
-        for i in range(self.no_alarm_nodes):
-            max_attempts = None
-            self._handle_seed()
-
-            # Extract custom arrival distribution
-            if self.custom_alarm_arrivals is not None:
-                max_attempts = self.custom_alarm_arrivals[i].get('max_attempts')
-                next_arrival = self.alarm_arrivals[i].get_next()
-
-                # Spread if distribution is constant
-                if self.custom_alarm_arrivals[i].get('distribution') == 'constant':
-                    self._handle_seed()
-                    next_arrival *= np.random.rand()
-            else:
-                next_arrival = self.alarm_arrivals.get_next()
-
-                # Spread if distribution is constant
-                if self.alarm_arrival_distribution == 'constant':
-                    self._handle_seed()
-                    next_arrival *= np.random.rand()
-
-            self.event_heap.push(self._ALARM_ARRIVAL, next_arrival, i, max_attempts)
+    # def _initialize_alarm_arrival_nodes(self):
+    #     # Initialize event times for all alarm and control nodes
+    #
+    #     for i in range(self.no_alarm_nodes):
+    #         max_attempts = None
+    #         self._handle_seed()
+    #
+    #         # Extract custom arrival distribution
+    #         if self.custom_alarm_arrivals is not None:
+    #             max_attempts = self.custom_alarm_arrivals[i].get('max_attempts')
+    #             next_arrival = self.alarm_arrivals[i].get_next()
+    #
+    #             # Spread if distribution is constant
+    #             if self.custom_alarm_arrivals[i].get('distribution') == 'constant':
+    #                 self._handle_seed()
+    #                 next_arrival *= np.random.rand()
+    #         else:
+    #             next_arrival = self.alarm_arrivals.get_next()
+    #
+    #             # Spread if distribution is constant
+    #             if self.alarm_arrival_distribution == 'constant':
+    #                 self._handle_seed()
+    #                 next_arrival *= np.random.rand()
+    #
+    #         self.event_heap.push(self._ALARM_ARRIVAL, next_arrival, i, max_attempts)
 
     def _handle_alarm_arrival(self, event):
         # Handle an alarm arrival event

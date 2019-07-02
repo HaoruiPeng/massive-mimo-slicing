@@ -157,13 +157,13 @@ class Simulation:
         self.event_heap.push(self._MEASURE, self.time + self.measurement_period, 0)
 
     # The following methods should be overwritten in a child class
-    def _initialize_alarm_arrival_nodes(self):
-        pass
+    # def _initialize_alarm_arrival_nodes(self):
+    #     pass
 
     def _assign_pilots(self):
         pass
 
-    def _handle_alarm_arrival(self, event):
+    def _handle_urllc_arrival(self, event):
         pass
 
     def __initialize_nodes(self, _slice):
@@ -171,36 +171,22 @@ class Simulation:
         nodes = _slice.pool
         for _node in nodes:# TODO:<----
             max_attempts = None
-            # self._handle_seed()
-
-            # Extract custom arrival distribution
-            # Next arrival, current + next arrival is the next arrival time
-            # if self.custom_control_arrivals is not None:
-            #     max_attempts = self.custom_control_arrivals[i].get('max_attempts')
-            #     next_arrival = self.control_arrivals[i].get_next()
-            #
-            #     # Spread if distribution is constant
-            #     if self.custom_control_arrivals[i].get('distribution') == 'constant':
-            #         self._handle_seed()
-            #         next_arrival *= np.random.rand()  #TODO:noise?
-            # else:
             next_arrival = _node.event_generator.get_next()
-            if _node.
 
-            self.event_heap.push(self._CONTROL_ARRIVAL, self.time + next_arrival, i, max_attempts)
+            self.event_heap.push(_slice.type, self.time + next_arrival, nodes.index(_node), self.max_attempts)
 
     def __handle_event(self, event):
         # Event switcher to determine correct action for an event
 
         event_actions = {
-            self._ALARM_ARRIVAL: self._handle_alarm_arrival,
-            self._CONTROL_ARRIVAL: self.__handle_control_arrival,
+            self._URLLC_ARRIVAL: self._handle_urllc_arrival,
+            self._mMTC_ARRIVAL: self.__handle_mmtc_arrival,
             self._DEPARTURE: self.__handle_departure,
             self._MEASURE: self.__handle_measurement}
 
         event_actions[event.type](event)
 
-    def __handle_control_arrival(self, event):
+    def __handle_mmtc_arrival(self, event):
         # Handle a control arrival event
 
         self.stats.stats['no_control_arrivals'] += 1
