@@ -1,20 +1,18 @@
 {
   "simulation_name": "factory_automation_huffman",
-  "simulation_length": 1,
   "max_attempts": 10,
   "no_alarm_nodes": 5,
   "no_control_nodes": 500,
-  "no_pilots": 30,
+  "no_pilots": 12,
   "control_nodes_buffer": 5,
-  "default_alarm_arrival_distribution": "uniform",
-  "default_control_arrival_distribution": "exponential",
   "base_alarm_pilot_share": 0.1,
-  "frame_length": 1,
-  "measurement_period": 5,
-  "use_seed": 1,
   "multi_run": 1,
   "custom_alarm_arrivals": 0,
   "custom_control_arrivals": 0,
+
+  "frame_length": 0.5,
+  "simulation_length": 1,
+  "measurement_period": 5,
 
   "alarm_arrival_distributions": {
     "exponential": {
