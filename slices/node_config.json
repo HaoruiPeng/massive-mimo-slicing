@@ -17,7 +17,7 @@
         "mean_arrival_time": 1000
       },
       "constant": {
-        "arrival_time": 1000,
+        "arrival_time": 1,
         "seed": true
       },
       "uniform": {
@@ -26,7 +26,7 @@
     },
     "mmtc": {
       "exponential": {
-        "mean_arrival_time": 50
+        "mean_arrival_time": 100
       },
       "constant": {
         "arrival_time": 50,
