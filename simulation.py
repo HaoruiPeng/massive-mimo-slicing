@@ -69,7 +69,7 @@ class Simulation:
             self.__initialize_nodes(s)
 
         # If custom alarm arrivals specified, initialize these
-        # TODO: Specofy the event generator for every customer
+        # TODO: Specify the event generator for every customer
         # if self.custom_alarm_arrivals is not None:
         #     self.alarm_arrivals = []
         #
@@ -186,7 +186,7 @@ class Simulation:
             event = self.send_queue[i]
             if event.dead_time < self.time:
                 remove_indices.append(i)
-                #TODO: add number of missed events in the stats
+                # TODO: add number of missed events in the stats
 
             # Check for events with missed deadlines
             # if event.attempts_left == 0:
