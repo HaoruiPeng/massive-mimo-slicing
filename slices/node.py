@@ -25,15 +25,15 @@ class Node:
     _URLLC = 1
     _mMTC = 2
 
-    #the nodes generator the event periodically
+    # the nodes generator the event periodically
     def __init__(self, slice_id, config):
         with open('node_config.json') as config_file:
             config = json.load(config_file)
         self.slice = slice_id
 
-        if slice_id == Node._URLLC:
+        if slice_id == self._URLLC:
             self.slice_name = "urllc"
-        elif slice_id == Node._mMTC:
+        elif slice_id == self._mMTC:
             self.slice_name = "mmtc"
 
         self.data_rate = 10
