@@ -1,8 +1,5 @@
 import sys
-import time
-
 import numpy as np
-
 from utilities.event_heap import EventHeap
 from utilities.event_generator import EventGenerator
 from slices.slice import Slice
@@ -19,48 +16,7 @@ class Simulation:
 
     Attributes
     ----------
-    __ALARM_ARRIVAL : int
-        Type id for an alarm arrival event
-    __CONTROL_ARRIVAL : int
-        Type id for a control arrival event
-    __DEPARTURE : int
-        Type id for a departure event
-    __MEASURE : int
-        Type id for a measure event
-    stats : Stats
-        Statistics object for keeping track for measurements
-    time : float
-        Current simulation time (default 0)
-    max_attempts : int
-        Maximum number of attempts or frames before a packet misses its deadline
-    base_alarm_pilot_share : float
-        Start share of dedicated pilots for alarm packets after pilot contamination involving an alarm packet
-    no_alarm_nodes : int
-        Number of alarm nodes in simulation
-    no_control_nodes : int
-        Number of control nodes in simulation
-    no_pilots : int
-        Number of available pilots
-    simulation_length : int
-        Simulation length in (in ms)
-    frame_length : int
-        Frame length (in ms), determining the frequency of departure events
-    measurement_period : int
-        Time in ms of how often measurements of the system should be taken
-    control_node_buffer : int
-        Number of control events allowed in send queue for a certain node
-    event_heap : EventHeap
-        Binary heap of all signalling events (arrivals, departures and measurements)
-    send_queue : list of __Event
-        List of all events that need to be processed
-    alarm_arrivals : list
-        (List of) object for generating alarm event times with a specific distribution
-    control_arrivals : list
-        (List of) object for generating control event times with a specific distribution
-    custom_alarm_arrivals : list
-        Optional list for per node specific arrival distribution and deadline
-    custom_control_arrivals : list
-        Optional list for per node specific arrival distribution and deadline
+
 
     Methods
     -------
@@ -88,15 +44,13 @@ class Simulation:
             Statistics object for keeping track for measurements
         """
 
-        #TODO: Initialize slice objects and generate events in the nodes that subscribe to each slice
-        #TODO: Complete event genertation in simulation first then in the nodes
+        # TODO: Initialize slice objects and generate events in the nodes that subscribe to each slice
+        # TODO: Complete event genertation in simulation first then in the nodes
 
         self.stats = stats
         self.time = 0.0
 
         # self.seed_counter = self.base_seed
-
-
         # self.use_seed = config.get('use_seed')
 #        self.base_alarm_pilot_share = config.get('base_alarm_pilot_share')
 
@@ -104,18 +58,18 @@ class Simulation:
         self.simulation_length = config.get('simulation_length') * 1000
         self.frame_length = config.get('frame_length')
         self.measurement_period = config.get('measurement_period')
-        #number of control nodes
+        # number of control nodes
         self.control_node_buffer = config.get('control_nodes_buffer')
         self.event_heap = EventHeap()
         self.send_queue = []
 
-        #The simulation slices parameters can be passed from the main fuction
+        # The simulation slices parameters can be passed from the main fuction
         self.Slices = [Slice(self._URLLC), Slice(self._mMTC)]
         for s in self.Slices:
             self.__initialize_nodes(s)
 
         # If custom alarm arrivals specified, initialize these
-        #TODO: Specofy the event generator for every customer
+        # TODO: Specofy the event generator for every customer
         # if self.custom_alarm_arrivals is not None:
         #     self.alarm_arrivals = []
         #
@@ -147,7 +101,6 @@ class Simulation:
         #     control_arrival_parameters = config.get('control_arrival_distributions').get(
         #         self.control_arrival_distribution)
         #     self.control_arrivals = EventGenerator(self.control_arrival_distribution, control_arrival_parameters)
-
 
         # Initialize nodes and their arrival times
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, None, 0)
@@ -224,7 +177,7 @@ class Simulation:
         self.event_heap.push(self._MEASURE, self.time + self.measurement_period, None, 0)
 
     def __handle_expired_events(self):
-        #remove the expired events in the send_queue
+        # remove the expired events in the send_queue
 
         send_queue_length = len(self.send_queue)
         remove_indices = []
@@ -316,23 +269,23 @@ class Simulation:
         urllc_events = []
         mmtc_events = []
         # Check for any missed alarms
-        #missed_alarm_attempts = 0
+        # missed_alarm_attempts = 0
         for event in self.send_queue:
             if event.type == self._URLLC_ARRIVAL:
-                #missed_alarm_attempts = max(event.max_attempts - event.attempts_left, missed_alarm_attempts)
+                # missed_alarm_attempts = max(event.max_attempts - event.attempts_left, missed_alarm_attempts)
                 urllc_counter += 1
                 urllc_events.append(event)
             else:
                 mmtc_events.append(event)
         # Limit the number of missed attempts, will cause overflow otherwise
-        #missed_alarm_attempts = min(10, missed_alarm_attempts)
+        # missed_alarm_attempts = min(10, missed_alarm_attempts)
 
         # Exponential back-off is used to assign dedicated pilots to alarm packets, at most 100%
-        #alarm_pilot_share = min(self.base_alarm_pilot_share * np.power(2, max(missed_alarm_attempts - 1, 0)), 1)
+        # alarm_pilot_share = min(self.base_alarm_pilot_share * np.power(2, max(missed_alarm_attempts - 1, 0)), 1)
 
         # At least one alarm pilot if dedicated resources is used
-        #alarm_pilots = max(int(alarm_pilot_share * self.no_pilots), 1)
-        #control_pilots = self.no_pilots - alarm_pilots
+        # alarm_pilots = max(int(alarm_pilot_share * self.no_pilots), 1)
+        # control_pilots = self.no_pilots - alarm_pilots
 
         # Only used dedicated alarm pilots if a collision has occurred
         # Dedicated pilots is possible since all nodes in a collision know about the collision,
@@ -349,7 +302,7 @@ class Simulation:
             urllc_pilots = self.Slices[self._URLLC-1].pool[event.node_id].pilot_samples
             no_pilots -= urllc_pilots
             if no_pilots >= 0:
-                #remove the event that assigned the pilots from the list
+                # remove the event that assigned the pilots from the list
                 self.send_queue.remove(event)
                 del event
                 continue
@@ -391,7 +344,8 @@ class Simulation:
     # @staticmethod
     # def __generate_pilot_assignments(pilots, no_nodes, base=0):
     #     # Randomly assign pilots to the nodes, note that nodes cannot communicate with each other without pilots,
-    #     # i.e. if node 1 uses pilot 1, node 2 DOES NOT KNOW THIS and is equally likely (in base case) to select pilot 1
+    #     # i.e. if node 1 uses pilot 1,
+    #     # node 2 DOES NOT KNOW THIS and is equally likely (in base case) to select pilot 1
     #     # as well
     #
     #     pilot_assignments = []
