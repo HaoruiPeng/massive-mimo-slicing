@@ -29,7 +29,7 @@ class Simulation:
         Type id for a measure event
     stats : Stats
         Statistics object for keeping track for measurements
-    time : int
+    time : float
         Current simulation time (default 0)
     max_attempts : int
         Maximum number of attempts or frames before a packet misses its deadline
@@ -98,8 +98,7 @@ class Simulation:
 
 
         # self.use_seed = config.get('use_seed')
-        self.base_alarm_pilot_share = config.get('base_alarm_pilot_share')
-        #number of customers
+#        self.base_alarm_pilot_share = config.get('base_alarm_pilot_share')
 
         self.no_pilots = config.get('no_pilots')
         self.simulation_length = config.get('simulation_length') * 1000
@@ -107,12 +106,12 @@ class Simulation:
         self.measurement_period = config.get('measurement_period')
         #number of control nodes
         self.control_node_buffer = config.get('control_nodes_buffer')
-        self.event_heap = EventHeap(self.max_attempts)
+        self.event_heap = EventHeap()
         self.send_queue = []
 
         #The simulation slices parameters can be passed from the main fuction
-        self.Slice = [Slice(Simulation._URLLC), Slice(Simulation._mMTC)]
-        for s in self.Slice:
+        self.Slices = [Slice(self._URLLC), Slice(self._mMTC)]
+        for s in self.Slices:
             self.__initialize_nodes(s)
 
         # If custom alarm arrivals specified, initialize these
@@ -177,11 +176,10 @@ class Simulation:
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add a new alarm arrival event to the event list
-        node = self.Slice[Simulation._URLLC-1].pool[event.node_id]
+        node = self.Slices[self._URLLC-1].pool[event.node_id]
         next_arrival = node.event_generator.get_next()
 
         self.event_heap.push(self._URLLC_ARRIVAL, self.time + next_arrival, self.time + node.deadline, event.node_id)
-
 
     def __handle_mmtc_arrival(self, event):
         # Handle a control arrival event
@@ -191,7 +189,7 @@ class Simulation:
         self.send_queue.insert(0, event)
         # Add new control arrival event to the event list
 
-        node = self.Slice[Simulation._mMTC-1].pool[event.node_id]
+        node = self.Slices[Simulation._mMTC-1].pool[event.node_id]
         next_arrival = node.event_generator.get_next()
 
         self.event_heap.push(self._mMTC_ARRIVAL, self.time + next_arrival, self.time + node.deadline, event.node_id)
@@ -202,7 +200,7 @@ class Simulation:
         del event
         self.__handle_expired_events()
         self._assign_pilots()
-        self.__check_collisions()
+        # self.__check_collisions()
         # Add new departure event to the event list
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, None, 0)
 
@@ -226,150 +224,182 @@ class Simulation:
         self.event_heap.push(self._MEASURE, self.time + self.measurement_period, None, 0)
 
     def __handle_expired_events(self):
-        # Handle expired alarm and control events
+        #remove the expired events in the send_queue
 
         send_queue_length = len(self.send_queue)
         remove_indices = []
 
         for i in range(send_queue_length):
             event = self.send_queue[i]
+            if event.dead_time < self.time:
+                remove_indices.append(i)
+                #TODO: add number of missed events in the stats
 
             # Check for events with missed deadlines
-            if event.attempts_left == 0:
-                # Alarm events need to be handled regardless if the event has expired, i.e. do not
-                # remove the event from the send queue
-                if event.type == self._ALARM_ARRIVAL:
-                    self.stats.stats['no_missed_alarms'] += 1
-                else:
-                    self.stats.stats['no_missed_controls'] += 1
-                    if i not in remove_indices:
-                        remove_indices.append(i)
-
-                continue
-
-            # If last event in send queue, no more other events to compare with
-            if i == send_queue_length - 1:
-                continue
-
-            # Disregard control events if the buffer is full, logic is that too old control signals are not relevant
-            # Alarm signals should always be handled and never removed from the send queue
-            event_matches = 0
-            for j in range(i + 1, send_queue_length):
-                cmp_event = self.send_queue[j]
-
-                if event.type == self._CONTROL_ARRIVAL and event.node_id == cmp_event.node_id:
-                    event_matches += 1
-
-                    if event_matches > self.control_node_buffer and j not in remove_indices:
-                        self.stats.stats['no_missed_controls'] += 1
-                        remove_indices.append(j)
+            # if event.attempts_left == 0:
+            #     # Alarm events need to be handled regardless if the event has expired, i.e. do not
+            #     # remove the event from the send queue
+            #     if event.type == self._ALARM_ARRIVAL:
+            #         self.stats.stats['no_missed_alarms'] += 1
+            #     else:
+            #         self.stats.stats['no_missed_controls'] += 1
+            #         if i not in remove_indices:
+            #             remove_indices.append(i)
+            #
+            #     continue
+            #
+            # # If last event in send queue, no more other events to compare with
+            # if i == send_queue_length - 1:
+            #     continue
+            #
+            # # Disregard control events if the buffer is full, logic is that too old control signals are not relevant
+            # # Alarm signals should always be handled and never removed from the send queue
+            # event_matches = 0
+            # for j in range(i + 1, send_queue_length):
+            #     cmp_event = self.send_queue[j]
+            #
+            #     if event.type == self._CONTROL_ARRIVAL and event.node_id == cmp_event.node_id:
+            #         event_matches += 1
+            #
+            #         if event_matches > self.control_node_buffer and j not in remove_indices:
+            #             self.stats.stats['no_missed_controls'] += 1
+            #             remove_indices.append(j)
 
         # Remove the events in reversed order to not shift subsequent indices
         for i in sorted(remove_indices, reverse=True):
             del self.send_queue[i]
 
-    def __check_collisions(self):
-        # Check for pilot contamination, i.e. more than one node assigned the same pilot
-        send_queue_length = len(self.send_queue)
-        pilot_collisions = []
-        remove_indices = []
-
-        # Check for contaminated pilots
-        for i in range(send_queue_length - 1):
-            event = self.send_queue[i]
-
-            for j in range(i + 1, send_queue_length):
-                cmp_event = self.send_queue[j]
-
-                if event.pilot_id == cmp_event.pilot_id and not event.node_id == cmp_event.node_id:
-                    if event.pilot_id not in pilot_collisions:
-                        pilot_collisions.append(event.pilot_id)
-
-        self.stats.stats['no_collisions'] += len(pilot_collisions)
-
-        handled_nodes = []
-
-        # Handle events with contaminated pilots, start with the first events in time (e.g. last in list)
-        for i in reversed(range(send_queue_length)):
-            event = self.send_queue[i]
-
-            if event.pilot_id in pilot_collisions:
-                event.attempts_left -= 1
-            elif i not in handled_nodes:
-                handled_nodes.append(i)
-                remove_indices.append(i)
-
-            # Reset pilot id to handle case where no pilots where assigned
-            event.pilot_id = -1
-
-        # Remove the events in reversed order to not shift subsequent indices
-        for i in sorted(remove_indices, reverse=True):
-            self.stats.stats['no_departures'] += 1
-            del self.send_queue[i]
+    # def __check_collisions(self):
+    #     # Check for pilot contamination, i.e. more than one node assigned the same pilot
+    #     send_queue_length = len(self.send_queue)
+    #     # pilot_collisions = []
+    #     remove_indices = []
+    #
+    #     # Check for contaminated pilots
+    #     for i in range(send_queue_length - 1):
+    #         event = self.send_queue[i]
+    #
+    #         for j in range(i + 1, send_queue_length):
+    #             cmp_event = self.send_queue[j]
+    #
+    #             if event.pilot_id == cmp_event.pilot_id and not event.node_id == cmp_event.node_id:
+    #                 if event.pilot_id not in pilot_collisions:
+    #                     pilot_collisions.append(event.pilot_id)
+    #
+    #     self.stats.stats['no_collisions'] += len(pilot_collisions)
+    #
+    #     handled_nodes = []
+    #
+    #     # Handle events with contaminated pilots, start with the first events in time (e.g. last in list)
+    #     for i in reversed(range(send_queue_length)):
+    #         event = self.send_queue[i]
+    #
+    #         if event.pilot_id in pilot_collisions:
+    #             event.attempts_left -= 1
+    #         elif i not in handled_nodes:
+    #             handled_nodes.append(i)
+    #             remove_indices.append(i)
+    #
+    #         # Reset pilot id to handle case where no pilots where assigned
+    #         event.pilot_id = -1
+    #
+    #     # Remove the events in reversed order to not shift subsequent indices
+    #     for i in sorted(remove_indices, reverse=True):
+    #         self.stats.stats['no_departures'] += 1
+    #         del self.send_queue[i]
 
     def _assign_pilots(self):
         # Assign pilots to all alarm and control nodes. Note that the receiving base station
         # does not on before hand how many nodes want to send
-
+        no_pilots = self.no_pilots
+        urllc_counter = 0
+        urllc_events = []
+        mmtc_events = []
         # Check for any missed alarms
-        missed_alarm_attempts = 0
+        #missed_alarm_attempts = 0
         for event in self.send_queue:
-            if event.type == self._ALARM_ARRIVAL:
-                missed_alarm_attempts = max(event.max_attempts - event.attempts_left, missed_alarm_attempts)
-
+            if event.type == self._URLLC_ARRIVAL:
+                #missed_alarm_attempts = max(event.max_attempts - event.attempts_left, missed_alarm_attempts)
+                urllc_counter += 1
+                urllc_events.append(event)
+            else:
+                mmtc_events.append(event)
         # Limit the number of missed attempts, will cause overflow otherwise
-        missed_alarm_attempts = min(10, missed_alarm_attempts)
+        #missed_alarm_attempts = min(10, missed_alarm_attempts)
 
         # Exponential back-off is used to assign dedicated pilots to alarm packets, at most 100%
-        alarm_pilot_share = min(self.base_alarm_pilot_share * np.power(2, max(missed_alarm_attempts - 1, 0)), 1)
+        #alarm_pilot_share = min(self.base_alarm_pilot_share * np.power(2, max(missed_alarm_attempts - 1, 0)), 1)
 
         # At least one alarm pilot if dedicated resources is used
-        alarm_pilots = max(int(alarm_pilot_share * self.no_pilots), 1)
-        control_pilots = self.no_pilots - alarm_pilots
+        #alarm_pilots = max(int(alarm_pilot_share * self.no_pilots), 1)
+        #control_pilots = self.no_pilots - alarm_pilots
 
         # Only used dedicated alarm pilots if a collision has occurred
         # Dedicated pilots is possible since all nodes in a collision know about the collision,
         # all other nodes can be informed by the base station since they have successfully received a pilot
-        if missed_alarm_attempts == 0:
-            alarm_pilots = self.no_pilots
-            control_pilots = self.no_pilots
-            base_control_pilots = 0
-        else:
-            # If missed alarm, use pilots AFTER alarm pilots for the control nodes
-            base_control_pilots = alarm_pilots
+        # if missed_alarm_attempts == 0:
+        #     alarm_pilots = self.no_pilots
+        #     control_pilots = self.no_pilots
+        #     base_control_pilots = 0
+        # else:
+        #     # If missed alarm, use pilots AFTER alarm pilots for the control nodes
+        #     base_control_pilots = alarm_pilots
+        urllc_events.sort(key=lambda x: x.dead_time, reverse=True)
+        for event in urllc_events:
+            urllc_pilots = self.Slices[self._URLLC-1].pool[event.node_id].pilot_samples
+            no_pilots -= urllc_pilots
+            if no_pilots >= 0:
+                #remove the event that assigned the pilots from the list
+                self.send_queue.remove(event)
+                del event
+                continue
+            else:
+                break
 
-        # Randomly assign pilots
-        alarm_pilot_assignments = self.__generate_pilot_assignments(alarm_pilots, self.no_alarm_nodes)
+        if no_pilots > 0:
+            mmtc_events.sort(key=lambda x: x.dead_time, reverse=True)
+            for event in mmtc_events:
+                mmtc_pilots = self.Slices[self._mMTC-1].pool[event.node_id].pilot_samples
+                no_pilots -= mmtc_pilots
+                if no_pilots >= 0:
+                    self.send_queue.remove(event)
+                    del event
+                    continue
+                else:
+                    break
 
-        # Assign alarm pilots to the events/nodes in the send queue
-        for i in range(self.no_alarm_nodes):
-            for event in self.send_queue:
-                if i == event.node_id and event.type == self._ALARM_ARRIVAL:
-                    event.pilot_id = alarm_pilot_assignments[i]
-
-        # Assign control pilots
-        if control_pilots > 0:
-            control_pilot_assignments = self.__generate_pilot_assignments(control_pilots, self.no_control_nodes,
-                                                                          base=base_control_pilots)
-
-            # Assign pilots to the events/nodes in the send queue
-            for i in range(self.no_control_nodes):
-                for event in self.send_queue:
-                    if i == event.node_id and event.type == self._CONTROL_ARRIVAL:
-                        event.pilot_id = control_pilot_assignments[i]
-
-    @staticmethod
-    def __generate_pilot_assignments(pilots, no_nodes, base=0):
-        # Randomly assign pilots to the nodes, note that nodes cannot communicate with each other without pilots,
-        # i.e. if node 1 uses pilot 1, node 2 DOES NOT KNOW THIS and is equally likely (in base case) to select pilot 1
-        # as well
-
-        pilot_assignments = []
-
-        while len(pilot_assignments) < no_nodes:
-            pilot_assignments.append(base + np.random.randint(pilots))
-
-        return pilot_assignments
+    #     # Randomly assign pilots
+    #     alarm_pilot_assignments = self.__generate_pilot_assignments(alarm_pilots, self.no_alarm_nodes)
+    #
+    #     # Assign alarm pilots to the events/nodes in the send queue
+    #     for i in range(self.no_alarm_nodes):
+    #         for event in self.send_queue:
+    #             if i == event.node_id and event.type == self._ALARM_ARRIVAL:
+    #                 event.pilot_id = alarm_pilot_assignments[i]
+    #
+    #     # Assign control pilots
+    #     if control_pilots > 0:
+    #         control_pilot_assignments = self.__generate_pilot_assignments(control_pilots, self.no_control_nodes,
+    #                                                                       base=base_control_pilots)
+    #
+    #         # Assign pilots to the events/nodes in the send queue
+    #         for i in range(self.no_control_nodes):
+    #             for event in self.send_queue:
+    #                 if i == event.node_id and event.type == self._CONTROL_ARRIVAL:
+    #                     event.pilot_id = control_pilot_assignments[i]
+    #
+    # @staticmethod
+    # def __generate_pilot_assignments(pilots, no_nodes, base=0):
+    #     # Randomly assign pilots to the nodes, note that nodes cannot communicate with each other without pilots,
+    #     # i.e. if node 1 uses pilot 1, node 2 DOES NOT KNOW THIS and is equally likely (in base case) to select pilot 1
+    #     # as well
+    #
+    #     pilot_assignments = []
+    #
+    #     while len(pilot_assignments) < no_nodes:
+    #         pilot_assignments.append(base + np.random.randint(pilots))
+    #
+    #     return pilot_assignments
 
     def __get_send_queue_info(self):
         # Extract statistics from the send queue
@@ -404,16 +434,6 @@ class Simulation:
             avg_control_wait = round(float(total_control_wait / no_control_events), 2)
 
         return no_alarm_events, no_control_events, avg_alarm_wait, avg_control_wait, max_alarm_wait, max_control_wait
-
-    # def _handle_seed(self):
-    #     # If use of seed is specified this will ensure the same seed pattern is used every simulations, but without
-    #     # using the same random number every time a new event is generated in the heap
-    #     # Since event signaling is used this is the only way to recreate results (alternative is to pre-calculate all
-    #     # events which)
-    #
-    #     if self.use_seed:
-    #         np.random.seed(self.seed_counter)
-    #         self.seed_counter += 1
 
     def run(self):
         """ Runs the simulation """
