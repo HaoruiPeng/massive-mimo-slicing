@@ -51,7 +51,7 @@ class EventHeap:
          #   max_attempts = self.__max_attempts
 
         new_event = Event(event_type, event_time, dead_time, node_id)
-        heapq.heappush(self.__heap, (event_type, event_time, self.__key, new_event))
+        heapq.heappush(self.__heap, (event_time, event_type, self.__key, new_event))
         self.__key += 1
 
     def pop(self):
@@ -65,3 +65,9 @@ class EventHeap:
         """
 
         return heapq.heappop(self.__heap)
+
+    def get_heap(self):
+        return self.__heap
+
+    def get_size(self):
+        return  len(self.__heap)

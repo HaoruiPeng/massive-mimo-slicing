@@ -46,23 +46,23 @@ class BinarySimulation(Simulation):
     #
     #         self.event_heap.push(self._ALARM_ARRIVAL, next_arrival, i, max_attempts)
 
-    def _handle_alarm_arrival(self, event):
-        # Handle an alarm arrival event
-        self.stats.stats['no_alarm_arrivals'] += 1
-        # Store event in send queue until departure (as LIFO)
-        self.send_queue.insert(0, event)
-        # Add a new alarm arrival event to the event list
-        self._handle_seed()
-
-        max_attempts = None
-
-        if self.custom_alarm_arrivals is not None:
-            max_attempts = self.custom_alarm_arrivals[event.node_id].get('max_attempts')
-            next_arrival = self.alarm_arrivals[event.node_id].get_next()
-        else:
-            next_arrival = self.alarm_arrivals.get_next()
-
-        self.event_heap.push(self._ALARM_ARRIVAL, self.time + next_arrival, event.node_id, max_attempts)
+    # def _handle_alarm_arrival(self, event):
+    #     # Handle an alarm arrival event
+    #     self.stats.stats['no_alarm_arrivals'] += 1
+    #     # Store event in send queue until departure (as LIFO)
+    #     self.send_queue.insert(0, event)
+    #     # Add a new alarm arrival event to the event list
+    #     self._handle_seed()
+    #
+    #     max_attempts = None
+    #
+    #     if self.custom_alarm_arrivals is not None:
+    #         max_attempts = self.custom_alarm_arrivals[event.node_id].get('max_attempts')
+    #         next_arrival = self.alarm_arrivals[event.node_id].get_next()
+    #     else:
+    #         next_arrival = self.alarm_arrivals.get_next()
+    #
+    #     self.event_heap.push(self._ALARM_ARRIVAL, self.time + next_arrival, event.node_id, max_attempts)
 
     def _assign_pilots(self):
         # Assign pilots to all alarm and control nodes. Note that the receiving base station

@@ -26,10 +26,10 @@
     },
     "mmtc": {
       "exponential": {
-        "mean_arrival_time": 100
+        "mean_arrival_time": 10
       },
       "constant": {
-        "arrival_time": 50,
+        "arrival_time": 5,
         "seed": true
       }
     }

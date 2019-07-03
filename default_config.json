@@ -1,37 +1,7 @@
 {
-  "simulation_name": "factory_automation_huffman",
-  "max_attempts": 10,
-  "no_alarm_nodes": 5,
-  "no_control_nodes": 500,
+  "simulation_name": "Slicing Simulation",
   "no_pilots": 12,
-  "control_nodes_buffer": 5,
-  "base_alarm_pilot_share": 0.1,
-  "multi_run": 1,
-  "custom_alarm_arrivals": 0,
-  "custom_control_arrivals": 0,
-
   "frame_length": 0.5,
-  "simulation_length": 1,
-  "measurement_period": 5,
-
-  "alarm_arrival_distributions": {
-    "exponential": {
-      "mean_arrival_time": 1000
-    },
-    "constant": {
-      "arrival_time": 1000
-    },
-    "uniform": {
-      "max_arrival_time": 4000
-    }
-  },
-
-  "control_arrival_distributions": {
-    "exponential": {
-      "mean_arrival_time": 50
-    },
-    "constant": {
-      "arrival_time": 50
-    }
-  }
+  "simulation_length": 1000,
+  "measurement_period": 2
 }

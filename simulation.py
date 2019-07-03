@@ -27,12 +27,13 @@ class Simulation:
     _URLLC = 1
     _mMTC = 2
 
-    _URLLC_ARRIVAL = 1
-    _mMTC_ARRIVAL = 2
-    _DEPARTURE = 3
-    _MEASURE = 4
+    _DEPARTURE = 1
+    _MEASURE = 2
+    _URLLC_ARRIVAL = 3
+    _mMTC_ARRIVAL = 4
 
-    def __init__(self, config, stats, seed=None):
+
+    def __init__(self, config, stats):
         """
         Initialize simulation object
 
@@ -55,13 +56,15 @@ class Simulation:
 #        self.base_alarm_pilot_share = config.get('base_alarm_pilot_share')
 
         self.no_pilots = config.get('no_pilots')
-        self.simulation_length = config.get('simulation_length') * 1000
+        self.simulation_length = config.get('simulation_length')
         self.frame_length = config.get('frame_length')
         self.measurement_period = config.get('measurement_period')
         # number of control nodes
-        self.control_node_buffer = config.get('control_nodes_buffer')
+        # self.control_node_buffer = config.get('control_nodes_buffer')
         self.event_heap = EventHeap()
         self.send_queue = []
+        self.urllc_loss = 0
+        self.mmtc_loss = 0
 
         # The simulation slices parameters can be passed from the main fuction
         self.Slices = [Slice(self._URLLC), Slice(self._mMTC)]
@@ -109,9 +112,10 @@ class Simulation:
     def __initialize_nodes(self, _slice):
         # Initialize event times for all control nodes
         nodes = _slice.pool
+        # print("[Time {}] Initial {} nodes.".format(self.time, len(nodes)))
         for _node in nodes:
             next_arrival = _node.event_generator.get_next()
-            self.event_heap.push(_slice.type, self.time + next_arrival, self.time + _node.deadline, nodes.index(_node))
+            self.event_heap.push(_slice.type+2, self.time + next_arrival, self.time + next_arrival + _node.deadline, nodes.index(_node))
 
     def __handle_event(self, event):
         # Event switcher to determine correct action for an event
@@ -125,19 +129,21 @@ class Simulation:
 
     def _handle_urllc_arrival(self, event):
         # Handle an alarm arrival event
-        self.stats.stats['no_alarm_arrivals'] += 1
+        self.stats.stats['no_urllc_arrivals'] += 1
+        # print("[Time {}] No. of urllc_arrivals: {}".format(self.time, self.stats.stats['no_urllc_arrivals']))
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add a new alarm arrival event to the event list
         node = self.Slices[self._URLLC-1].pool[event.node_id]
         next_arrival = node.event_generator.get_next()
 
-        self.event_heap.push(self._URLLC_ARRIVAL, self.time + next_arrival, self.time + node.deadline, event.node_id)
+        self.event_heap.push(self._URLLC_ARRIVAL, self.time + next_arrival, self.time + next_arrival + node.deadline, event.node_id)
 
     def __handle_mmtc_arrival(self, event):
         # Handle a control arrival event
 
-        self.stats.stats['no_control_arrivals'] += 1
+        self.stats.stats['no_mmtc_arrivals'] += 1
+        # print("[Time {}] No. of mmtc_arrivals: {}".format(self.time, self.stats.stats['no_mmtc_arrivals']))
         # Store event in send queue until departure (as LIFO)
         self.send_queue.insert(0, event)
         # Add new control arrival event to the event list
@@ -145,11 +151,12 @@ class Simulation:
         node = self.Slices[Simulation._mMTC-1].pool[event.node_id]
         next_arrival = node.event_generator.get_next()
 
-        self.event_heap.push(self._mMTC_ARRIVAL, self.time + next_arrival, self.time + node.deadline, event.node_id)
+        self.event_heap.push(self._mMTC_ARRIVAL, self.time + next_arrival, self.time + next_arrival + node.deadline, event.node_id)
 
     def __handle_departure(self, event):
         # Handle a departure event
-
+        #print("[Time {}] Departure".format(self.time))
+        # print("[Time {}] Send queue size {}" .format(self.time, len(self.send_queue)))
         del event
         self.__handle_expired_events()
         self._assign_pilots()
@@ -164,15 +171,15 @@ class Simulation:
         self.stats.stats['no_measurements'] += 1
 
         measurements = self.__get_send_queue_info()
-        log_string = ''
-
-        for m in measurements:
-            log_string += str(m) + ','
-
-        log_string = log_string[:-1]
-        log_string += '\n'
-        self.stats.write_log(log_string)
-
+        # print("[Time {}] No.URLLC: {} No.mMTC: {}".format(self.time, measurements[0], measurements[1]))
+        # log_string = ''
+        #
+        # for m in measurements:
+        #     log_string += str(m) + ','
+        #
+        # log_string = log_string[:-1]
+        # log_string += '\n'
+        # self.stats.write_log(log_string)
         # Add a new measure event to the event list
         self.event_heap.push(self._MEASURE, self.time + self.measurement_period, None, 0)
 
@@ -181,6 +188,8 @@ class Simulation:
 
         send_queue_length = len(self.send_queue)
         remove_indices = []
+        urllc_counter = 0
+        mmtc_counter = 0
 
         for i in range(send_queue_length):
             event = self.send_queue[i]
@@ -220,7 +229,17 @@ class Simulation:
 
         # Remove the events in reversed order to not shift subsequent indices
         for i in sorted(remove_indices, reverse=True):
+            event = self.send_queue[i]
+            if event.type == self._URLLC_ARRIVAL:
+                urllc_counter += 1
+                self.urllc_loss += 1
+            elif event.type == self._mMTC_ARRIVAL:
+                mmtc_counter += 1
+                self.mmtc_loss += 1
             del self.send_queue[i]
+
+        if len(remove_indices) > 0:
+            print("\n[Time {}] Lost {} URLLC packets, {} mMTC packets\n".format(self.time, urllc_counter, mmtc_counter))
 
     # def __check_collisions(self):
     #     # Check for pilot contamination, i.e. more than one node assigned the same pilot
@@ -358,44 +377,45 @@ class Simulation:
     def __get_send_queue_info(self):
         # Extract statistics from the send queue
 
-        no_alarm_events = 0
-        no_control_events = 0
-        max_alarm_wait = 0
-        max_control_wait = 0
-        total_alarm_wait = 0
-        total_control_wait = 0
-        avg_alarm_wait = 0
-        avg_control_wait = 0
+        no_urllc_events = 0
+        no_mmtc_events = 0
+        max_urllc_wait = 0
+        max_mmtc_wait = 0
+        total_urllc_wait = 0
+        total_mmtc_wait = 0
+        avg_urllc_wait = 0
+        avg_mmtc_wait = 0
 
         for event in self.send_queue:
-            if event.type == self._ALARM_ARRIVAL:
-                no_alarm_events += 1
-
-                wait = self.max_attempts - event.attempts_left
-                max_alarm_wait = max(max_alarm_wait, wait)
-                total_alarm_wait += wait
+            if event.type == self._URLLC_ARRIVAL:
+                no_urllc_events += 1
             else:
-                no_control_events += 1
+                no_mmtc_events += 1
+                #
+                # wait = self.max_attempts - event.attempts_left
+                # max_control_wait = max(max_control_wait, wait)
+                # total_control_wait += wait
 
-                wait = self.max_attempts - event.attempts_left
-                max_control_wait = max(max_control_wait, wait)
-                total_control_wait += wait
+        # if not no_alarm_events == 0:
+        #     avg_alarm_wait = round(float(total_alarm_wait / no_alarm_events), 2)
+        #
+        # if not no_control_events == 0:
+        #     avg_control_wait = round(float(total_control_wait / no_control_events), 2)
 
-        if not no_alarm_events == 0:
-            avg_alarm_wait = round(float(total_alarm_wait / no_alarm_events), 2)
-
-        if not no_control_events == 0:
-            avg_control_wait = round(float(total_control_wait / no_control_events), 2)
-
-        return no_alarm_events, no_control_events, avg_alarm_wait, avg_control_wait, max_alarm_wait, max_control_wait
+        return no_urllc_events, no_mmtc_events
 
     def run(self):
         """ Runs the simulation """
 
         current_progress = 0
-
+        print("\n[Time {}] Simulation start.\n".format(self.time))
+        print("Size: {}".format(self.event_heap.get_size()))
+        # for k in self.event_heap.get_heap():
+        #     print(k)
         while self.time < self.simulation_length:
+            # print("[Time {}] Event heap size {}".format(self.time, self.event_heap.size()))
             next_event = self.event_heap.pop()[3]
+            # print("Handle event: {} generated at time {}".format(next_event.type, next_event.time))
 
             # Advance time before handling event
             self.time = next_event.time
@@ -404,7 +424,7 @@ class Simulation:
 
             if progress > current_progress:
                 current_progress = progress
-                str1 = "\r Progress [{0}]".format('#' * (progress + 1) + ' ' * (100 - progress))
+                str1 = "\r Progress: {0}%".format(progress)
                 sys.stdout.write(str1)
                 sys.stdout.flush()
 

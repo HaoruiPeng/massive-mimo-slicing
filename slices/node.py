@@ -26,8 +26,8 @@ class Node:
     _mMTC = 2
 
     # the nodes generator the event periodically
-    def __init__(self, slice_id, config):
-        with open('node_config.json') as config_file:
+    def __init__(self, slice_id):
+        with open('slices/node_config.json') as config_file:
             config = json.load(config_file)
         self.slice = slice_id
 

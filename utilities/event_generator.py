@@ -72,7 +72,7 @@ class EventGenerator:
         # Returns a float from a constant distribution with noise
         if self.__settings.get('seed'):
             self.seed_counter = int(time.time())
-            np.random.seed(self.seed_counter)
-            return self.__settings.get('arrival_time') * np.random.rand()
+            # np.random.seed(self.seed_counter)
+            return self.__settings.get('arrival_time') * np.random.normal(1, 0.05)
         else:
             return self.__settings.get('arrival_time')

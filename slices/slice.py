@@ -24,7 +24,7 @@ class Slice:
     _mMTC = 2
 
     def __init__(self, slice_type):
-        with open('slice_config.json') as config_file:
+        with open('slices/slice_config.json') as config_file:
             config = json.load(config_file)
 
         self.type = slice_type
