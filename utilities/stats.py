@@ -30,39 +30,45 @@ class Stats:
 
         # Write the headers to the csv files
         self.__stats_file.write(
-            'Config No,Measurements,Alarm arrivals,Control arrivals,Departures,Missed alarms,Missed controls,Collisions,'
-            'Avg. alarm queue,Alarm queue delta,Avg. control queue,Control queue delta,Avg. alarm wait,Alarm wait delta,'
-            'Avg. control wait,Control wait delta,Max alarm wait,Max control wait\n')
+            'Config No,Measurements,URLLC arrivals,Control arrivals,Departures,'
+            'Missed URLLC,Missed mMTC,Collisions,'
+            'Avg. URLLC queue,URLLC queue delta,'
+            'Avg. mMTC queue,mMTC queue delta,'
+            'Avg. URLLC wait,URLLC wait delta,'
+            'Avg. mMTC wait,mMTC wait delta,'
+            'Max URLLC wait,Max mMTC wait\n')
 
         self.__log_file.write(
-            'Config No.,Alarm events,Control events,Avg. alarm wait,Avg. control wait,Max alarm wait,Max control wait\n')
+            'Config No.,URLLC events,mMTC events,'
+            'Avg. URLLC wait,Avg. mMTC wait,'
+            'Max URLLC wait,Max mMTC wait\n')
 
-        self.stats = {'config_no': 0, 'no_measurements': 0, 'no_alarm_arrivals': 0, 'no_control_arrivals': 0,
-                      'no_departures': 0, 'no_missed_alarms': 0, 'no_missed_controls': 0, 'no_collisions': 0,
-                      'avg_alarm_queue': 0, 'alarm_queue_delta': 0, 'avg_control_queue': 0, 'control_queue_delta': 0,
-                      'avg_alarm_wait': 0, 'alarm_wait_delta': 0, 'avg_control_wait': 0, 'control_wait_delta': 0,
-                      'max_alarm_wait': 0, 'max_control_wait': 0}
+        self.stats = {'config_no': 0, 'no_measurements': 0, 'no_urllc_arrivals': 0, 'no_mmtc_arrivals': 0,
+                      'no_departures': 0, 'no_missed_urllc': 0, 'no_missed_mmtc': 0, 'no_collisions': 0,
+                      'avg_urllc_queue': 0, 'urllc_queue_delta': 0, 'avg_mmtc_queue': 0, 'mmtc_queue_delta': 0,
+                      'avg_urllc_wait': 0, 'urllc_wait_delta': 0, 'avg_mmtc_wait': 0, 'mmtc_wait_delta': 0,
+                      'max_urllc_wait': 0, 'max_mmtc_wait': 0}
 
     def print_stats(self):
         """ Print the results to the terminal """
 
         print('Config: ' + str(self.stats['config_no']))
         print('Measurements: ' + str(self.stats['no_measurements']))
-        print('Alarm arrivals: ' + str(self.stats['no_alarm_arrivals']))
-        print('Control arrivals: ' + str(self.stats['no_control_arrivals']))
+        print('URLLC arrivals: ' + str(self.stats['no_urllc_arrivals']))
+        print('mMTC arrivals: ' + str(self.stats['no_mmtc_arrivals']))
         print('Departures: ' + str(self.stats['no_departures']))
-        print('Missed alarms: ' + str(self.stats['no_missed_alarms']))
-        print('Missed controls: ' + str(self.stats['no_missed_controls']))
+        print('Missed URLLC: ' + str(self.stats['no_missed_urllc']))
+        print('Missed mMTC: ' + str(self.stats['no_missed_mmtc']))
         print('Collisions: ' + str(self.stats['no_collisions']))
-        print('Alarm queue: ' + str(self.stats['avg_alarm_queue']) + ' +- ' + str(self.stats['alarm_queue_delta']))
-        print('Control queue: ' + str(self.stats['avg_control_queue']) + ' +- ' + str(
-            self.stats['control_queue_delta']))
-        print('Alarm wait if queue: ' + str(self.stats['avg_alarm_wait']) + ' +- ' + str(
-            self.stats['alarm_wait_delta']))
-        print('Control wait if queue: ' + str(self.stats['avg_control_wait']) + ' +- ' + str(
-            self.stats['control_wait_delta']))
-        print('Max alarm wait: ' + str(self.stats['max_alarm_wait']))
-        print('Max control wait: ' + str(self.stats['max_control_wait']))
+        print('URLLC queue: ' + str(self.stats['avg_urllc_queue']) + ' +- ' + str(self.stats['urllc_queue_delta']))
+        print('mMTC queue: ' + str(self.stats['avg_mmtc_queue']) + ' +- ' + str(
+            self.stats['mmtc_queue_delta']))
+        print('URLLC wait if queue: ' + str(self.stats['avg_urllc_wait']) + ' +- ' + str(
+            self.stats['urllc_wait_delta']))
+        print('mMTC wait if queue: ' + str(self.stats['avg_mmtc_wait']) + ' +- ' + str(
+            self.stats['mmtc_wait_delta']))
+        print('Max URLLC wait: ' + str(self.stats['max_urllc_wait']))
+        print('Max mMTC wait: ' + str(self.stats['max_mmtc_wait']))
 
     def save_stats(self):
         """ Save the results to file """
@@ -92,36 +98,36 @@ class Stats:
         # noinspection PyTypeChecker
         results = np.loadtxt(self.__log_file, delimiter=',', skiprows=1)
 
-        alarm_queue = []
-        control_queue = []
-        alarm_wait = []
-        control_wait = []
-        max_alarm_wait = 0
-        max_control_wait = 0
+        urllc_queue = []
+        mmtc_queue = []
+        urllc_wait = []
+        mmtc_wait = []
+        max_urllc_wait = 0
+        max_mmtc_wait = 0
 
         for row in results:
             if row[0] == self.stats['config_no']:
-                alarm_queue.append(row[1])
-                control_queue.append(row[2])
+                urllc_queue.append(row[1])
+                mmtc_queue.append(row[2])
 
                 if not row[3] == 0:
-                    alarm_wait.append(row[3])
+                    urllc_wait.append(row[3])
 
                 if not row[4] == 0:
-                    control_wait.append(row[4])
+                    mmtc_wait.append(row[4])
 
-                max_alarm_wait = max(max_alarm_wait, row[5])
-                max_control_wait = max(max_control_wait, row[6])
+                max_urllc_wait = max(max_urllc_wait, row[5])
+                max_mmtc_wait = max(max_mmtc_wait, row[6])
 
-        self.stats['avg_alarm_queue'], self.stats['alarm_queue_delta'] = self.__calc_confidence_interval(
-            alarm_queue)
-        self.stats['avg_control_queue'], self.stats['control_queue_delta'] = self.__calc_confidence_interval(
-            control_queue)
-        self.stats['avg_alarm_wait'], self.stats['alarm_wait_delta'] = self.__calc_confidence_interval(alarm_wait)
+        self.stats['avg_urllc_queue'], self.stats['urllc_queue_delta'] = self.__calc_confidence_interval(
+            urllc_queue)
+        self.stats['avg_mmtc_queue'], self.stats['mmtc_queue_delta'] = self.__calc_confidence_interval(
+            mmtc_queue)
+        self.stats['avg_urllc_wait'], self.stats['urllc_wait_delta'] = self.__calc_confidence_interval(urllc_wait)
         self.stats['avg_control_wait'], self.stats['control_wait_delta'] = self.__calc_confidence_interval(
-            control_wait)
-        self.stats['max_alarm_wait'] = max_alarm_wait
-        self.stats['max_control_wait'] = max_control_wait
+            mmtc_wait)
+        self.stats['max_urllc_wait'] = max_urllc_wait
+        self.stats['max_mmtc_wait'] = max_mmtc_wait
 
     def close(self):
         """ Close stats and log file """
