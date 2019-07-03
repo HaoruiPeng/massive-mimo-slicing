@@ -38,6 +38,6 @@ class Event:
         self.type = event_type
         self.time = event_time
         self.node_id = node_id
-        #self.attempts_left = max_attempts
+        # self.attempts_left = max_attempts
         self.dead_time = dead_time
         self.pilot_id = -1
