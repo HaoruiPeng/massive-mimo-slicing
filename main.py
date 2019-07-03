@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     # Initialize stats and logger
     stats = Stats(stats_file_path, log_file_path)
-
+    # TODO: rewrite the measuremnet part and log status and data
     # custom_alarm_arrivals = None
     # custom_control_arrivals = None
     #
