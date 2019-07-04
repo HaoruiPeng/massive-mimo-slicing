@@ -27,8 +27,8 @@ class Simulation:
     _URLLC = 1
     _mMTC = 2
 
-    _DEPARTURE = 1
-    _MEASURE = 2
+    _DEPARTURE = 2
+    _MEASURE = 1
     _URLLC_ARRIVAL = 3
     _mMTC_ARRIVAL = 4
 
@@ -72,7 +72,6 @@ class Simulation:
             self.__initialize_nodes(s)
 
         # If custom alarm arrivals specified, initialize these
-        # TODO: Specify the event generator for every customer
         # if self.custom_alarm_arrivals is not None:
         #     self.alarm_arrivals = []
         #
@@ -106,16 +105,25 @@ class Simulation:
         #     self.control_arrivals = EventGenerator(self.control_arrival_distribution, control_arrival_parameters)
 
         # Initialize nodes and their arrival times
-        self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, None, 0)
-        self.event_heap.push(self._MEASURE, self.time + self.measurement_period, None, 0)
+        self.event_heap.push(self._DEPARTURE, self.time + self.frame_length)
+        self.event_heap.push(self._MEASURE, self.time + self.measurement_period)
 
     def __initialize_nodes(self, _slice):
         # Initialize event times for all control nodes
         nodes = _slice.pool
+        counter = 0
         # print("[Time {}] Initial {} nodes.".format(self.time, len(nodes)))
         for _node in nodes:
             next_arrival = _node.event_generator.get_next()
-            self.event_heap.push(_slice.type+2, self.time + next_arrival, self.time + next_arrival + _node.deadline, nodes.index(_node))
+            if _slice.type == self._URLLC:
+                self.stats.stats['no_urllc_arrivals'] += 1
+                counter = self.stats.stats['no_urllc_arrivals']
+            else:
+                self.stats.stats['no_mmtc_arrivals'] += 1
+                counter = self.stats.stats['no_mmtc_arrivals']
+            self.event_heap.push(_slice.type+2,
+                                 self.time + next_arrival, self.time + next_arrival + _node.deadline,
+                                 nodes.index(_node), counter)
 
     def __handle_event(self, event):
         # Event switcher to determine correct action for an event
@@ -137,11 +145,12 @@ class Simulation:
         node = self.Slices[self._URLLC-1].pool[event.node_id]
         next_arrival = node.event_generator.get_next()
 
-        self.event_heap.push(self._URLLC_ARRIVAL, self.time + next_arrival, self.time + next_arrival + node.deadline, event.node_id)
+        self.event_heap.push(self._URLLC_ARRIVAL,
+                             self.time + next_arrival, self.time + next_arrival + node.deadline,
+                             event.node_id, self.stats.stats['no_urllc_arrivals'])
 
     def __handle_mmtc_arrival(self, event):
         # Handle a control arrival event
-
         self.stats.stats['no_mmtc_arrivals'] += 1
         # print("[Time {}] No. of mmtc_arrivals: {}".format(self.time, self.stats.stats['no_mmtc_arrivals']))
         # Store event in send queue until departure (as LIFO)
@@ -151,7 +160,9 @@ class Simulation:
         node = self.Slices[Simulation._mMTC-1].pool[event.node_id]
         next_arrival = node.event_generator.get_next()
 
-        self.event_heap.push(self._mMTC_ARRIVAL, self.time + next_arrival, self.time + next_arrival + node.deadline, event.node_id)
+        self.event_heap.push(self._mMTC_ARRIVAL,
+                             self.time + next_arrival, self.time + next_arrival + node.deadline,
+                             event.node_id, self.stats.stats['no_mmtc_arrivals'])
 
     def __handle_departure(self, event):
         # Handle a departure event
@@ -162,7 +173,7 @@ class Simulation:
         self._assign_pilots()
         # self.__check_collisions()
         # Add new departure event to the event list
-        self.event_heap.push(self._DEPARTURE, self.time + self.frame_length, None, 0)
+        self.event_heap.push(self._DEPARTURE, self.time + self.frame_length)
 
     def __handle_measurement(self, event):
         # Take measurement of the send queue
@@ -181,7 +192,7 @@ class Simulation:
         # log_string += '\n'
         # self.stats.write_log(log_string)
         # Add a new measure event to the event list
-        self.event_heap.push(self._MEASURE, self.time + self.measurement_period, None, 0)
+        self.event_heap.push(self._MEASURE, self.time + self.measurement_period)
 
     def __handle_expired_events(self):
         # remove the expired events in the send_queue
@@ -232,14 +243,15 @@ class Simulation:
             event = self.send_queue[i]
             if event.type == self._URLLC_ARRIVAL:
                 urllc_counter += 1
-                self.urllc_loss += 1
+                self.stats.stats['no_missed_urllc'] += 1
             elif event.type == self._mMTC_ARRIVAL:
                 mmtc_counter += 1
-                self.mmtc_loss += 1
+                self.stats.stats['no_missed_mmtc'] += 1
             del self.send_queue[i]
 
-        if len(remove_indices) > 0:
-            print("\n[Time {}] Lost {} URLLC packets, {} mMTC packets\n".format(self.time, urllc_counter, mmtc_counter))
+        # if len(remove_indices) > 0:
+        #       print("\n[Time {}] Lost {} URLLC packets, {} mMTC packets\n"
+        #               .format(self.time, urllc_counter, mmtc_counter))
 
     # def __check_collisions(self):
     #     # Check for pilot contamination, i.e. more than one node assigned the same pilot

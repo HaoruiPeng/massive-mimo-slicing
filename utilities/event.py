@@ -19,7 +19,7 @@ class Event:
         Pilot id that is assigned during the simulation
     """
 
-    def __init__(self, event_type, event_time, dead_time, node_id, counter):
+    def __init__(self, event_type, event_time, dead_time=None, node_id=0, counter=0):
         """
         Initializes a new event
 
