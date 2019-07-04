@@ -13,7 +13,7 @@ class Stats:
 
     """
 
-    def __init__(self, stats_file_path, log_file_path):
+    def __init__(self, stats_file_path, log_file_path, trace_file_path):
         """
         Initialize a new statistics and logging object
 
@@ -27,10 +27,11 @@ class Stats:
 
         self.__stats_file = open(stats_file_path, 'w')
         self.__log_file = open(log_file_path, 'w+')
+        self.__trace_file = open(trace_file_path, 'w+')
 
         # Write the headers to the csv files
         self.__stats_file.write(
-            'Config No,Measurements,URLLC arrivals,Control arrivals,Departures,'
+            'Config No,Measurements,URLLC arrivals,mMTC arrivals,Departures,'
             'Missed URLLC,Missed mMTC,Collisions,'
             'Avg. URLLC queue,URLLC queue delta,'
             'Avg. mMTC queue,mMTC queue delta,'
@@ -42,6 +43,8 @@ class Stats:
             'Config No.,URLLC events,mMTC events,'
             'Avg. URLLC wait,Avg. mMTC wait,'
             'Max URLLC wait,Max mMTC wait\n')
+
+        self.__trace_file.write('Event,Node,Counter,Arrival,Dead,Departure,Pilot\n')
 
         self.stats = {'config_no': 0, 'no_measurements': 0, 'no_urllc_arrivals': 0, 'no_mmtc_arrivals': 0,
                       'no_departures': 0, 'no_missed_urllc': 0, 'no_missed_mmtc': 0, 'no_collisions': 0,
@@ -134,6 +137,7 @@ class Stats:
 
         self.__stats_file.close()
         self.__log_file.close()
+        self.__trace_file.close()
 
     def write_log(self, message):
         """
@@ -145,7 +149,14 @@ class Stats:
             Message to write to the file
         """
 
-        self.__log_file.write(str(self.stats['config_no']) + ',' + message)
+        self.__log_file.write(message)
+
+    def write_trace(self, entry):
+        # print(entry['event_type'])
+        self.__trace_file.write(str(entry['event_type']) + ',' + str(entry['node_id']) + ','
+                                + str(entry['counter']) + ',' + str(entry['arrival_time']) + ','
+                                + str(entry['dead_time']) + ',' + str(entry['departure_time']) + ','
+                                + str(entry['pilot']) + '\n')
 
     @staticmethod
     def __calc_confidence_interval(v):

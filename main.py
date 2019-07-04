@@ -25,9 +25,9 @@ if __name__ == '__main__':
 
     log_file_path = 'logs/' + time_string + '_' + simulation_name + '_queue_log.csv'
     stats_file_path = 'stats/' + time_string + '_' + simulation_name + '_stats.csv'
-
+    trace_file_path = 'trace/' + time_string + '_' + simulation_name + '_event_trace.csv'
     # Initialize stats and logger
-    stats = Stats(stats_file_path, log_file_path)
+    stats = Stats(stats_file_path, log_file_path, trace_file_path)
     # TODO: rewrite the measuremnet part and log status and data
     # custom_alarm_arrivals = None
     # custom_control_arrivals = None

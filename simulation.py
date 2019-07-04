@@ -1,9 +1,6 @@
 import sys
-import numpy as np
 from utilities.event_heap import EventHeap
-from utilities.event_generator import EventGenerator
 from slices.slice import Slice
-from slices.node import Node
 
 __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
 
@@ -247,6 +244,9 @@ class Simulation:
             elif event.type == self._mMTC_ARRIVAL:
                 mmtc_counter += 1
                 self.stats.stats['no_missed_mmtc'] += 1
+            entry = event.get_entry(self.time, False)
+            # print(entry)
+            self.stats.write_trace(entry)
             del self.send_queue[i]
 
         # if len(remove_indices) > 0:
@@ -334,6 +334,9 @@ class Simulation:
             no_pilots -= urllc_pilots
             if no_pilots >= 0:
                 # remove the event that assigned the pilots from the list
+                entry = event.get_entry(self.time, True)
+                # print(entry)
+                self.stats.write_trace(entry)
                 self.send_queue.remove(event)
                 del event
                 continue
@@ -346,6 +349,9 @@ class Simulation:
                 mmtc_pilots = self.Slices[self._mMTC-1].pool[event.node_id].pilot_samples
                 no_pilots -= mmtc_pilots
                 if no_pilots >= 0:
+                    entry = event.get_entry(self.time, True)
+                    # print(entry)
+                    self.stats.write_trace(entry)
                     self.send_queue.remove(event)
                     del event
                     continue
