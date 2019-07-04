@@ -19,7 +19,7 @@ class Event:
         Pilot id that is assigned during the simulation
     """
 
-    def __init__(self, event_type, event_time, dead_time, node_id):
+    def __init__(self, event_type, event_time, dead_time, node_id, counter):
         """
         Initializes a new event
 
@@ -31,13 +31,20 @@ class Event:
             Positive float (presumably greater than the current time in the simulation)
         node_id : int
             What node (think machine/device) this event belongs to
-        max_attempts : int
-            Maximum number of attempts (in frames) before event expires
         """
 
         self.type = event_type
         self.time = event_time
         self.node_id = node_id
-        # self.attempts_left = max_attempts
         self.dead_time = dead_time
         self.pilot_id = -1
+        self.counter = 0
+        self.trace = {'event_type': event_type, 'node_id': node_id, 'counter': counter,
+                      'arrival_time': event_time, 'dead_time': dead_time, 'departure_time': 0,
+                      'pilot': False}
+
+    def get_entry(self, departure_time, pilot):
+        self.trace['departure_time'] = departure_time
+        self.trace['pilot'] = pilot
+
+        return self.trace
