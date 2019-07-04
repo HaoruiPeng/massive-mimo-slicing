@@ -52,9 +52,6 @@ class Node:
             self.arrival)
         self.event_generator = EventGenerator(self.arrival, self.arrival_parameter)
 
-    def generate(self, node_id):
-        event = Event(node_id)
-
 
 
 

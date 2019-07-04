@@ -35,7 +35,4 @@ class Slice:
 
         self.pool = [Node(self.type) for i in range(self.no_nodes)]
 
-    def generate(self):
-        for n in self.pool:
-            event = n.generate(self.pool.index(n))
 
