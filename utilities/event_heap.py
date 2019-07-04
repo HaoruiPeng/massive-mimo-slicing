@@ -33,7 +33,7 @@ class EventHeap:
         self.__heap = []
         #self.__max_attempts = max_attempts
 
-    def push(self, event_type, event_time, dead_time, node_id, counter):
+    def push(self, event_type, event_time, dead_time=None, node_id=0, counter=0):
         """
         Inserts a new event at the correct time in the event heap
 
