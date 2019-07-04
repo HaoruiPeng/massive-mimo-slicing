@@ -5,7 +5,6 @@ Define slice types for customer groups: URLLC and mMTC
 __author__ = "Haorui Peng"
 
 from slices.node import Node
-from utilities.event import Event
 import json
 
 

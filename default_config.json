@@ -1,7 +1,7 @@
 {
-  "simulation_name": "Slicing Simulation",
+  "simulation_name": "Slicing_Simulation",
   "no_pilots": 12,
   "frame_length": 0.5,
   "simulation_length": 1000,
-  "measurement_period": 2
+  "measurement_period": 5
 }

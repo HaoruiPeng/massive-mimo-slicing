@@ -1,6 +1,6 @@
 import numpy as np
 
-from utilities.event import Event
+from events.event import Event
 from simulation import Simulation
 
 __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"

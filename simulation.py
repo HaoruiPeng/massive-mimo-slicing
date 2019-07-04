@@ -1,5 +1,5 @@
 import sys
-from utilities.event_heap import EventHeap
+from events.event_heap import EventHeap
 from slices.slice import Slice
 
 __author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
@@ -426,8 +426,8 @@ class Simulation:
         """ Runs the simulation """
 
         current_progress = 0
-        print("\n[Time {}] Simulation start.\n".format(self.time))
-        print("Size: {}".format(self.event_heap.get_size()))
+        print("\n[Time {}] Simulation start.".format(self.time))
+        # print("Size: {}".format(self.event_heap.get_size()))
         # for k in self.event_heap.get_heap():
         #     print(k)
         while self.time < self.simulation_length:
@@ -442,10 +442,10 @@ class Simulation:
 
             if progress > current_progress:
                 current_progress = progress
-                str1 = "\r Progress: {0}%".format(progress)
+                str1 = "\rProgress: {0}%".format(progress)
                 sys.stdout.write(str1)
                 sys.stdout.flush()
 
             self.__handle_event(next_event)
 
-        print('\n Simulation complete. Results: \n')
+        print('\n[Time {}] Simulation complete. Results:'.format(self.time))

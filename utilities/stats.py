@@ -171,3 +171,4 @@ class Stats:
         n = len(v)
         delta = 1.96 * (stddev / math.sqrt(n))
         return round(avg.item(), 2), round(delta.item(), 2)
+
