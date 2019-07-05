@@ -10,6 +10,7 @@ import time
 import sys
 import os
 from utilities.stats import Stats
+from utilities.trace import Trace
 from simulation import Simulation
 sys.path.append(os.path.abspath('../'))
 
@@ -27,7 +28,8 @@ if __name__ == '__main__':
     stats_file_path = 'stats/' + time_string + '_' + simulation_name + '_stats.csv'
     trace_file_path = 'trace/' + time_string + '_' + simulation_name + '_event_trace.csv'
     # Initialize stats and logger
-    stats = Stats(stats_file_path, log_file_path, trace_file_path)
+    stats = Stats(stats_file_path, log_file_path)
+    trace = Trace(trace_file_path)
     # TODO: rewrite the measuremnet part and log status and data
     # custom_alarm_arrivals = None
     # custom_control_arrivals = None
@@ -88,7 +90,7 @@ if __name__ == '__main__':
     #         i += 1
     # else:
         # Run a single simulation with default parameters
-    simulation = Simulation(config, stats)
+    simulation = Simulation(config, stats, trace)
     simulation.run()
     # stats.process_results()
     # stats.save_stats()
@@ -96,3 +98,4 @@ if __name__ == '__main__':
 
     # Close files
     stats.close()
+    trace.close()

@@ -29,8 +29,7 @@ class Simulation:
     _URLLC_ARRIVAL = 3
     _mMTC_ARRIVAL = 4
 
-
-    def __init__(self, config, stats):
+    def __init__(self, config, stats, trace):
         """
         Initialize simulation object
 
@@ -46,6 +45,7 @@ class Simulation:
         # TODO: Complete event genertation in simulation first then in the nodes
 
         self.stats = stats
+        self.trace = trace
         self.time = 0.0
 
         # self.seed_counter = self.base_seed
@@ -246,7 +246,7 @@ class Simulation:
                 self.stats.stats['no_missed_mmtc'] += 1
             entry = event.get_entry(self.time, False)
             # print(entry)
-            self.stats.write_trace(entry)
+            self.trace.write_trace(entry)
             del self.send_queue[i]
 
         # if len(remove_indices) > 0:
@@ -336,7 +336,7 @@ class Simulation:
                 # remove the event that assigned the pilots from the list
                 entry = event.get_entry(self.time, True)
                 # print(entry)
-                self.stats.write_trace(entry)
+                self.trace.write_trace(entry)
                 self.send_queue.remove(event)
                 del event
                 continue
@@ -351,7 +351,7 @@ class Simulation:
                 if no_pilots >= 0:
                     entry = event.get_entry(self.time, True)
                     # print(entry)
-                    self.stats.write_trace(entry)
+                    self.trace.write_trace(entry)
                     self.send_queue.remove(event)
                     del event
                     continue
