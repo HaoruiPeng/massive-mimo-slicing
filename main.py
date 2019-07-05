@@ -99,3 +99,5 @@ if __name__ == '__main__':
     # Close files
     stats.close()
     trace.close()
+    trace.process()
+    trace.print_results()

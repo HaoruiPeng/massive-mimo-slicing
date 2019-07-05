@@ -1,7 +1,7 @@
 {
   "urllc": {
     "distribution": "constant",
-    "reliability": "low",
+    "reliability": "high",
     "deadline": "short"
   },
 
@@ -17,7 +17,7 @@
         "mean_arrival_time": 1000
       },
       "constant": {
-        "arrival_time": 1,
+        "arrival_time": 10,
         "seed": true
       },
       "uniform": {
@@ -26,7 +26,7 @@
     },
     "mmtc": {
       "exponential": {
-        "mean_arrival_time": 10
+        "mean_arrival_time": 50
       },
       "constant": {
         "arrival_time": 5,

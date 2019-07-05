@@ -339,7 +339,6 @@ class Simulation:
                 self.trace.write_trace(entry)
                 self.send_queue.remove(event)
                 del event
-                continue
             else:
                 break
 
@@ -354,7 +353,6 @@ class Simulation:
                     self.trace.write_trace(entry)
                     self.send_queue.remove(event)
                     del event
-                    continue
                 else:
                     break
 
