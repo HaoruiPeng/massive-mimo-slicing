@@ -447,3 +447,16 @@ class Simulation:
             self.__handle_event(next_event)
 
         print('\n[Time {}] Simulation complete. Results:'.format(self.time))
+
+    def write_result(self):
+        file = open("result.csv", 'a')
+        file.write(str(self.Slices[0].no_nodes) + ','
+                   + str(self.Slices[1].no_nodes) + ','
+                   + str(self.trace.get_waiting_time()[0]) + ','
+                   + str(self.trace.get_waiting_time()[1]) + ','
+                   + str(self.trace.get_loss_rate()[0]) + ','
+                   + str(self.trace.get_loss_rate()[1]) + '\n'
+                   )
+        file.close()
+
+

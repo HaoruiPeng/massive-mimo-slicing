@@ -100,4 +100,5 @@ if __name__ == '__main__':
     stats.close()
     trace.close()
     trace.process()
-    trace.print_results()
+    simulation.write_result()
+    # trace.write_trace()
