@@ -1,8 +1,8 @@
 {
   "urllc": {
     "distribution": "constant",
-    "reliability": "high",
-    "deadline": "short"
+    "reliability": "low",
+    "deadline": "long"
   },
 
   "mmtc" :{
