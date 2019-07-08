@@ -109,3 +109,4 @@ venv.bak/
 #unused scheduling algorithms
 /huffman
 /binary
+.DS_Store
