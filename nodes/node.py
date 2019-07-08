@@ -49,8 +49,8 @@ class Node:
         self.arrival_parameter = config.get('arrival_distributions_par').get(
             self.slice_name).get(
             self.arrival)
+        if len(self.arrival_parameter) == 0:
+            self.arrival_parameter = self.deadline
+
         self.event_generator = EventGenerator(self.arrival, self.arrival_parameter)
-
-
-
 

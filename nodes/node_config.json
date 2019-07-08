@@ -16,8 +16,7 @@
       "exponential": {
         "mean_arrival_time": 1000
       },
-      "constant": {
-
+      "constant":{
       },
       "uniform": {
         "max_arrival_time": 4000
