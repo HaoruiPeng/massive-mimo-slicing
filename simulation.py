@@ -241,12 +241,14 @@ class Simulation:
             if event.type == self._URLLC_ARRIVAL:
                 urllc_counter += 1
                 self.stats.stats['no_missed_urllc'] += 1
+                entry = event.get_entry(self.time, False)
+                self.trace.write_trace(entry)
             elif event.type == self._mMTC_ARRIVAL:
                 mmtc_counter += 1
                 self.stats.stats['no_missed_mmtc'] += 1
-            entry = event.get_entry(self.time, False)
+                entry = event.get_entry(self.time, False)
             # print(entry)
-            self.trace.write_trace(entry)
+                self.trace.write_trace(entry)
             del self.send_queue[i]
 
         # if len(remove_indices) > 0:
@@ -449,7 +451,7 @@ class Simulation:
         print('\n[Time {}] Simulation complete. Results:'.format(self.time))
 
     def write_result(self):
-        file = open("result.csv", 'a')
+        file = open("results/result.csv", 'a')
         file.write(str(self.Slices[0].no_nodes) + ','
                    + str(self.Slices[1].no_nodes) + ','
                    + str(self.trace.get_waiting_time()[0]) + ','
