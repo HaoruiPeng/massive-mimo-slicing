@@ -110,3 +110,4 @@ venv.bak/
 /huffman
 /binary
 .DS_Store
+*/tmp*
