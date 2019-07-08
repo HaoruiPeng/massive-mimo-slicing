@@ -6,7 +6,7 @@ import numpy as np
 
 result_path = "results/"
 figure_path = "plots/"
-file_name = "result_low_long"
+file_name = "result_high_short"
 path = result_path + file_name + ".csv"
 Dict = {}
 keys = []
@@ -48,21 +48,21 @@ _m_no, _u_no = np.meshgrid(m_no, u_no)
 cmap = plt.get_cmap('magma_r')
 
 fig_u_wait = plt.figure(file_name + "_urllc_wait")
-plt.contourf(_u_no, _m_no, _u_wait, levels=np.linspace(0, 0.5, 100), cmap=cmap)
+plt.contourf(_u_no, _m_no, _u_wait, levels=np.linspace(0, 1, 100), cmap=cmap)
 plt.colorbar()
 plt.xlabel("No. of URLLC nodes")
 plt.ylabel("No. of mMTC nodes")
 plt.savefig(figure_path + file_name + "/URLLC_wait.png")
 
 fig_m_wait = plt.figure(file_name + "_mmtc_wait")
-plt.contourf(_u_no, _m_no, _m_wait, levels=np.linspace(0, 100, 100), cmap=cmap)
+plt.contourf(_u_no, _m_no, _m_wait, levels=np.linspace(0, 101, 100), cmap=cmap)
 plt.colorbar()
 plt.xlabel("No. of URLLC nodes")
 plt.ylabel("No. of mMTC nodes")
 plt.savefig(figure_path + file_name + "/mMTC_wait.png")
 
 fig_u_loss = plt.figure(file_name + "_urllc_loss")
-plt.contourf(_u_no, _m_no, _u_loss, levels=np.linspace(0, 0.5, 100), cmap=cmap)
+plt.contourf(_u_no, _m_no, _u_loss, levels=np.linspace(0, 1, 100), cmap=cmap)
 plt.colorbar()
 plt.xlabel("No. of URLLC nodes")
 plt.ylabel("No. of mMTC nodes")
