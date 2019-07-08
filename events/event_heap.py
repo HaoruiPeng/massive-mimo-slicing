@@ -47,9 +47,6 @@ class EventHeap:
             What node (i.e. machine/device) this event belongs to
         """
 
-        #if dead_time is None:
-         #   max_attempts = self.__max_attempts
-
         new_event = Event(event_type, event_time, dead_time, node_id, counter)
         heapq.heappush(self.__heap, (event_time, event_type, self.__key, new_event))
         self.__key += 1
