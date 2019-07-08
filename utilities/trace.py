@@ -65,7 +65,7 @@ class Trace:
         arrival_time = self.urllc['arrival_time']
         departure_time = self.urllc['departure_time']
         pilots = self.urllc['pilot']
-        wait_time = departure_time - arrival_time
+        wait_time = np.array(departure_time) - np.array(arrival_time)
 
         for ind in range(len(pilots)):
             if not pilots[ind]:
@@ -93,26 +93,13 @@ class Trace:
         arrival_time = self.mmtc['arrival_time']
         departure_time = self.mmtc['departure_time']
         pilots = self.mmtc['pilot']
-        wait_time = departure_time - arrival_time
+        wait_time = np.array(departure_time) - np.array(arrival_time)
 
         for ind in range(len(pilots)):
             if not pilots[ind]:
                 np.delete(wait_time, ind)
         avg_wait = np.mean(wait_time)
         return avg_wait
-
-    def create_plots(self):
-        time_string = time.strftime('%Y%m%d_%H%M%S')
-        self.plot_path = "/plots/" + time_string
-        try:
-            os.mkdir(self.plot_path)
-        except OSError:
-            print("Failed to create plots directory {}".format(self.plot_path))
-            return False
-        else:
-            print("Plots directory {} created".format(self.plot_path))
-            return True
-        pass
 
     def print_results(self):
         print("------------------------------------------------------")
