@@ -41,9 +41,6 @@ class Simulation:
             Statistics object for keeping track for measurements
         """
 
-        # TODO: Initialize slice objects and generate events in the nodes that subscribe to each slice
-        # TODO: Complete event genertation in simulation first then in the nodes
-
         self.stats = stats
         self.trace = trace
         self.time = 0.0
@@ -77,7 +74,7 @@ class Simulation:
         counter = 0
         # print("[Time {}] Initial {} nodes.".format(self.time, len(nodes)))
         for _node in nodes:
-            next_arrival = _node.event_generator.get_next()
+            next_arrival = _node.event_generator.get_init()
             if _slice.type == self._URLLC:
                 self.stats.stats['no_urllc_arrivals'] += 1
                 counter = self.stats.stats['no_urllc_arrivals']

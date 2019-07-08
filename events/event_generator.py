@@ -44,6 +44,12 @@ class EventGenerator:
             'constant': self.__constant
         }
 
+        self.init_mapping = {
+            'exponential': self.__exponential,
+            'uniform': self.__uniform,
+            'constant': self.__constant_init
+        }
+
         self.seed_counter = None
 
     def get_next(self):
@@ -58,6 +64,9 @@ class EventGenerator:
 
         return self.mapping[self.__distribution]()
 
+    def get_init(self):
+        return self.init_mapping[self.__distribution]()
+
     def __exponential(self):
         # Returns float from an exponential distribution
 
@@ -70,9 +79,8 @@ class EventGenerator:
 
     def __constant(self):
         # Returns a float from a constant distribution with noise
-        if self.__settings.get('seed'):
-            self.seed_counter = int(time.time())
-            # np.random.seed(self.seed_counter)
-            return self.__settings.get('arrival_time') * np.random.normal(1, 0.05)
-        else:
-            return self.__settings.get('arrival_time')
+        return self.__settings * np.random.normal(1, 0.05)
+
+    def __constant_init(self):
+        return self.__settings * np.random.normal(1, 0.5)
+
