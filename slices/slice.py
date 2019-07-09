@@ -19,8 +19,8 @@ class Slice:
 
     """
 
-    _URLLC = 1
-    _mMTC = 2
+    _URLLC = 0
+    _mMTC = 1
 
     def __init__(self, slice_type):
         with open('slices/slice_config.json') as config_file:
@@ -33,5 +33,8 @@ class Slice:
             self.no_nodes = config.get("no_mmtc_nodes")
 
         self.pool = [Node(self.type) for i in range(self.no_nodes)]
+
+    def get_node(self, node_id):
+        return self.pool[node_id]
 
 

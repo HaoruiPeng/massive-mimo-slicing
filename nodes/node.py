@@ -21,8 +21,8 @@ class Node:
     deadline
     """
 
-    _URLLC = 1
-    _mMTC = 2
+    _URLLC = 0
+    _mMTC = 1
 
     # the nodes generator the event periodically
     def __init__(self, slice_id):
@@ -53,4 +53,5 @@ class Node:
             self.arrival_parameter = self.deadline
 
         self.event_generator = EventGenerator(self.arrival, self.arrival_parameter)
+        self.active = False
 
