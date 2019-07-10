@@ -13,10 +13,12 @@ class Event:
         Positive float (presumably greater than the current time in the simulation)
     node_id : int
         What node (think machine/device) this event belongs to
-    attempts_left : int
-        Number of attempts (in frames) left before events expires (defaults to max_attempts)
-    pilot_id : int
-        Pilot id that is assigned during the simulation
+    dead_time: float
+        Positive float, at which the event is dropped when no pilot has been assigned yet
+    counter: int
+        Count how many packets have arrived
+    trace: dictionary
+        Trace the life time of a packet
     """
 
     def __init__(self, event_type, event_time, dead_time=None, node_id=0, counter=0):
@@ -37,7 +39,6 @@ class Event:
         self.time = event_time
         self.node_id = node_id
         self.dead_time = dead_time
-        self.pilot_id = -1
         self.counter = 0
         self.trace = {'event_type': event_type, 'node_id': node_id, 'counter': counter,
                       'arrival_time': event_time, 'dead_time': dead_time, 'departure_time': 0,

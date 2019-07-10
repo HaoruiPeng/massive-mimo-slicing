@@ -7,6 +7,7 @@ __author__ = "Haorui Peng"
 from events.event_generator import EventGenerator
 import json
 
+
 class Node:
 
     """

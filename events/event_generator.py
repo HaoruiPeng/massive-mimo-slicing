@@ -18,8 +18,6 @@ class EventGenerator:
             Dictionary of parameters for the specified distribution. Needed parameters are:
                 - Exponential: mean_arrival_time (mean arrival time)
                 - Constant: arrival_time (arrival time)
-        use_seed : bool
-            Specifies if a seed should be used for the random number generation
 
     """
 
