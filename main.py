@@ -1,8 +1,6 @@
 """
-Massive MIMO factory simulation
+Massive MIMO Network slicing on MAC layer simulation
 
-This library provides a network simulator for a factory floor with a number of machines with control traffic and a
-number of alarm nodes with alarm traffic. The library is built to be highly configurable.
 """
 
 import json
