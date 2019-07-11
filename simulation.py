@@ -1,4 +1,5 @@
 import sys
+import os
 from events.event_heap import EventHeap
 from slices.slice import Slice
 
@@ -240,17 +241,6 @@ class Simulation:
 
         print('\n[Time {}] Simulation complete. Results:'.format(self.time))
 
-    def write_result(self):
-        file = open("results/result.csv", 'a')
-        file.write(str(self.Slices[0].no_nodes) + ','
-                   + str(self.Slices[1].no_nodes) + ','
-                   + str(self.trace.get_waiting_time()[0]) + ','
-                   + str(self.trace.get_waiting_time()[1]) + ','
-                   + str(self.trace.get_loss_rate()[0]) + ','
-                   + str(self.trace.get_loss_rate()[1]) + '\n'
-                   )
-        file.close()
-
     def __fist_come_first_served(self):
         no_pilots = self.no_pilots
         urllc_events = self.send_queue['_URLLC']
@@ -340,5 +330,36 @@ class Simulation:
                         break
         self.__handle_send_queue()
 
+    def write_result(self):
+        dir = "results/"+self.pilot_strategy
+        reliability = self.Slices[self._URLLC].get_node(0).reliability_profile
+        deadline = self.Slices[self._URLLC].get_node(0).deadline_profile
+        file_name = dir + "/" + reliability + "_" + deadline + ".csv"
+        try:
+            os.mkdir(dir)
+        except OSError:
+            print("Directory exists")
+
+        try:
+            file = open(file_name, 'a')
+            file.write(str(self.Slices[0].no_nodes) + ','
+                       + str(self.Slices[1].no_nodes) + ','
+                       + str(self.trace.get_waiting_time()[0]) + ','
+                       + str(self.trace.get_waiting_time()[1]) + ','
+                       + str(self.trace.get_loss_rate()[0]) + ','
+                       + str(self.trace.get_loss_rate()[1]) + '\n'
+                       )
+        except FileNotFoundError:
+            print("No file found, create the file first")
+            file = open(file_name, 'w+')
+            file.write("No.URLLC,No.mMTC,URLLC_wait,mMTC_wait,URLLC_loss,mMTC_loss\n")
+            file.write(str(self.Slices[0].no_nodes) + ','
+                       + str(self.Slices[1].no_nodes) + ','
+                       + str(self.trace.get_waiting_time()[0]) + ','
+                       + str(self.trace.get_waiting_time()[1]) + ','
+                       + str(self.trace.get_loss_rate()[0]) + ','
+                       + str(self.trace.get_loss_rate()[1]) + '\n'
+                       )
+        file.close()
 
 
