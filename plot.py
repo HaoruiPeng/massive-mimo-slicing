@@ -6,74 +6,49 @@ import numpy as np
 
 result_path = "results/"
 figure_path = "plots/"
-file_name = "result_high_short"
-path = result_path + file_name + ".csv"
-Dict = {}
-keys = []
+strategy_name = "RR_NQ"
+file_name = "high_short"
+path = result_path + strategy_name + "/" +file_name + ".csv"
+keys = ['No.URLLC', 'No.mMTC', 'URLLC_wait_time', 'mMTC_wait_time', 'URLLC_loss_rate', 'mMTC_loss_rate']
+Dict = dict((key, []) for key in keys)
+
 with open(path) as file:
     csv_reader = csv.reader(file, delimiter=',')
-    line_count = 0
     for line in csv_reader:
-        if line_count == 0:
-            keys = line.copy()
-            Dict = dict((key, []) for key in line)
-            line_count += 1
-        else:
-            for i in range(len(line)):
-                value = float(line[i])
-                Dict[keys[i]] = np.append(Dict[keys[i]], value)
-            line_count += 1
-
-# URLLC = {Dict[keys[0]], Dict[keys[2]], Dict[keys[4]]}
-# mMTC = {Dict[keys[1]], Dict[keys[3]], Dict[keys[5]]}
+        for i in range(len(line)):
+            value = float(line[i])
+            Dict[keys[i]] = np.append(Dict[keys[i]], value)
 
 try:
-    os.mkdir(figure_path + file_name)
+    os.makedirs(figure_path + strategy_name + '/' + file_name)
 except OSError:
-    print("Failed to create figure directory " + file_name + "/")
+    print("Failed to create figure directory " + strategy_name + '/' + file_name + "/")
     print("Directory exists")
 
-# print(Dict[keys[0]])
 
 u_no = np.array(range(int(np.min(Dict[keys[0]])), int(np.max(Dict[keys[0]]))+1))
 m_no = np.array(range(int(np.min(Dict[keys[1]])), int(np.max(Dict[keys[1]])+1), 500))
 
-_u_wait = Dict[keys[2]].reshape(len(u_no), len(m_no))
-_m_wait = Dict[keys[3]].reshape(len(u_no), len(m_no))
-_u_loss = Dict[keys[4]].reshape(len(u_no), len(m_no))
-_m_loss = Dict[keys[5]].reshape(len(u_no), len(m_no))
+new_keys = keys[2:6]
+figs = {}
+print(new_keys)
 
-_m_no, _u_no = np.meshgrid(m_no, u_no)
-
-cmap = plt.get_cmap('magma_r')
-
-fig_u_wait = plt.figure(file_name + "_urllc_wait")
-plt.contourf(_u_no, _m_no, _u_wait, levels=np.linspace(0, 1, 100), cmap=cmap)
-plt.colorbar()
-plt.xlabel("No. of URLLC nodes")
-plt.ylabel("No. of mMTC nodes")
-plt.savefig(figure_path + file_name + "/URLLC_wait.png")
-
-fig_m_wait = plt.figure(file_name + "_mmtc_wait")
-plt.contourf(_u_no, _m_no, _m_wait, levels=np.linspace(0, 101, 100), cmap=cmap)
-plt.colorbar()
-plt.xlabel("No. of URLLC nodes")
-plt.ylabel("No. of mMTC nodes")
-plt.savefig(figure_path + file_name + "/mMTC_wait.png")
-
-fig_u_loss = plt.figure(file_name + "_urllc_loss")
-plt.contourf(_u_no, _m_no, _u_loss, levels=np.linspace(0, 1, 100), cmap=cmap)
-plt.colorbar()
-plt.xlabel("No. of URLLC nodes")
-plt.ylabel("No. of mMTC nodes")
-plt.savefig(figure_path + file_name + "/URLLC_loss.png")
-
-fig_m_loss = plt.figure(file_name + "_mmtc_loss")
-plt.contourf(_u_no, _m_no, _m_loss, levels=np.linspace(0, 1, 100), cmap=cmap)
-plt.colorbar()
-plt.xlabel("No. of URLLC nodes")
-plt.ylabel("No. of mMTC nodes")
-plt.savefig(figure_path + file_name + "/mMTC_loss.png")
+for k in new_keys:
+    figs[k], axs = plt.subplots(1, 2, sharey='all', figsize=(20, 8))
+    figs[k].suptitle(k)
+    for u in u_no:
+        ind_list = np.where(Dict[keys[0]] == u)
+        m = Dict[keys[1]][ind_list]
+        result_1 = Dict[k][ind_list]
+        axs[0].plot(m, result_1, label=str(u))
+    axs[0].legend(loc='upper right')
+    for m in m_no:
+        ind_list = np.where(Dict[keys[1]] == m)
+        u = Dict[keys[0]][ind_list]
+        result_2 = Dict[k][ind_list]
+        axs[1].plot(u, result_2, label=str(m))
+    axs[1].legend(loc='upper right')
+    plt.savefig(figure_path + strategy_name + '/' + file_name + "/" + k + ".png")
 
 plt.show()
 
