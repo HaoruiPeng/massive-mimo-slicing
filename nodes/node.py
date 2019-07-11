@@ -39,14 +39,14 @@ class Node:
         self.data_rate = 10
         self.arrival = config.get(self.slice_name).get(
             'distribution')
-        deadline_profile = config.get(self.slice_name).get(
+        self.deadline_profile = config.get(self.slice_name).get(
             'deadline')
-        reliability_profile = config.get(self.slice_name).get(
+        self.reliability_profile = config.get(self.slice_name).get(
             'reliability')
         self.deadline = config.get('deadline_par').get(
-            deadline_profile)
+            self.deadline_profile)
         self.pilot_samples = config.get('reliability_par').get(
-            reliability_profile)
+            self.reliability_profile)
         self.arrival_parameter = config.get('arrival_distributions_par').get(
             self.slice_name).get(
             self.arrival)
