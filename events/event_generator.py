@@ -80,5 +80,5 @@ class EventGenerator:
         return self.__settings * np.random.normal(1, 0.05)
 
     def __constant_init(self):
-        return self.__settings * np.random.normal(1, 0.5)
+        return abs(np.random.normal(0, 0.5))
 
