@@ -1,5 +1,6 @@
 #!/bin/bash
-
+jq '.no_urllc_nodes = 4 | .no_mmtc_nodes = 0' slices/slice_config.json > slices/tmp.json
+cp slices/tmp.json slices/slice_config.json
 for U in 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
 do
     jq '.no_urllc_nodes += 1' slices/slice_config.json > slices/tmp.json
@@ -14,4 +15,3 @@ do
         python3 main.py
     done
 done
-
