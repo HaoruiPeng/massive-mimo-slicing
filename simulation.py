@@ -103,7 +103,6 @@ class Simulation:
         # print("[Time {}] No. of urllc_arrivals: {}".format(self.time, self.stats.stats['no_urllc_arrivals']))
         # Store event in send queue until departure (as LIFO)
         self.send_queue['_URLLC'].insert(0, event)
-        # Add a new alarm arrival event to the event list
         node = self.Slices[self._URLLC].get_node(event.node_id)
         node.active = True
         next_arrival = node.event_generator.get_next()
@@ -118,7 +117,6 @@ class Simulation:
         # print("[Time {}] No. of mmtc_arrivals: {}".format(self.time, self.stats.stats['no_mmtc_arrivals']))
         # Store event in send queue until departure (as LIFO)
         self.send_queue['_mMTC'].insert(0, event)
-    # Add new control arrival event to the event list
 
         node = self.Slices[self._mMTC].get_node(event.node_id)
         node.active = True
@@ -243,10 +241,10 @@ class Simulation:
 
     def __fist_come_first_served(self):
         no_pilots = self.no_pilots
-        urllc_events = self.send_queue['_URLLC']
-        mmtc_events = self.send_queue['_mMTC']
+        urllc_events = self.send_queue['_URLLC'].copy()
+        mmtc_events = self.send_queue['_mMTC'].copy()
 
-        urllc_events.sort(key=lambda x: x.dead_time, reverse=True)
+        urllc_events.sort(key=lambda x: x.dead_time)
         for event in urllc_events:
             urllc_pilots = self.Slices[self._URLLC].get_node(event.node_id).pilot_samples
             no_pilots -= urllc_pilots
@@ -256,12 +254,13 @@ class Simulation:
                 # print(entry)
                 self.trace.write_trace(entry)
                 self.send_queue['_URLLC'].remove(event)
-                del event
+                # print(no_pilots, len(self.send_queue['_URLLC']), len(urllc_events))
             else:
-                return
+                # print("pilot not enough")
+                break
 
         if no_pilots > 0:
-            mmtc_events.sort(key=lambda x: x.dead_time, reverse=True)
+            mmtc_events.sort(key=lambda x: x.dead_time)
             for event in mmtc_events:
                 mmtc_pilots = self.Slices[self._mMTC].get_node(event.node_id).pilot_samples
                 no_pilots -= mmtc_pilots
@@ -270,9 +269,8 @@ class Simulation:
                     # print(entry)
                     self.trace.write_trace(entry)
                     self.send_queue['_mMTC'].remove(event)
-                    del event
                 else:
-                    return
+                    break
 
     def __round_robin_queue_info(self):
         no_pilots = self.no_pilots
