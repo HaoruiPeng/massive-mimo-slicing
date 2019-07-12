@@ -326,14 +326,14 @@ class Simulation:
             for event in events_assigend:
                 events_from_same_node = list(filter(lambda e: e.node_id == event.node_id, events_assigend))
                 if len(events_from_same_node) == 1:
-                    # self.send_queue[key].remove(event)
+                    self.send_queue[key].remove(event)
                     # if event.type == self._URLLC_ARRIVAL:
                     #     print(event.node_id)
                     entry = event.get_entry(self.time, True)
                     self.trace.write_trace(entry)
                     self.Slices[s].get_node(event.node_id).active = False
                 else:
-                    # self.Slices[s].get_node(event.node_id).active = True
+                    self.Slices[s].get_node(event.node_id).active = True
                     # if event.type == self._URLLC_ARRIVAL:
                     #     print("overlapped")
                     events_from_same_node.sort(key=lambda e: e.dead_time)
