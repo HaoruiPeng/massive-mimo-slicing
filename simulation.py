@@ -62,6 +62,7 @@ class Simulation:
         self.frame_counter = 0
         self.frame_loops = self.Slices[self._URLLC].get_node(0).deadline / self.frame_length
         self.node_pointer = 0
+        # print(self.frame_loops)
 
         for s in self.Slices:
             # Initialize nodes and their arrival times
@@ -185,32 +186,6 @@ class Simulation:
     def __assign_pilots(self):
         self.strategy_mapping[self.pilot_strategy]()
 
-    def __handle_send_queue(self):
-        # Used only for RR_NQ method, applied after pilots assignment
-        for key in self.send_queue:
-            if key == '_URLLC':
-                s = self._URLLC
-            else:
-                s = self._mMTC
-            queue = self.send_queue[key]
-            events_assigend = list(filter(lambda e: not self.Slices[s].get_node(e.node_id).active, queue))
-            for event in events_assigend:
-                events_from_same_node = list(filter(lambda e: e.node_id == event.node_id, events_assigend))
-                if len(events_from_same_node) == 1:
-                    events_assigend.remove(event)
-                    self.send_queue[key].remove(event)
-                    entry = event.get_entry(self.time, True)
-                    self.trace.write_trace(entry)
-                    del event
-                else:
-                    self.Slices[s].get_node(event.node_id).active = True
-                    events_from_same_node.sort(key=lambda e: e.dead_time)
-                    self.send_queue[key].remove(events_from_same_node[0])
-                    entry = events_from_same_node[0].get_entry(self.time, True)
-                    self.trace.write_trace(entry)
-                    for e in events_from_same_node:
-                        events_assigend.remove(e)
-
     def run(self):
         """ Runs the simulation """
 
@@ -305,16 +280,20 @@ class Simulation:
 
     def __round_robin_no_queue_info(self):
         self.frame_counter = (self.frame_counter + 1) % self.frame_loops
+        # print('\n' + str(self.frame_counter))
         if self.frame_counter == 1:
             self.node_pointer = 0
         start_ind = self.node_pointer
         no_pilots = self.no_pilots
+        for s in self.Slices:
+            for n in s.pool:
+                n.assigned = False
         for i in range(start_ind, len(self.Slices[self._URLLC].pool)):
             _node = self.Slices[self._URLLC].get_node(i)
             no_pilots -= _node.pilot_samples
             if no_pilots >= 0:
                 self.node_pointer += 1
-                _node.active = False
+                _node.assigned = True
             else:
                 no_pilots += _node.pilot_samples
                 break
@@ -323,10 +302,48 @@ class Simulation:
                 if _node.active:
                     no_pilots -= _node.pilot_samples
                     if no_pilots >= 0:
-                        _node.active = False
+                        _node.assigned = True
                     else:
                         break
+        # for i in range(0, len(self.Slices[self._URLLC].pool)):
+        #     if self.Slices[self._URLLC].get_node(i).assigned:
+        #         print(i, end='\ ')
+        # print()
         self.__handle_send_queue()
+
+    def __handle_send_queue(self):
+        # Used only for RR_NQ method, applied after pilots assignment
+        for key in self.send_queue:
+            if key == '_URLLC':
+                s = self._URLLC
+            else:
+                s = self._mMTC
+            queue = self.send_queue[key].copy()
+            events_assigend = list(filter(lambda e: self.Slices[s].get_node(e.node_id).assigned, queue))
+            # if key == '_URLLC':
+            #     print([e.node_id for e in queue])
+            #     print([e.node_id for e in events_assigend])
+            for event in events_assigend:
+                events_from_same_node = list(filter(lambda e: e.node_id == event.node_id, events_assigend))
+                if len(events_from_same_node) == 1:
+                    # self.send_queue[key].remove(event)
+                    # if event.type == self._URLLC_ARRIVAL:
+                    #     print(event.node_id)
+                    entry = event.get_entry(self.time, True)
+                    self.trace.write_trace(entry)
+                    self.Slices[s].get_node(event.node_id).active = False
+                else:
+                    # self.Slices[s].get_node(event.node_id).active = True
+                    # if event.type == self._URLLC_ARRIVAL:
+                    #     print("overlapped")
+                    events_from_same_node.sort(key=lambda e: e.dead_time)
+                    self.send_queue[key].remove(events_from_same_node[0])
+                    entry = events_from_same_node[0].get_entry(self.time, True)
+                    # if event.type == self._URLLC_ARRIVAL:
+                    #     print(events_from_same_node[0].node_id)
+                    self.trace.write_trace(entry)
+                    for e in events_from_same_node:
+                        events_assigend.remove(e)
 
     def write_result(self):
         dir = "results/"+self.pilot_strategy
