@@ -55,4 +55,5 @@ class Node:
 
         self.event_generator = EventGenerator(self.arrival, self.arrival_parameter)
         self.active = False
+        self.assigned = False
 
