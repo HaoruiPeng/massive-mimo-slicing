@@ -37,4 +37,7 @@ class Slice:
     def get_node(self, node_id):
         return self.pool[node_id]
 
+    def get_index(self, node):
+        return self.pool.index(node)
+
 
