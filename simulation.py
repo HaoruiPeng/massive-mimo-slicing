@@ -62,7 +62,7 @@ class Simulation:
         self.frame_counter = 0
         self.frame_loops = self.Slices[self._URLLC].get_node(0).deadline / self.frame_length
         self.node_pointer = 0
-        # print(self.frame_loops)
+        print(self.frame_loops)
 
         for s in self.Slices:
             # Initialize nodes and their arrival times
@@ -280,7 +280,7 @@ class Simulation:
 
     def __round_robin_no_queue_info(self):
         self.frame_counter = (self.frame_counter + 1) % self.frame_loops
-        # print('\n' + str(self.frame_counter))
+        # print('\n' + str(self.time))
         if self.frame_counter == 1:
             self.node_pointer = 0
         start_ind = self.node_pointer
@@ -323,7 +323,10 @@ class Simulation:
             # if key == '_URLLC':
             #     print([e.node_id for e in queue])
             #     print([e.node_id for e in events_assigend])
+            overlapped_event = []
             for event in events_assigend:
+                if event in overlapped_event:
+                    continue
                 events_from_same_node = list(filter(lambda e: e.node_id == event.node_id, events_assigend))
                 if len(events_from_same_node) == 1:
                     self.send_queue[key].remove(event)
@@ -334,16 +337,17 @@ class Simulation:
                     self.Slices[s].get_node(event.node_id).active = False
                 else:
                     self.Slices[s].get_node(event.node_id).active = True
-                    # if event.type == self._URLLC_ARRIVAL:
-                    #     print("overlapped")
+                    # print("overlapped")
                     events_from_same_node.sort(key=lambda e: e.dead_time)
+                    # print([(e.node_id, e.counter) for e in events_from_same_node])
+                    # print([(e.node_id, e.counter) for e in self.send_queue[key]])
                     self.send_queue[key].remove(events_from_same_node[0])
                     entry = events_from_same_node[0].get_entry(self.time, True)
                     # if event.type == self._URLLC_ARRIVAL:
                     #     print(events_from_same_node[0].node_id)
                     self.trace.write_trace(entry)
                     for e in events_from_same_node:
-                        events_assigend.remove(e)
+                        overlapped_event.append(e)
 
     def write_result(self):
         dir = "results/"+self.pilot_strategy
