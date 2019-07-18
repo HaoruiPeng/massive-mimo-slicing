@@ -22,7 +22,7 @@ class Slice:
     _URLLC = 0
     _mMTC = 1
 
-    def __init__(self, slice_type):
+    def __init__(self, slice_type, traffic=None):
         with open('slices/slice_config.json') as config_file:
             config = json.load(config_file)
 
@@ -32,7 +32,7 @@ class Slice:
         elif self.type == self._mMTC:
             self.no_nodes = config.get("no_mmtc_nodes")
 
-        self.pool = [Node(self.type) for i in range(self.no_nodes)]
+        self.pool = [Node(self.type, traffic) for i in range(self.no_nodes)]
 
     def get_node(self, node_id):
         return self.pool[node_id]

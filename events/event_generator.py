@@ -1,8 +1,6 @@
 import numpy as np
 import time
 
-__author__ = "Jon Stålhammar, Christian Lejdström, Emma Fitzgerald"
-
 
 class EventGenerator:
     """

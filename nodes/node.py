@@ -26,7 +26,7 @@ class Node:
     _mMTC = 1
 
     # the nodes generator the event periodically
-    def __init__(self, slice_id):
+    def __init__(self, slice_id, traffic=None):
         with open('nodes/node_config.json') as config_file:
             config = json.load(config_file)
         self.slice = slice_id
@@ -39,10 +39,14 @@ class Node:
         self.data_rate = 10
         self.arrival = config.get(self.slice_name).get(
             'distribution')
-        self.deadline_profile = config.get(self.slice_name).get(
-            'deadline')
-        self.reliability_profile = config.get(self.slice_name).get(
-            'reliability')
+        if traffic is not None:
+            self.reliability_profile = traffic[0]
+            self.deadline_profile = traffic[1]
+        else:
+            self.deadline_profile = config.get(self.slice_name).get(
+                'deadline')
+            self.reliability_profile = config.get(self.slice_name).get(
+                'reliability')
         self.deadline = config.get('deadline_par').get(
             self.deadline_profile)
         self.pilot_samples = config.get('reliability_par').get(

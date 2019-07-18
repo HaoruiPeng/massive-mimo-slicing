@@ -22,11 +22,10 @@ class Simulation:
     _mMTC = 1
 
     _DEPARTURE = 2
-    _MEASURE = 1
     _URLLC_ARRIVAL = 3
     _mMTC_ARRIVAL = 4
 
-    def __init__(self, config, stats, trace):
+    def __init__(self, config, stats, trace, scheduler=None, traffic=None):
         """
         Initialize simulation object
 
@@ -45,8 +44,10 @@ class Simulation:
         self.no_pilots = config.get('no_pilots')
         self.simulation_length = config.get('simulation_length')
         self.frame_length = config.get('frame_length')
-        self.measurement_period = config.get('measurement_period')
-        self.pilot_strategy = config.get('strategy')
+        if scheduler is not None:
+            self.pilot_strategy = scheduler
+        else:
+            self.pilot_strategy = config.get('strategy')
 
         self.strategy_mapping = {
             'FCFS': self.__fist_come_first_served,
@@ -58,7 +59,7 @@ class Simulation:
         self.send_queue = {'_URLLC': [], '_mMTC': []}
         # used only in method "RR_NQ"
 
-        self.Slices = [Slice(self._URLLC), Slice(self._mMTC)]
+        self.Slices = [Slice(self._URLLC, traffic), Slice(self._mMTC)]
         self.frame_counter = 0
         self.frame_loops = self.Slices[self._URLLC].get_node(0).deadline / self.frame_length
         self.node_pointer = 0
@@ -70,7 +71,6 @@ class Simulation:
 
         # Initialize departure and measurement event
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length)
-        self.event_heap.push(self._MEASURE, self.time + self.measurement_period)
 
     def __initialize_nodes(self, _slice):
         nodes = _slice.pool
@@ -93,9 +93,7 @@ class Simulation:
         event_actions = {
             self._URLLC_ARRIVAL: self.__handle_urllc_arrival,
             self._mMTC_ARRIVAL: self.__handle_mmtc_arrival,
-            self._DEPARTURE: self.__handle_departure,
-            self._MEASURE: self.__handle_measurement}
-
+            self._DEPARTURE: self.__handle_departure}
         event_actions[event.type](event)
 
     def __handle_urllc_arrival(self, event):
@@ -136,17 +134,6 @@ class Simulation:
         # self.__check_collisions()
         # Add new departure event to the event list
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length)
-
-    def __handle_measurement(self, event):
-        # Take measurement of the send queue
-
-        del event
-        self.stats.stats['no_measurements'] += 1
-
-        # measurements = self.__get_send_queue_info()
-        # print("[Time {}] No.URLLC: {} No.mMTC: {}".format(self.time, measurements[0], measurements[1]))
-        # Add a new measure event to the event list
-        self.event_heap.push(self._MEASURE, self.time + self.measurement_period)
 
     def __handle_expired_events(self):
         # remove the expired events in the send_queue

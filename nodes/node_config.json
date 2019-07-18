@@ -1,7 +1,7 @@
 {
   "urllc": {
     "distribution": "constant",
-    "reliability": "high",
+    "reliability": "low",
     "deadline": "short"
   },
 
