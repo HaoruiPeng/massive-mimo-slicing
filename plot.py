@@ -6,8 +6,8 @@ import numpy as np
 
 result_path = "results/"
 figure_path = "plots/"
-strategy_name = "RR_NQ"
-file_name = "high_short"
+strategy_name = "RR_Q"
+file_name = "low_short"
 path = result_path + strategy_name + "/" +file_name + ".csv"
 keys = ['No.URLLC', 'No.mMTC', 'URLLC_wait_time', 'mMTC_wait_time', 'URLLC_loss_rate', 'mMTC_loss_rate']
 Dict = dict((key, []) for key in keys)
