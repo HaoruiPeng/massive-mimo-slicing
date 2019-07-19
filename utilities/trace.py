@@ -21,7 +21,6 @@ class Trace:
         self.__trace_file.close()
 
     def write_trace(self, entry):
-        # print(entry['event_type'])
         self.__trace_file.write(str(entry[self.keys[0]]) + ',' + str(entry[self.keys[1]]) + ','
                                 + str(entry[self.keys[2]]) + ',' + str(entry[self.keys[3]]) + ','
                                 + str(entry[self.keys[4]]) + ',' + str(entry[self.keys[5]]) + ','
