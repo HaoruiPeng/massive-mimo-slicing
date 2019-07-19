@@ -27,6 +27,7 @@ for sch in "${schs[@]}"; do
                 do
                 python3 main.py --scheduler "$sch" --reliability "$rel" --deadline "$dead"
                 done
+                python3 calculate.py --scheduler "$sch" --reliability "$rel" --deadline "$dead"
             done
             done
         done
