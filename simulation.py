@@ -63,7 +63,6 @@ class Simulation:
         self.frame_counter = 0
         self.frame_loops = self.Slices[self._URLLC].get_node(0).deadline / self.frame_length
         self.node_pointer = 0
-        print(self.frame_loops)
 
         for s in self.Slices:
             # Initialize nodes and their arrival times
@@ -199,7 +198,7 @@ class Simulation:
 
             self.__handle_event(next_event)
 
-        print('\n[Time {}] Simulation complete. Results:'.format(self.time))
+        print('\n[Time {}] Simulation complete.'.format(self.time))
 
     def __fist_come_first_served(self):
         no_pilots = self.no_pilots
