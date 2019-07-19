@@ -10,7 +10,7 @@ try:
     statistics = open(result_path + result_file, "a")
 except FileNotFoundError:
     statistics = open(result_path + result_file, "w+")
-    statistics.write("No.URLLC,No.mMTC,"
+    statistics.write("Strategy,Traffic,No.URLLC,No.mMTC,"
                      "Uw_mean,Uw_var,Uw_con_low,Uw_con_high,"
                      "Mw_mean,Mw_var,Mw_con_low,Mw_con_high,"
                      "Ul_mean,Ul_var,Ul_con_low,Mw_con_high,"
@@ -28,6 +28,7 @@ parser.add_argument('--deadline', action="store", default=None)
 args = parser.parse_args()
 strategy = args.scheduler
 traffic = args.reliability + "_" + args.deadline
+
 
 file_path = result_path + strategy + "/" + traffic + ".csv"
 Dict = dict((key, []) for key in keys)
@@ -54,7 +55,8 @@ if len(Dict[keys[0]]) > 0:
             statistics.write("Received wrong mMTC data for current parameter configuration\n")
             sys.exit(0)
         else:
-            statistics.write(str(Dict[keys[0]][0]) + ',' +
+            statistics.write(strategy + ',' + traffic + ',' +
+                             str(Dict[keys[0]][0]) + ',' +
                              str(Dict[keys[1]][0]) + ',')
 else:
     statistics.write("Received no data for current parameter configuration\n")
