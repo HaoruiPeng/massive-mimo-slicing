@@ -26,8 +26,8 @@ if __name__ == '__main__':
     parser.add_argument('--scheduler', action="store", default=None)
     parser.add_argument('--reliability', action="store", default=None)
     parser.add_argument('--deadline', action="store", default=None)
-    parser.add_argument('--urllc_nodes', action="store", default=None)
-    parser.add_argument('--mmtc_nodes', action="store", default=None)
+    parser.add_argument('--urllc_nodes', action="store", type=int, default=None)
+    parser.add_argument('--mmtc_nodes', action="store", type=int, default=None)
 
     args = parser.parse_args()
     # print(args.scheduler)
