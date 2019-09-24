@@ -370,30 +370,57 @@ class Simulation:
         dir = "results/"+self.pilot_strategy
         reliability = self.Slices[self._URLLC].get_node(0).reliability_profile
         deadline = self.Slices[self._URLLC].get_node(0).deadline_profile
-        file_name = dir + "/" + reliability + "_" + deadline + ".csv"
+        URLLC_file_name = dir + "/" + reliability + "_" + deadline + "_URLLC.csv"
+        mMTC_file_name = dir + "/" + reliability + "_" + deadline + "_mMTC.csv"
+
         try:
             os.mkdir(dir)
         except OSError:
             print("Directory exists")
 
         try:
-            file = open(file_name, 'a')
+            file = open(URLLC_file_name, 'a')
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
-                       + str(self.trace.get_waiting_time()[0]) + ','
-                       + str(self.trace.get_waiting_time()[1]) + ','
-                       + str(self.trace.get_loss_rate()[0]) + ','
-                       + str(self.trace.get_loss_rate()[1]) + '\n'
+                       + str(self.trace.__get_urllc_wait()[0]) + ','
+                       + str(self.trace.__get_urllc_wait()[1]) + ','
+                       + str(self.trace.__get_urllc_wait()[2]) + ','
+                       + str(self.trace.__get_urllc_wait()[3]) + ','
+                       + str(self.trace.get_loss_rate()[0]) + '\n'
                        )
         except FileNotFoundError:
             print("No file found, create the file first")
-            file = open(file_name, 'w+')
-            file.write("No.URLLC,No.mMTC,URLLC_wait,mMTC_wait,URLLC_loss,mMTC_loss\n")
+            file = open(URLLC_file_name, 'w+')
+            file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
-                       + str(self.trace.get_waiting_time()[0]) + ','
-                       + str(self.trace.get_waiting_time()[1]) + ','
-                       + str(self.trace.get_loss_rate()[0]) + ','
+                       + str(self.trace.__get_urllc_wait()[0]) + ','
+                       + str(self.trace.__get_urllc_wait()[1]) + ','
+                       + str(self.trace.__get_urllc_wait()[2]) + ','
+                       + str(self.trace.__get_urllc_wait()[3]) + ','
+                       + str(self.trace.get_loss_rate()[0]) + '\n'
+                       )
+        file.close()
+        try:
+            file = open(mMTC_file_name, 'a')
+            file.write(str(self.Slices[0].no_nodes) + ','
+                       + str(self.Slices[1].no_nodes) + ','
+                       + str(self.trace.__get_mmtc_wait()[0]) + ','
+                       + str(self.trace.__get_mmtc_wait()[1]) + ','
+                       + str(self.trace.__get_mmtc_wait()[2]) + ','
+                       + str(self.trace.__get_mmtc_wait()[3]) + ','
+                       + str(self.trace.get_loss_rate()[0]) + '\n'
+                       )
+        except FileNotFoundError:
+            print("No file found, create the file first")
+            file = open(mMTC_file_name, 'w+')
+            file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
+            file.write(str(self.Slices[0].no_nodes) + ','
+                       + str(self.Slices[1].no_nodes) + ','
+                       + str(self.trace.__get_mmtc_wait()[0]) + ','
+                       + str(self.trace.__get_mmtc_wait()[1]) + ','
+                       + str(self.trace.__get_mmtc_wait()[2]) + ','
+                       + str(self.trace.__get_mmtc_wait()[3]) + ','
                        + str(self.trace.get_loss_rate()[1]) + '\n'
                        )
         file.close()

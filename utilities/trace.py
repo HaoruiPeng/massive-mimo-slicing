@@ -1,7 +1,5 @@
-import matplotlib as plt
 import numpy as np
-import os
-import time
+import scipy.stats as st
 
 
 class Trace:
@@ -70,7 +68,13 @@ class Trace:
             if not pilots[ind]:
                 np.delete(wait_time, ind)
         avg_wait = np.mean(wait_time)
-        return avg_wait
+        var_wait = np.var(wait_time)
+        if var_wait > 0.0:
+            con_interval = st.t.interval(0.95, len(wait_time) - 1, loc=avg_wait, scale=st.sem(wait_time))
+        else:
+            con_interval = (avg_wait, avg_wait)
+
+        return avg_wait, var_wait, con_interval
 
     def __get_urllc_loss(self):
         pilots = self.urllc['pilot']
@@ -98,7 +102,12 @@ class Trace:
             if not pilots[ind]:
                 np.delete(wait_time, ind)
         avg_wait = np.mean(wait_time)
-        return avg_wait
+        var_wait = np.var(wait_time)
+        if var_wait > 0.0:
+            con_interval = st.t.interval(0.95, len(wait_time) - 1, loc=avg_wait, scale=st.sem(wait_time))
+        else:
+            con_interval = (avg_wait, avg_wait)
+        return avg_wait, var_wait, con_interval
 
     def print_results(self):
         print("------------------------------------------------------")
