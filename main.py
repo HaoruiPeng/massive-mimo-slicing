@@ -51,14 +51,14 @@ if __name__ == '__main__':
     if args.urllc_nodes is None:
         with open('slices/slice_config.json') as config_file:
             node = json.load(config_file)
-        no_urllc = [node.get("no_urllc_nodes")]
+        no_urllc = node.get("no_urllc_nodes")
     else:
         no_urllc = args.urllc_nodes
 
     if args.mmtc_nodes is None:
         with open('slices/slice_config.json') as config_file:
             node = json.load(config_file)
-        no_mmtc = [node.get("no_mmtc_nodes")]
+        no_mmtc = node.get("no_mmtc_nodes")
     else:
         no_mmtc = args.mmtc_nodes
 
