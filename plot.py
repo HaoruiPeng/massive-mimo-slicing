@@ -6,49 +6,54 @@ import numpy as np
 
 result_path = "results/"
 figure_path = "plots/"
-strategy_name = "RR_Q"
-file_name = "low_short"
-path = result_path + strategy_name + "/" +file_name + ".csv"
-keys = ['No.URLLC', 'No.mMTC', 'URLLC_wait_time', 'mMTC_wait_time', 'URLLC_loss_rate', 'mMTC_loss_rate']
-Dict = dict((key, []) for key in keys)
+# strategy_names = ['FCFS', "RR_Q", 'RR_NQ']
+strategy_names = ['FCFS', 'RR_NQ']
+file_name = "high_short"
+load = "mid_load"
 
-with open(path) as file:
-    csv_reader = csv.reader(file, delimiter=',')
-    for line in csv_reader:
-        for i in range(len(line)):
-            value = float(line[i])
-            Dict[keys[i]] = np.append(Dict[keys[i]], value)
+keys = ['No.URLLC', 'No.mMTC', 'URLLC_wait_time', 'mMTC_wait_time', 'URLLC_loss_rate', 'mMTC_loss_rate']
+figure_names = ['URLLC_wait_time', 'mMTC_wait_time', 'URLLC_loss_rate', 'mMTC_loss_rate']
+
+def no2load(no_mmtc):
+    x = 0.5
+    P = 100
+    return (no_mmtc * x) / (12 * P)
+
 
 try:
-    os.makedirs(figure_path + strategy_name + '/' + file_name)
+    os.makedirs(figure_path)
 except OSError:
-    print("Failed to create figure directory " + strategy_name + '/' + file_name + "/")
+    print("Failed to create figure directory " +  figure_path)
     print("Directory exists")
 
+figure_name = figure_path + load
+fig_dict = dict((figure_name, plt.subplots(figsize=(10, 8))) for figure_name in figure_names)
+for figure_name in figure_names:
+    fig_dict[figure_name][0].suptitle(figure_name)
 
-u_no = np.array(range(int(np.min(Dict[keys[0]])), int(np.max(Dict[keys[0]]))+1))
-m_no = np.array(range(int(np.min(Dict[keys[1]])), int(np.max(Dict[keys[1]])+1), 500))
+for strategy in strategy_names:
+    path = result_path + strategy + "/" + file_name + ".csv"
+    Dict = dict((key, []) for key in keys)
+    with open(path) as file:
+        csv_reader = csv.reader(file, delimiter=',')
+        for line in csv_reader:
+            for i in range(len(line)):
+                value = float(line[i])
+                Dict[keys[i]] = np.append(Dict[keys[i]], value)
+    m_ro = np.array([no2load(n) for n in Dict[keys[1]]])
+    u_wt = np.array(Dict[keys[2]])
+    m_wt = np.array(Dict[keys[3]])
+    u_lr = np.array(Dict[keys[4]])
+    m_lr = np.array(Dict[keys[5]])
+    fig_dict[figure_names[0]][1].plot(m_ro, u_wt, label=strategy)
+    fig_dict[figure_names[0]][1].legend(loc='upper right')
+    fig_dict[figure_names[1]][1].plot(m_ro, m_wt, label=strategy)
+    fig_dict[figure_names[1]][1].legend(loc='upper right')
+    fig_dict[figure_names[2]][1].plot(m_ro, u_lr, label=strategy)
+    fig_dict[figure_names[2]][1].legend(loc='upper right')
+    fig_dict[figure_names[3]][1].plot(m_ro, m_lr, label=strategy)
+    fig_dict[figure_names[3]][1].legend(loc='upper right')
 
-new_keys = keys[2:6]
-figs = {}
-print(new_keys)
-
-for k in new_keys:
-    figs[k], axs = plt.subplots(1, 2, sharey='all', figsize=(20, 8))
-    figs[k].suptitle(k)
-    for u in u_no:
-        ind_list = np.where(Dict[keys[0]] == u)
-        m = Dict[keys[1]][ind_list]
-        result_1 = Dict[k][ind_list]
-        axs[0].plot(m, result_1, label=str(u))
-    axs[0].legend(loc='upper right')
-    for m in m_no:
-        ind_list = np.where(Dict[keys[1]] == m)
-        u = Dict[keys[0]][ind_list]
-        result_2 = Dict[k][ind_list]
-        axs[1].plot(u, result_2, label=str(m))
-    axs[1].legend(loc='upper right')
-    plt.savefig(figure_path + strategy_name + '/' + file_name + "/" + k + ".png")
-
+plt.savefig(file_name + ".png")
 plt.show()
 

@@ -341,7 +341,7 @@ class Simulation:
         deadline = self.Slices[self._URLLC].get_node(0).deadline_profile
         file_name = dir + "/" + reliability + "_" + deadline + ".csv"
         try:
-            os.mkdir(dir)
+            os.makedirs(dir)
         except OSError:
             print("Directory exists")
 
