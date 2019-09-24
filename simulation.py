@@ -175,7 +175,7 @@ class Simulation:
         """ Runs the simulation """
 
         current_progress = 0
-        print("\n[Time {}] Simulation start.".format(self.time))
+        # print("\n[Time {}] Simulation start.".format(self.time))
         # print("Size: {}".format(self.event_heap.get_size()))
         # for k in self.event_heap.get_heap():
         #     print(k)
@@ -187,17 +187,17 @@ class Simulation:
             # Advance time before handling event
             self.time = next_event.time
 
-            progress = round(100 * self.time / self.simulation_length)
-
-            if progress > current_progress:
-                current_progress = progress
-                str1 = "\rProgress: {0}%".format(progress)
-                sys.stdout.write(str1)
-                sys.stdout.flush()
+            # progress = round(100 * self.time / self.simulation_length)
+            #
+            # if progress > current_progress:
+            #     current_progress = progress
+            #     str1 = "\rProgress: {0}%".format(progress)
+            #     sys.stdout.write(str1)
+            #     sys.stdout.flush()
 
             self.__handle_event(next_event)
 
-        print('\n[Time {}] Simulation complete.'.format(self.time))
+        # print('\n[Time {}] Simulation complete.'.format(self.time))
 
     def __fist_come_first_served(self):
         no_pilots = self.no_pilots
@@ -376,9 +376,8 @@ class Simulation:
         try:
             os.mkdir(result_dir)
         except OSError:
-            print("Directory exists")
-
-        print(self.trace.get_waiting_time()[0])
+            pass
+            # print("Directory exists")
 
         try:
             file = open(urllc_file_name, 'a')
