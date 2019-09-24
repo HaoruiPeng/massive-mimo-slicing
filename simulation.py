@@ -367,11 +367,11 @@ class Simulation:
                     overlapped_event.append(e)
 
     def write_result(self):
-        dir = "results/"+self.pilot_strategy
+        result_dir = "results/"+self.pilot_strategy
         reliability = self.Slices[self._URLLC].get_node(0).reliability_profile
         deadline = self.Slices[self._URLLC].get_node(0).deadline_profile
-        URLLC_file_name = dir + "/" + reliability + "_" + deadline + "_URLLC.csv"
-        mMTC_file_name = dir + "/" + reliability + "_" + deadline + "_mMTC.csv"
+        urllc_file_name = result_dir + "/" + reliability + "_" + deadline + "_URLLC.csv"
+        mmtc_file_name = result_dir + "/" + reliability + "_" + deadline + "_mMTC.csv"
 
         try:
             os.mkdir(dir)
@@ -379,7 +379,7 @@ class Simulation:
             print("Directory exists")
 
         try:
-            file = open(URLLC_file_name, 'a')
+            file = open(urllc_file_name, 'a')
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
                        + str(self.trace.__get_urllc_wait()[0]) + ','
@@ -390,7 +390,7 @@ class Simulation:
                        )
         except FileNotFoundError:
             print("No file found, create the file first")
-            file = open(URLLC_file_name, 'w+')
+            file = open(urllc_file_name, 'w+')
             file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
@@ -402,7 +402,7 @@ class Simulation:
                        )
         file.close()
         try:
-            file = open(mMTC_file_name, 'a')
+            file = open(mmtc_file_name, 'a')
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
                        + str(self.trace.__get_mmtc_wait()[0]) + ','
@@ -413,7 +413,7 @@ class Simulation:
                        )
         except FileNotFoundError:
             print("No file found, create the file first")
-            file = open(mMTC_file_name, 'w+')
+            file = open(mmtc_file_name, 'w+')
             file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
