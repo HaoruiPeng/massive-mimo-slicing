@@ -6,9 +6,13 @@ class Trace:
     _URLLC_ARRIVAL = 3
     _mMTC_ARRIVAL = 4
 
-    def __init__(self, trace_file_path):
-        self.__trace_file = open(trace_file_path, 'w+')
-        self.__trace_file.write('Event,Node,Counter,Arrival,Dead,Departure,Pilot\n')
+    def __init__(self, trace_file_path, log=False):
+        self.log = log
+        if log is True:
+            self.__trace_file = open(trace_file_path, 'w+')
+            self.__trace_file.write('Event,Node,Counter,Arrival,Dead,Departure,Pilot\n')
+        else:
+            self.__trace_file = None
         self.keys = ['event_type', 'node_id', 'counter', 'arrival_time', 'dead_time', 'departure_time', 'pilot']
         self.Dict = dict((key, []) for key in self.keys)
         self.plot_path = None
@@ -16,13 +20,18 @@ class Trace:
         self.mmtc = {}
 
     def close(self):
-        self.__trace_file.close()
+        if self.log is True:
+            self.__trace_file.close()
+        else:
+            pass
 
     def write_trace(self, entry):
-        self.__trace_file.write(str(entry[self.keys[0]]) + ',' + str(entry[self.keys[1]]) + ','
-                                + str(entry[self.keys[2]]) + ',' + str(entry[self.keys[3]]) + ','
-                                + str(entry[self.keys[4]]) + ',' + str(entry[self.keys[5]]) + ','
-                                + str(entry[self.keys[6]]) + '\n')
+        if self.log is True:
+            self.__trace_file.write(str(entry[self.keys[0]]) + ',' + str(entry[self.keys[1]]) + ','
+                                    + str(entry[self.keys[2]]) + ',' + str(entry[self.keys[3]]) + ','
+                                    + str(entry[self.keys[4]]) + ',' + str(entry[self.keys[5]]) + ','
+                                    + str(entry[self.keys[6]]) + '\n')
+
         for i in range(len(entry)):
             k = self.keys[i]
             self.Dict[k] = np.append(self.Dict[k], entry[k])
