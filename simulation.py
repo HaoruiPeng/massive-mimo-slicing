@@ -25,7 +25,7 @@ class Simulation:
     _URLLC_ARRIVAL = 3
     _mMTC_ARRIVAL = 4
 
-    def __init__(self, config, stats, trace, scheduler=None, traffic=None):
+    def __init__(self, config, stats, trace, no_urllc, no_mmtc, scheduler=None, traffic=None):
         """
         Initialize simulation object
 
@@ -40,7 +40,6 @@ class Simulation:
         self.stats = stats
         self.trace = trace
         self.time = 0.0
-
         self.no_pilots = config.get('no_pilots')
         self.simulation_length = config.get('simulation_length')
         self.frame_length = config.get('frame_length')
@@ -59,7 +58,7 @@ class Simulation:
         self.send_queue = {'_URLLC': [], '_mMTC': []}
         # used only in method "RR_NQ"
 
-        self.Slices = [Slice(self._URLLC, traffic), Slice(self._mMTC)]
+        self.Slices = [Slice(self._URLLC, no_urllc, traffic), Slice(self._mMTC, no_mmtc)]
         self.frame_counter = 0
         self.frame_loops = self.Slices[self._URLLC].get_node(0).deadline / self.frame_length
         self.node_pointer = 0
