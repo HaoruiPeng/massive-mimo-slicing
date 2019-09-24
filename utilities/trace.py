@@ -83,7 +83,7 @@ class Trace:
         else:
             con_interval = (avg_wait, avg_wait)
 
-        return avg_wait, var_wait, con_interval
+        return avg_wait, var_wait, con_interval[0], con_interval[1]
 
     def __get_urllc_loss(self):
         pilots = self.urllc['pilot']
@@ -116,7 +116,7 @@ class Trace:
             con_interval = st.t.interval(0.95, len(wait_time) - 1, loc=avg_wait, scale=st.sem(wait_time))
         else:
             con_interval = (avg_wait, avg_wait)
-        return avg_wait, var_wait, con_interval
+        return avg_wait, var_wait, con_interval[0], con_interval[1]
 
     def print_results(self):
         print("------------------------------------------------------")

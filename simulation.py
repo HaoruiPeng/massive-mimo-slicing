@@ -374,18 +374,20 @@ class Simulation:
         mmtc_file_name = result_dir + "/" + reliability + "_" + deadline + "_mMTC.csv"
 
         try:
-            os.mkdir(dir)
+            os.mkdir(result_dir)
         except OSError:
             print("Directory exists")
+
+        print(self.trace.get_waiting_time()[0])
 
         try:
             file = open(urllc_file_name, 'a')
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
-                       + str(self.trace.__get_urllc_wait()[0]) + ','
-                       + str(self.trace.__get_urllc_wait()[1]) + ','
-                       + str(self.trace.__get_urllc_wait()[2]) + ','
-                       + str(self.trace.__get_urllc_wait()[3]) + ','
+                       + str(self.trace.get_waiting_time()[0][0]) + ','
+                       + str(self.trace.get_waiting_time()[0][1]) + ','
+                       + str(self.trace.get_waiting_time()[0][2]) + ','
+                       + str(self.trace.get_waiting_time()[0][3]) + ','
                        + str(self.trace.get_loss_rate()[0]) + '\n'
                        )
         except FileNotFoundError:
@@ -394,10 +396,10 @@ class Simulation:
             file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
-                       + str(self.trace.__get_urllc_wait()[0]) + ','
-                       + str(self.trace.__get_urllc_wait()[1]) + ','
-                       + str(self.trace.__get_urllc_wait()[2]) + ','
-                       + str(self.trace.__get_urllc_wait()[3]) + ','
+                       + str(self.trace.get_waiting_time()[0][0]) + ','
+                       + str(self.trace.get_waiting_time()[0][1]) + ','
+                       + str(self.trace.get_waiting_time()[0][2]) + ','
+                       + str(self.trace.get_waiting_time()[0][3]) + ','
                        + str(self.trace.get_loss_rate()[0]) + '\n'
                        )
         file.close()
@@ -405,11 +407,11 @@ class Simulation:
             file = open(mmtc_file_name, 'a')
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
-                       + str(self.trace.__get_mmtc_wait()[0]) + ','
-                       + str(self.trace.__get_mmtc_wait()[1]) + ','
-                       + str(self.trace.__get_mmtc_wait()[2]) + ','
-                       + str(self.trace.__get_mmtc_wait()[3]) + ','
-                       + str(self.trace.get_loss_rate()[0]) + '\n'
+                       + str(self.trace.get_waiting_time()[1][0]) + ','
+                       + str(self.trace.get_waiting_time()[1][1]) + ','
+                       + str(self.trace.get_waiting_time()[1][2]) + ','
+                       + str(self.trace.get_waiting_time()[1][3]) + ','
+                       + str(self.trace.get_loss_rate()[1]) + '\n'
                        )
         except FileNotFoundError:
             print("No file found, create the file first")
@@ -417,10 +419,10 @@ class Simulation:
             file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
-                       + str(self.trace.__get_mmtc_wait()[0]) + ','
-                       + str(self.trace.__get_mmtc_wait()[1]) + ','
-                       + str(self.trace.__get_mmtc_wait()[2]) + ','
-                       + str(self.trace.__get_mmtc_wait()[3]) + ','
+                       + str(self.trace.get_waiting_time()[1][0]) + ','
+                       + str(self.trace.get_waiting_time()[1][1]) + ','
+                       + str(self.trace.get_waiting_time()[1][2]) + ','
+                       + str(self.trace.get_waiting_time()[1][3]) + ','
                        + str(self.trace.get_loss_rate()[1]) + '\n'
                        )
         file.close()
