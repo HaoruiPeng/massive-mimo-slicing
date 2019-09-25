@@ -2,6 +2,7 @@ import os
 import numpy as np
 from multiprocessing import Pool
 import json
+import time
 
 PROCESSES = 4
 
@@ -28,6 +29,8 @@ deadline = "long"
 urllc_period = period[deadline]
 urllc_pilot = pilots[reliability]
 
+SEED = round(time.time() / 100)
+
 
 def rho2urllc(rho):
     urllc = rho * total_pilots * urllc_period / (urllc_pilot * slot_time)
@@ -48,13 +51,21 @@ no_mmtc_list = [rho2mmtc(rho) for rho in mmtc_loads]
 
 scheduler = "RR_F"
 for no_mmtc in no_mmtc_list:
-    simulations.append("python3 main.py  --scheduler {} --reliability {} --deadline {} --urllc_node {} --mmtc_node {}".format(
-        scheduler, reliability, deadline, no_urllc, no_mmtc))
+    SEED += np.random.randint(100)
+    simulations.append("python3 main.py \
+                        --scheduler {} --reliability {} --deadline {} \
+                        --urllc_node {} --mmtc_node {} \
+                        --seed {}".format(
+        scheduler, reliability, deadline, no_urllc, no_mmtc, SEED))
 
 scheduler = "RR_RR"
 for no_mmtc in no_mmtc_list:
-    simulations.append("python3 main.py  --scheduler {} --reliability {} --deadline {} --urllc_node {} --mmtc_node {}".format(
-        scheduler, reliability, deadline, no_urllc, no_mmtc))
+    SEED += np.random.randint(100)
+    simulations.append("python3 main.py \
+                            --scheduler {} --reliability {} --deadline {} \
+                            --urllc_node {} --mmtc_node {} \
+                            --seed {}".format(
+        scheduler, reliability, deadline, no_urllc, no_mmtc, SEED))
 
 pool = Pool(processes=PROCESSES)
 for k, simulation in enumerate(simulations):

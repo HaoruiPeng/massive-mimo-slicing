@@ -28,6 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--deadline', action="store", default=None)
     parser.add_argument('--urllc_nodes', action="store", type=int, default=None)
     parser.add_argument('--mmtc_nodes', action="store", type=int, default=None)
+    parser.add_argument('--seed', action="store", type=int, default=1)
 
     args = parser.parse_args()
     # print(args.scheduler)
@@ -37,9 +38,10 @@ if __name__ == '__main__':
     trace_file_path = 'trace/' + time_string + '_' + simulation_name + '_event_trace.csv'
     # Initialize stats and logger
     stats = Stats(stats_file_path)
-    trace = Trace(trace_file_path)
+    trace = Trace(trace_file_path, log=True)
 
-    seed = round(time.time())
+    seed = args.seed
+
     try:
         file = open(log_file_path, 'a')
     except FileNotFoundError:
