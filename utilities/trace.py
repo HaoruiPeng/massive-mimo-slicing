@@ -106,7 +106,6 @@ class Trace:
         departure_time = self.mmtc['departure_time']
         pilots = self.mmtc['pilot']
         wait_time = np.array(departure_time) - np.array(arrival_time)
-
         for ind in range(len(pilots)):
             if not pilots[ind]:
                 np.delete(wait_time, ind)

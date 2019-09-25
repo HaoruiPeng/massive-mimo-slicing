@@ -373,6 +373,8 @@ class Simulation:
         urllc_file_name = result_dir + "/" + reliability + "_" + deadline + "_URLLC.csv"
         mmtc_file_name = result_dir + "/" + reliability + "_" + deadline + "_mMTC.csv"
 
+        data = self.trace.get_waiting_time()
+
         try:
             os.mkdir(result_dir)
         except OSError:
@@ -383,10 +385,10 @@ class Simulation:
             file = open(urllc_file_name, 'a')
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
-                       + str(self.trace.get_waiting_time()[0][0]) + ','
-                       + str(self.trace.get_waiting_time()[0][1]) + ','
-                       + str(self.trace.get_waiting_time()[0][2]) + ','
-                       + str(self.trace.get_waiting_time()[0][3]) + ','
+                       + str(data[0][0]) + ','
+                       + str(data[0][1]) + ','
+                       + str(data[0][2]) + ','
+                       + str(data[0][3]) + ','
                        + str(self.trace.get_loss_rate()[0]) + '\n'
                        )
         except FileNotFoundError:
@@ -395,10 +397,10 @@ class Simulation:
             file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
-                       + str(self.trace.get_waiting_time()[0][0]) + ','
-                       + str(self.trace.get_waiting_time()[0][1]) + ','
-                       + str(self.trace.get_waiting_time()[0][2]) + ','
-                       + str(self.trace.get_waiting_time()[0][3]) + ','
+                       + str(data[0][0]) + ','
+                       + str(data[0][1]) + ','
+                       + str(data[0][2]) + ','
+                       + str(data[0][3]) + ','
                        + str(self.trace.get_loss_rate()[0]) + '\n'
                        )
         file.close()
@@ -406,10 +408,10 @@ class Simulation:
             file = open(mmtc_file_name, 'a')
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
-                       + str(self.trace.get_waiting_time()[1][0]) + ','
-                       + str(self.trace.get_waiting_time()[1][1]) + ','
-                       + str(self.trace.get_waiting_time()[1][2]) + ','
-                       + str(self.trace.get_waiting_time()[1][3]) + ','
+                       + str(data[1][0]) + ','
+                       + str(data[1][1]) + ','
+                       + str(data[1][2]) + ','
+                       + str(data[1][3]) + ','
                        + str(self.trace.get_loss_rate()[1]) + '\n'
                        )
         except FileNotFoundError:
@@ -418,10 +420,10 @@ class Simulation:
             file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
-                       + str(self.trace.get_waiting_time()[1][0]) + ','
-                       + str(self.trace.get_waiting_time()[1][1]) + ','
-                       + str(self.trace.get_waiting_time()[1][2]) + ','
-                       + str(self.trace.get_waiting_time()[1][3]) + ','
+                       + str(data[1][0]) + ','
+                       + str(data[1][1]) + ','
+                       + str(data[1][2]) + ','
+                       + str(data[1][3]) + ','
                        + str(self.trace.get_loss_rate()[1]) + '\n'
                        )
         file.close()
