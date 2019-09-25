@@ -1,16 +1,18 @@
-import matplotlib as plt
 import numpy as np
-import os
-import time
+import scipy.stats as st
 
 
 class Trace:
     _URLLC_ARRIVAL = 3
     _mMTC_ARRIVAL = 4
 
-    def __init__(self, trace_file_path):
-        self.__trace_file = open(trace_file_path, 'w+')
-        self.__trace_file.write('Event,Node,Counter,Arrival,Dead,Departure,Pilot\n')
+    def __init__(self, trace_file_path, log=False):
+        self.log = log
+        if log is True:
+            self.__trace_file = open(trace_file_path, 'w+')
+            self.__trace_file.write('Event,Node,Counter,Arrival,Dead,Departure,Pilot\n')
+        else:
+            self.__trace_file = None
         self.keys = ['event_type', 'node_id', 'counter', 'arrival_time', 'dead_time', 'departure_time', 'pilot']
         self.Dict = dict((key, []) for key in self.keys)
         self.plot_path = None
@@ -18,13 +20,18 @@ class Trace:
         self.mmtc = {}
 
     def close(self):
-        self.__trace_file.close()
+        if self.log is True:
+            self.__trace_file.close()
+        else:
+            pass
 
     def write_trace(self, entry):
-        self.__trace_file.write(str(entry[self.keys[0]]) + ',' + str(entry[self.keys[1]]) + ','
-                                + str(entry[self.keys[2]]) + ',' + str(entry[self.keys[3]]) + ','
-                                + str(entry[self.keys[4]]) + ',' + str(entry[self.keys[5]]) + ','
-                                + str(entry[self.keys[6]]) + '\n')
+        if self.log is True:
+            self.__trace_file.write(str(entry[self.keys[0]]) + ',' + str(entry[self.keys[1]]) + ','
+                                    + str(entry[self.keys[2]]) + ',' + str(entry[self.keys[3]]) + ','
+                                    + str(entry[self.keys[4]]) + ',' + str(entry[self.keys[5]]) + ','
+                                    + str(entry[self.keys[6]]) + '\n')
+
         for i in range(len(entry)):
             k = self.keys[i]
             self.Dict[k] = np.append(self.Dict[k], entry[k])
@@ -70,7 +77,13 @@ class Trace:
             if not pilots[ind]:
                 np.delete(wait_time, ind)
         avg_wait = np.mean(wait_time)
-        return avg_wait
+        var_wait = np.var(wait_time)
+        if var_wait > 0.0:
+            con_interval = st.t.interval(0.95, len(wait_time) - 1, loc=avg_wait, scale=st.sem(wait_time))
+        else:
+            con_interval = (avg_wait, avg_wait)
+
+        return avg_wait, var_wait, con_interval[0], con_interval[1]
 
     def __get_urllc_loss(self):
         pilots = self.urllc['pilot']
@@ -93,12 +106,16 @@ class Trace:
         departure_time = self.mmtc['departure_time']
         pilots = self.mmtc['pilot']
         wait_time = np.array(departure_time) - np.array(arrival_time)
-
         for ind in range(len(pilots)):
             if not pilots[ind]:
                 np.delete(wait_time, ind)
         avg_wait = np.mean(wait_time)
-        return avg_wait
+        var_wait = np.var(wait_time)
+        if var_wait > 0.0:
+            con_interval = st.t.interval(0.95, len(wait_time) - 1, loc=avg_wait, scale=st.sem(wait_time))
+        else:
+            con_interval = (avg_wait, avg_wait)
+        return avg_wait, var_wait, con_interval[0], con_interval[1]
 
     def print_results(self):
         print("------------------------------------------------------")
