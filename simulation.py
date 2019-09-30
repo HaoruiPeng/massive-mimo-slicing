@@ -187,6 +187,7 @@ class Simulation:
         # print("[Time {}] Send queue size {}" .format(self.time, len(self.send_queue)))
         del event
         self.__handle_expired_events()
+        self.no_pilots = 12
         self.__assign_pilots()
         # self.__check_collisions()
         # Add new departure event to the event list
@@ -284,7 +285,6 @@ class Simulation:
         no_pilots = self.no_pilots
         key = ['_URLLC', '_mMTC']
         events = self.send_queue[key[slice_type]].copy()
-
         events.sort(key=lambda x: x.dead_time)
         for event in events:
             node = self.Slices[slice_type].get_node(event.node_id)

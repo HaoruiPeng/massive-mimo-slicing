@@ -63,7 +63,7 @@ class Node:
         self.assigned = False
 
     def push_event(self, event):
-        self.request_queue.append(event)
+        self.request_queue.insert(0, event)
 
     def remove_event(self, event):
         self.request_queue.remove(event)
