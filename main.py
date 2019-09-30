@@ -65,7 +65,7 @@ if __name__ == '__main__':
     else:
         no_mmtc = args.mmtc_nodes
 
-    print(no_urllc, no_mmtc)
+    # print(no_urllc, no_mmtc)
 
     if args.s1 is not None:
         if args.reliability is not None and args.deadline is not None:
