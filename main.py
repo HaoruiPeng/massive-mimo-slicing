@@ -14,22 +14,22 @@ from simulation import Simulation
 import argparse
 sys.path.append(os.path.abspath('../'))
 
+with open('default_config.json') as config_file:
+    config = json.load(config_file)
+
 if __name__ == '__main__':
     # Load simulation parameters
-    with open('default_config.json') as config_file:
-        config = json.load(config_file)
-    with open('slices/slice_config.json') as slice_config_file:
-        nodes = json.load(slice_config_file)
-    no_urllc = nodes.get("no_urllc_nodes")
-    no_mmtc = nodes.get("no_mmtc_nodes")
-
     time_string = time.strftime('%Y%m%d_%H%M%S')
     simulation_name = config.get('simulation_name')
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scheduler', action="store", default=None)
+    parser.add_argument('--s1', action="store", default=None)
+    parser.add_argument('--s2', action="store", default=None)
     parser.add_argument('--reliability', action="store", default=None)
     parser.add_argument('--deadline', action="store", default=None)
+    parser.add_argument('--urllc_nodes', action="store", type=int, default=None)
+    parser.add_argument('--mmtc_nodes', action="store", type=int, default=None)
+    parser.add_argument('--seed', action="store", type=int, default=1)
 
     args = parser.parse_args()
     # print(args.scheduler)
@@ -39,9 +39,10 @@ if __name__ == '__main__':
     trace_file_path = 'trace/' + time_string + '_' + simulation_name + '_event_trace.csv'
     # Initialize stats and logger
     stats = Stats(stats_file_path)
-    trace = Trace(trace_file_path)
+    trace = Trace(trace_file_path, log=True)
 
-    seed = round(time.time())
+    seed = args.seed
+
     try:
         file = open(log_file_path, 'a')
     except FileNotFoundError:
@@ -49,25 +50,44 @@ if __name__ == '__main__':
         file = open(log_file_path, 'w+')
 
     np.random.seed(seed)
-    # Run a single simulation with default parameters
-    if args.scheduler is not None:
+
+    if args.urllc_nodes is None:
+        with open('slices/slice_config.json') as config_file:
+            node = json.load(config_file)
+        no_urllc = node.get("no_urllc_nodes")
+    else:
+        no_urllc = args.urllc_nodes
+
+    if args.mmtc_nodes is None:
+        with open('slices/slice_config.json') as config_file:
+            node = json.load(config_file)
+        no_mmtc = node.get("no_mmtc_nodes")
+    else:
+        no_mmtc = args.mmtc_nodes
+
+    print(no_urllc, no_mmtc)
+
+    if args.s1 is not None:
         if args.reliability is not None and args.deadline is not None:
-            simulation = Simulation(config, stats, trace, args.scheduler, (args.reliability, args.deadline))
-            file.write(args.scheduler + ',' + args.reliability + ',' + args.deadline + ','
+            simulation = Simulation(config, stats, trace, no_urllc, no_mmtc,
+                                    args.s1, args.s2,
+                                    (args.reliability, args.deadline))
+            file.write(args.s1 + '-' + args.s2 + ',' + args.reliability + ',' + args.deadline + ','
                        + str(no_urllc) + ',' + str(no_mmtc) + ',' + str(seed) + '\n')
         else:
-            simulation = Simulation(config, stats, trace, args.scheduler)
-            file.write(args.scheduler + ',' + str(no_urllc) + ',' + str(no_mmtc) + ',' + str(seed) + '\n')
+            simulation = Simulation(config, stats, trace,  no_urllc, no_mmtc,
+                                    args.s1, args.s2)
+            file.write(args.s1 + '-' + args.s2 + ',' + str(no_urllc) + ',' + str(no_mmtc) + ',' + str(seed) + '\n')
     else:
-        simulation = Simulation(config, stats, trace)
+        simulation = Simulation(config, stats, trace, no_urllc, no_mmtc)
         file.write(str(no_urllc) + ',' + str(no_mmtc) + ',' + str(seed) + '\n')
 
     simulation.run()
     stats.save_stats()
+
     # Close files
     stats.close()
     trace.close()
 
     trace.process()
     simulation.write_result()
-    # trace.write_trace()

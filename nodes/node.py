@@ -30,6 +30,7 @@ class Node:
         with open('nodes/node_config.json') as config_file:
             config = json.load(config_file)
         self.slice = slice_id
+        self.request_queue = []
 
         if slice_id == self._URLLC:
             self.slice_name = "urllc"
@@ -60,4 +61,11 @@ class Node:
         self.event_generator = EventGenerator(self.arrival, self.arrival_parameter)
         self.active = False
         self.assigned = False
+
+    def push_event(self, event):
+        self.request_queue.append(event)
+
+    def remove_event(self, event):
+        self.request_queue.remove(event)
+
 
