@@ -332,7 +332,7 @@ class Simulation:
             self.node_pointer = 0
         start_ind = self.node_pointer
         no_pilots = self.no_pilots
-        for i in range(start_ind, len(self.Slices[self._URLLC].pool)):
+        for i in range(start_ind, len(self.Slices[self._URLLC].pool)-1):
             _node = self.Slices[self._URLLC].get_node(i)
             no_pilots -= _node.pilot_samples
             if no_pilots >= 0:
