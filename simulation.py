@@ -332,13 +332,13 @@ class Simulation:
             self.node_pointer = 0
         start_ind = self.node_pointer
         no_pilots = self.no_pilots
-        for i in range(start_ind, len(self.Slices[self._URLLC].pool)-1):
+        for i in range(start_ind, len(self.Slices[self._URLLC].pool)):
             _node = self.Slices[self._URLLC].get_node(i)
             no_pilots -= _node.pilot_samples
             if no_pilots >= 0:
                 self.node_pointer += 1
                 if len(_node.request_queue) > 0:
-                    event = self.Slices[self._URLLC].get_node(i).request_queue.pop()
+                    event = self.Slices[self._URLLC].get_node(i).request_queue.pop(0)
                     entry = event.get_entry(self.time, True)
                     self.trace.write_trace(entry)
             else:
