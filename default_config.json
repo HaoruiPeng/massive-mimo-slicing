@@ -2,7 +2,7 @@
   "simulation_name": "Slicing_Simulation",
   "no_pilots": 12,
   "frame_length": 0.5,
-  "simulation_length": 1000,
+  "simulation_length": 10000,
   "strategy_s1": "RR_NQ",
   "strategy_s2": "RR_NQ"
 }
