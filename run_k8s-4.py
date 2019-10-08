@@ -20,13 +20,13 @@ period = {"long": 10,
 pilots = {"high": 3,
           "low": 1}
 
-reliability = "low"
-deadline = "long"
+reliability = "high"
+deadline = "short"
 
 urllc_period = period[deadline]
 urllc_pilot = pilots[reliability]
 
-SEED = round(time.time() / 100)
+SEED = round(time.time() / 10)
 
 simulations = []
 
@@ -87,14 +87,14 @@ no_urllc = rho2urllc(urllc_load, urllc_period, urllc_pilot)
 mmtc_loads = np.linspace(0.4, 1.5, 12)
 no_mmtc_list = [rho2mmtc(rho) for rho in mmtc_loads]
 
-# s1 = "FCFS"
-# for no_mmtc in no_mmtc_list:
-#     SEED += np.random.randint(100)
-#     simulations.append("python3 main.py \
-#                         --s1 {} --s2 {} --reliability {} --deadline {} \
-#                         --urllc_node {} --mmtc_node {} \
-#                         --seed {}".format(
-#         s1, s2 , reliability, deadline, no_urllc, no_mmtc, SEED))
+s1 = "FCFS"
+for no_mmtc in no_mmtc_list:
+    SEED += np.random.randint(100)
+    simulations.append("python3 main.py \
+                        --s1 {} --s2 {} --reliability {} --deadline {} \
+                        --urllc_node {} --mmtc_node {} \
+                        --seed {}".format(
+        s1, s2 , reliability, deadline, no_urllc, no_mmtc, SEED))
 
 s1 = "RR_Q"
 for no_mmtc in no_mmtc_list:
