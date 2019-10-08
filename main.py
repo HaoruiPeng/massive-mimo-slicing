@@ -17,6 +17,17 @@ sys.path.append(os.path.abspath('../'))
 with open('default_config.json') as config_file:
     config = json.load(config_file)
 
+
+def isprime(N):
+    if N<=1 or N==4:
+        return False
+    else:
+        for i in range(2, N//2):
+            if N%i == 0:
+                return False
+        return True
+
+
 if __name__ == '__main__':
     # Load simulation parameters
     time_string = time.strftime('%Y%m%d_%H%M%S')
@@ -36,11 +47,8 @@ if __name__ == '__main__':
 
     log_file_path = 'logs/seed_log.csv'
     stats_file_path = 'stats/simulation_stats.csv'
-    trace_file_path = 'trace/' + time_string + '_' + simulation_name + '_event_trace.csv'
     # Initialize stats and logger
     stats = Stats(stats_file_path)
-    trace = Trace(trace_file_path, log=True)
-
     seed = args.seed
 
     try:
@@ -64,8 +72,18 @@ if __name__ == '__main__':
         no_mmtc = node.get("no_mmtc_nodes")
     else:
         no_mmtc = args.mmtc_nodes
+        
+    sampling=no_urllc
 
-    # print(no_urllc, no_mmtc)
+    while True:
+        if isprime(sampling):
+            break
+        else:
+            sampling += 1
+    
+    # print(sampling)
+    trace_file_path = 'trace/' + args.deadline + '_' + args.reliability + '-' + args.s1 + '_' +args.s2 + '_' +str(no_urllc) + '_' + str(no_mmtc) + '_event_trace.csv'
+    trace = Trace(trace_file_path, sampling, log=True)
 
     if args.s1 is not None:
         if args.reliability is not None and args.deadline is not None:

@@ -6,7 +6,7 @@ class Trace:
     _URLLC_ARRIVAL = 3
     _mMTC_ARRIVAL = 4
 
-    def __init__(self, trace_file_path, log=False):
+    def __init__(self, trace_file_path, sampling, log=False):
         self.log = log
         if log is True:
             self.__trace_file = open(trace_file_path, 'w+')
@@ -18,6 +18,7 @@ class Trace:
         self.plot_path = None
         self.urllc = {}
         self.mmtc = {}
+        self.sampling = sampling
 
     def close(self):
         if self.log is True:
@@ -76,10 +77,18 @@ class Trace:
         for ind in range(len(pilots)):
             if not pilots[ind]:
                 np.delete(wait_time, ind)
-        avg_wait = np.mean(wait_time)
-        var_wait = np.var(wait_time)
+
+        init_ind = np.random.randint(self.sampling)
+        samples = np.array([])
+        for ind in range(init_ind, len(wait_time), self.sampling):
+            samples = np.append(samples, wait_time[ind])
+        # print("urllc sample length {}".format(len(samples)))
+
+        avg_wait = np.mean(samples)
+        var_wait = np.var(samples)
+
         if var_wait > 0.0:
-            con_interval = st.t.interval(0.95, len(wait_time) - 1, loc=avg_wait, scale=st.sem(wait_time))
+            con_interval = st.t.interval(0.95, len(samples) - 1, loc=avg_wait, scale=st.sem(samples))
         else:
             con_interval = (avg_wait, avg_wait)
 
@@ -109,10 +118,15 @@ class Trace:
         for ind in range(len(pilots)):
             if not pilots[ind]:
                 np.delete(wait_time, ind)
-        avg_wait = np.mean(wait_time)
-        var_wait = st.sem(wait_time)
+        init_ind = np.random.randint(self.sampling)
+        samples = np.array([])
+        for ind in range(init_ind, len(wait_time), self.sampling):
+            samples = np.append(samples, wait_time[ind])
+        # print("mmtc sample length {}".format(len(samples)))
+        avg_wait = np.mean(samples)
+        var_wait = st.sem(samples)
         if var_wait > 0.0:
-            con_interval = st.t.interval(0.95, len(wait_time) - 1, loc=avg_wait, scale=st.sem(wait_time))
+            con_interval = st.t.interval(0.95, len(samples) - 1, loc=avg_wait, scale=st.sem(samples))
         else:
             con_interval = (avg_wait, avg_wait)
         return avg_wait, var_wait, con_interval[0], con_interval[1]
