@@ -20,8 +20,8 @@ period = {"long": 10,
 pilots = {"high": 3,
           "low": 1}
 
-reliability = "low"
-deadline = "short"
+reliability = "high"
+deadline = "long"
 
 urllc_period = period[deadline]
 urllc_pilot = pilots[reliability]
@@ -54,14 +54,14 @@ no_urllc_list = list(set(no_urllc_list))  # remove duplicates
 
 s2 = "FCFS"
 
-# s1 = "FCFS"
-# for no_urllc in no_urllc_list:
-#     SEED += np.random.randint(100)
-#     simulations.append("python3 main.py \
-#                         --s1 {} --s2 {} --reliability {} --deadline {} \
-#                         --urllc_node {} --mmtc_node {} \
-#                         --seed {}".format(
-#         s1, s2 , reliability, deadline, no_urllc, no_mmtc, SEED))
+s1 = "FCFS"
+for no_urllc in no_urllc_list:
+    SEED += np.random.randint(100)
+    simulations.append("python3 main.py \
+                        --s1 {} --s2 {} --reliability {} --deadline {} \
+                        --urllc_node {} --mmtc_node {} \
+                        --seed {}".format(
+        s1, s2 , reliability, deadline, no_urllc, no_mmtc, SEED))
 
 s1 = "RR_Q"
 for no_urllc in no_urllc_list:
@@ -72,46 +72,46 @@ for no_urllc in no_urllc_list:
                         --seed {}".format(
         s1, s2, reliability, deadline, no_urllc, no_mmtc, SEED))
 
-# s1 = "RR_NQ"
-# for no_urllc in no_urllc_list:
-#     SEED += np.random.randint(100)
-#     simulations.append("python3 main.py \
-#                         --s1 {} --s2 {} --reliability {} --deadline {} \
-#                         --urllc_node {} --mmtc_node {} \
-#                         --seed {}".format(
-#         s1, s2, reliability, deadline, no_urllc, no_mmtc, SEED))
-#
-# deadline = "short"
-# urllc_period = period[deadline]
-# no_urllc_list = [rho2urllc(rho, urllc_period, urllc_pilot) for rho in urllc_loads]
-# no_urllc_list = list(set(no_urllc_list))  # remove duplicates
-#
-# s1 = "FCFS"
-# for no_urllc in no_urllc_list:
-#     SEED += np.random.randint(100)
-#     simulations.append("python3 main.py \
-#                         --s1 {} --s2 {} --reliability {} --deadline {} \
-#                         --urllc_node {} --mmtc_node {} \
-#                         --seed {}".format(
-#         s1, s2 , reliability, deadline, no_urllc, no_mmtc, SEED))
-#
-# s1 = "RR_Q"
-# for no_urllc in no_urllc_list:
-#     SEED += np.random.randint(100)
-#     simulations.append("python3 main.py \
-#                         --s1 {} --s2 {} --reliability {} --deadline {} \
-#                         --urllc_node {} --mmtc_node {} \
-#                         --seed {}".format(
-#         s1, s2, reliability, deadline, no_urllc, no_mmtc, SEED))
-#
-# s1 = "RR_NQ"
-# for no_urllc in no_urllc_list:
-#     SEED += np.random.randint(100)
-#     simulations.append("python3 main.py \
-#                         --s1 {} --s2 {} --reliability {} --deadline {} \
-#                         --urllc_node {} --mmtc_node {} \
-#                         --seed {}".format(
-#         s1, s2, reliability, deadline, no_urllc, no_mmtc, SEED))
+s1 = "RR_NQ"
+for no_urllc in no_urllc_list:
+    SEED += np.random.randint(100)
+    simulations.append("python3 main.py \
+                        --s1 {} --s2 {} --reliability {} --deadline {} \
+                        --urllc_node {} --mmtc_node {} \
+                        --seed {}".format(
+        s1, s2, reliability, deadline, no_urllc, no_mmtc, SEED))
+
+deadline = "short"
+urllc_period = period[deadline]
+no_urllc_list = [rho2urllc(rho, urllc_period, urllc_pilot) for rho in urllc_loads]
+no_urllc_list = list(set(no_urllc_list))  # remove duplicates
+
+s1 = "FCFS"
+for no_urllc in no_urllc_list:
+    SEED += np.random.randint(100)
+    simulations.append("python3 main.py \
+                        --s1 {} --s2 {} --reliability {} --deadline {} \
+                        --urllc_node {} --mmtc_node {} \
+                        --seed {}".format(
+        s1, s2 , reliability, deadline, no_urllc, no_mmtc, SEED))
+
+s1 = "RR_Q"
+for no_urllc in no_urllc_list:
+    SEED += np.random.randint(100)
+    simulations.append("python3 main.py \
+                        --s1 {} --s2 {} --reliability {} --deadline {} \
+                        --urllc_node {} --mmtc_node {} \
+                        --seed {}".format(
+        s1, s2, reliability, deadline, no_urllc, no_mmtc, SEED))
+
+s1 = "RR_NQ"
+for no_urllc in no_urllc_list:
+    SEED += np.random.randint(100)
+    simulations.append("python3 main.py \
+                        --s1 {} --s2 {} --reliability {} --deadline {} \
+                        --urllc_node {} --mmtc_node {} \
+                        --seed {}".format(
+        s1, s2, reliability, deadline, no_urllc, no_mmtc, SEED))
 
 pool = Pool(processes=PROCESSES)
 for k, simulation in enumerate(simulations):
