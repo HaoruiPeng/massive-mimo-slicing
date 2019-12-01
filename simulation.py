@@ -113,10 +113,19 @@ class Simulation:
         }
         #TODO:Report should be the infomation of all the previous information since last report
         self.Report = {
+                        'time': self.time,
                         'S1':{
                             'users': 0},
                         'S2':{
                             'users': 0}
+        }
+        
+        self.Report_prev = {
+                            'time': self.time,
+                            'S1':{
+                                'users': 0},
+                            'S2':{
+                                'users': 0}
         }
         
         #Attributes used by only RR_NQ strategy
@@ -159,12 +168,19 @@ class Simulation:
                                  self.time + next_arrival, self.time + next_arrival + _node.deadline,
                                  nodes.index(_node), counter)
 
+#################################################################################################################
+## Evnets Handling
+#################################################################################################################
+    
     def __handle_event(self, event):
         # Event switcher to determine correct action for an event
         event_actions = {
             self._URLLC_ARRIVAL: self.__handle_urllc_arrival,
             self._mMTC_ARRIVAL: self.__handle_mmtc_arrival,
-            self._DEPARTURE: self.__handle_departure}
+            self._DEPARTURE: self.__handle_departure,
+            self._REPORT: self.__handle_report,
+            self._DECISION: self.__handle_departure
+        }
         event_actions[event.type](event)
 
     def __handle_urllc_arrival(self, event):
@@ -244,33 +260,52 @@ class Simulation:
                              self.time + next_arrival, self.time + next_arrival + node.deadline,
                              event.node_id, self.stats.stats[no_arrivals[event.type]])
 
+    
+    def __handle_report(self, event)
+        """
+        Report is sent every sampling time
+        """
+        del event
+        self.__send_report()
+        self.event_heap.push(self._REPORT, self.time + self.sampling)
+        self.event_heap.push(self._DECISION, self.time + self.sampling + self.get_delay())
+        
+
+    def __handle_decision(self, event):
+        """
+        Descision is always passive and only triggered by a report
+        """
+        del event
+        self.__update_decision()
+        
+    
     def __handle_departure(self, event):
-        # Handle a departure event
+        """
+        Handle a departure event
+        """
         # print("[Time {}] Departure".format(self.time))
         # print("[Time {}] Send queue size {}" .format(self.time, len(self.send_queue)))
         del event
         self.__handle_expired_events()
         self.no_pilots = 12
         self.__assign_pilots()
-        # self.__check_collisions()
-        # Add new departure event to the event list, pull the delay from a multi gussian distribution
-#        mu, sigma = 2.26, 0.02
-#        delay = np.random.lognormal(mu, sigma, 1)
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length)
-    
-    def __handle_decision(self, event):
-    ##
-    #Desision will arrival every smapling time, which descision the number of users every sampling time and the schduler to use
-    ##
-        
-        self.event_heap.push(self.DE\\_DECISION_ARRIVAL, self.time + self.sampling + delay)
+
 
     def __handle_expired_events(self):
+        """
+        Handle all the expired requests before assigning the pilots every coherence interval
+        """
+
         self.__handle_urllc_expired_events()
         self.__handle_mmtc_expired_events()
 
+
     def __handle_urllc_expired_events(self):
-        # remove the expired events in the send_queue
+        """
+        remove the expired events in the send_queue
+        """
+        
         pilot_strategy = self.Slices[self._URLLC].strategy
         if pilot_strategy == "FCFS":
             self.__handle_station_node_queue(self._URLLC)
@@ -278,6 +313,7 @@ class Simulation:
             self.__handle_signaling(self._URLLC)
         if pilot_strategy == "RR_NQ":
             self.__handle__node_queue(self._URLLC)
+
 
     def __handle_mmtc_expired_events(self):
         pilot_strategy = self.Slices[self._mMTC].strategy
@@ -287,6 +323,7 @@ class Simulation:
             self.__handle_signaling(self._mMTC)
         if pilot_strategy == "RR_NQ":
             self.__handle__node_queue(self._mMTC)
+
 
     def __handle_station_node_queue(self, slice_type):
         key = ['_URLLC', '_mMTC']
@@ -316,6 +353,7 @@ class Simulation:
         #       print("\n[Time {}] Lost {} URLLC packets, {} mMTC packets\n"
         #               .format(self.time, urllc_counter, mmtc_counter))
 
+
     def __handle_signaling(self, slice_type):
         no_missed_event = ['no_missed_urllc', 'no_missed_mmtc']
         for node in self.Slices[slice_type].pool:
@@ -330,6 +368,7 @@ class Simulation:
             if len(node.request_queue) == 0:
                 node.active = False
 
+
     def __handle__node_queue(self, slice_type):
         no_missed_event = ['no_missed_urllc', 'no_missed_mmtc']
         for node in self.Slices[slice_type].pool:
@@ -341,7 +380,47 @@ class Simulation:
                         entry = event.get_entry(self.time, False)
                         self.trace.write_trace(entry)
                         del event
+                        
+#################################################################################################################
+## Methods
+#################################################################################################################
+    
+    def __send_report(self):
+        """
+        Update the report every sampling time, read the time of the old report
+        """
+        no_arrivals = {
+            self._URLLC_ARRIVAL: 'no_urllc_arrivals',
+            self._mMTC_ARRIVAL: 'no_mmtc_arrivals'
+        }
+        
+        report_urllc = self.stats.stats[no_arrivals[self._URLLC_ARRIVAL]]
+        report_mmtc = self.stats.stats[no_arrivals[self._mMTC_ARRIVAL]]
+        
+        self.Report = { 'time': self.time,
+                        'S1':{
+                            'users': report_urllc},
+                        'S2':{
+                            'users': report_mmtc}
+        }
 
+    
+    def __update_decision(self):
+        """Process the information and Send out the decision""""
+        interval = self.Report_prev['time'] - self.Report['time']
+        urllc_arrivals  = self.Report_prev['S1']['users'] - self.Report['S1']['users']
+        mmtc_arrivals  = self.Report_prev['S2']['users'] - self.Report['S2']['users']
+        
+        self.Decision = {
+                        'S1':{
+                            'strategy': 'FCFS',
+                            'users': round(urllc_arrivals / (self.sampling / self.frame_length))},
+                        'S2':{
+                            'strategy': 'FCFS',
+                            'users': round(mmtc_arrivals / (self.sampling / self.frame_length))}
+        }
+        
+    
     def __assign_pilots(self):
         self.__assign_urllc_pilots()
         if self.no_pilots > 0:
@@ -418,6 +497,10 @@ class Simulation:
                 self.no_pilots = no_pilots
                 return
         self.no_pilots = no_pilots
+        
+#################################################################################################################
+## Simulation Run
+#################################################################################################################
 
     def run(self):
         """ Runs the simulation """
