@@ -1,6 +1,7 @@
 import sys
 import os
 from events.event_heap import EventHeap
+import numpy as np
 from slices.slice import Slice
 
 
@@ -24,8 +25,9 @@ class Simulation:
     _DEPARTURE = 2
     _URLLC_ARRIVAL = 3
     _mMTC_ARRIVAL = 4
+    _DECISION_ARRIVAL = 5
 
-    def __init__(self, config, stats, trace, no_urllc, no_mmtc, s1=None, s2=None, traffic=None):
+    def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic=None):
         """
         Initialize simulation object
 
@@ -33,25 +35,52 @@ class Simulation:
         ----------
         config : dict
             Dictionary containing all configuration parameters
+            no_pilots : the total number of pilots per coherence interval\
+            frame_length : coherence interval
+            sampling : The rate to send out the desicions
         stats : Stats
             Statistics object for keeping track for measurements
+        trace : bool
+            Indicate whether to trace the
+        no_urllc : int
+            TODO: will be sperated to the UE function
+            Number of UEs in slice 1
+        no_mmtc : int
+           TODO: will be sperated to the UE function
+           Number of UEs in slice 2
+        mu : float
+            Statistics of the delay
+        s1 : String
+            Initial strategy of slice 1
+        s2 : String
+            Initial strategy of slice 2
+        traffic : tube of string
+            TODO: will be sperated to the UE function
+            Traffic type of the slice 1
+        
         """
 
         self.stats = stats
         self.trace = trace
+        self.mu = mu
         self.time = 0.0
-        self.no_pilots = config.get('no_pilots')
+        
         self.simulation_length = config.get('simulation_length')
         self.frame_length = config.get('frame_length')
+        self.sampling = config.get('sampling')
+        self.no_pilots = config.get('no_pilots')
+        
+        
+        #Initial strategy of both slices, will be changed be the decisions
         if s1 is not None:
             self.s1_strategy = s1
         else:
-            s1_strategy = config.get('strategy_s1')
+            self.s1_strategy = config.get('strategy_s1')
 
         if s2 is not None:
             self.s2_strategy = s2
         else:
-            s2_strategy = config.get('strategy_s2')
+            self.s1_strategy = config.get('strategy_s2')
 
         self.strategy_mapping = {
             'FCFS': self.__fist_come_first_served,
@@ -64,10 +93,11 @@ class Simulation:
             'RR_Q': self.__arrival_signal,
             'RR_NQ': self.__arrival_no_queue,
         }
+        
         self.event_heap = EventHeap()
         self.send_queue = {'_URLLC': [], '_mMTC': []}
-        # used only in method "RR_NQ"
-
+   
+        
         self.Slices = [Slice(self._URLLC, no_urllc, self.s1_strategy, traffic), Slice(self._mMTC, no_mmtc, self.s2_strategy)]
         self.frame_counter = 0
         self.frame_loops = self.Slices[self._URLLC].get_node(0).deadline / self.frame_length
@@ -190,8 +220,19 @@ class Simulation:
         self.no_pilots = 12
         self.__assign_pilots()
         # self.__check_collisions()
-        # Add new departure event to the event list
+        # Add new departure event to the event list, pull the delay from a multi gussian distribution
+#        mu, sigma = 2.26, 0.02
+#        delay = np.random.lognormal(mu, sigma, 1)
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length)
+    
+    def __handle_decision(self, event):
+    ##
+    #Desision will arrival every smapling time, which descision the number of users every sampling time and the schduler to use
+    ##
+        mu, sigma = 2.26, 0.02
+        delay = np.random.lognormal(mu, sigma, 1)
+        
+        self.event_heap.push(self.DE\\_DECISION_ARRIVAL, self.time + self.sampling + delay)
 
     def __handle_expired_events(self):
         self.__handle_urllc_expired_events()
@@ -351,36 +392,36 @@ class Simulation:
         """ Runs the simulation """
 
         current_progress = 0
-        # print("\n[Time {}] Simulation start.".format(self.time))
-        # print("Size: {}".format(self.event_heap.get_size()))
+        print("\n[Time {}] Simulation start.".format(self.time))
+#        print("Size: {}".format(self.event_heap.get_size()))
         # for k in self.event_heap.get_heap():
         #     print(k)
         while self.time < self.simulation_length:
-            # print("[Time {}] Event heap size {}".format(self.time, self.event_heap.size()))
+#            print("[Time {}] Event heap size {}".format(self.time, self.event_heap.size()))
             next_event = self.event_heap.pop()[3]
             # print("Handle event: {} generated at time {}".format(next_event.type, next_event.time))
 
             # Advance time before handling event
             self.time = next_event.time
 
-            progress = round(100 * self.time / self.simulation_length)
+            progress = np.round(100 * self.time / self.simulation_length)
 
             if progress > current_progress:
                 current_progress = progress
-                # str1 = "\rProgress: {0}%".format(progress)
-                # sys.stdout.write(str1)
-                # sys.stdout.flush()
+                str1 = "\rProgress: {0}%".format(progress)
+                sys.stdout.write(str1)
+                sys.stdout.flush()
 
             self.__handle_event(next_event)
 
-        # print('\n[Time {}] Simulation complete.'.format(self.time))
+        print('\n[Time {}] Simulation complete.'.format(self.time))
 
     def write_result(self):
         result_dir = "results/" + self.s1_strategy + "_" + self.s2_strategy
         reliability = self.Slices[self._URLLC].get_node(0).reliability_profile
         deadline = self.Slices[self._URLLC].get_node(0).deadline_profile
-        urllc_file_name = result_dir + "/" + reliability + "_" + deadline + "_URLLC.csv"
-        mmtc_file_name = result_dir + "/" + reliability + "_" + deadline + "_mMTC.csv"
+        urllc_file_name = result_dir + "/" + reliability + "_" + deadline + "_" + str(self.mu)+"_URLLC.csv"
+        mmtc_file_name = result_dir + "/" + reliability + "_" + deadline + "_" + str(self.mu)+"_mMTC.csv"
 
         data = self.trace.get_waiting_time()
 
