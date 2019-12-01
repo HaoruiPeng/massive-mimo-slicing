@@ -39,7 +39,7 @@ class Event:
         self.time = event_time
         self.node_id = node_id
         self.dead_time = dead_time
-        self.counter = 0
+        self.counter = counter
         self.trace = {'event_type': event_type, 'node_id': node_id, 'counter': counter,
                       'arrival_time': event_time, 'dead_time': dead_time, 'departure_time': 0,
                       'pilot': False}
