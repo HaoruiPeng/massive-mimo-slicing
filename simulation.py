@@ -25,7 +25,8 @@ class Simulation:
     _DEPARTURE = 2
     _URLLC_ARRIVAL = 3
     _mMTC_ARRIVAL = 4
-    _DECISION_ARRIVAL = 5
+    _REPORT = 5
+    _DECISION = 6
 
     def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic=None):
         """
@@ -73,14 +74,14 @@ class Simulation:
         
         #Initial strategy of both slices, will be changed be the decisions
         if s1 is not None:
-            self.s1_strategy = s1
+            s1_strategy = s1
         else:
-            self.s1_strategy = config.get('strategy_s1')
+            s1_strategy = config.get('strategy_s1')
 
         if s2 is not None:
-            self.s2_strategy = s2
+            s2_strategy = s2
         else:
-            self.s1_strategy = config.get('strategy_s2')
+            s1_strategy = config.get('strategy_s2')
 
         self.strategy_mapping = {
             'FCFS': self.__fist_come_first_served,
@@ -98,7 +99,27 @@ class Simulation:
         self.send_queue = {'_URLLC': [], '_mMTC': []}
    
         
-        self.Slices = [Slice(self._URLLC, no_urllc, self.s1_strategy, traffic), Slice(self._mMTC, no_mmtc, self.s2_strategy)]
+        self.Slices = [Slice(self._URLLC, no_urllc, traffic), Slice(self._mMTC, no_mmtc)]
+        
+        #Decision : A dict with all the decisicion that the actuator look up every coherence interval
+        #TODO:The initial number of users should follow the traffic distributtion of each slice
+        self.Decision = {
+                        'S1':{
+                            'strategy': s1_strategy,
+                            'users': round(no_urllc * 0.5)},
+                        'S2':{
+                            'strategy': s2_strategy,
+                            'users': round(no_mmtc * 0.01)}
+        }
+        #TODO:Report should be the infomation of all the previous information since last report
+        self.Report = {
+                        'S1':{
+                            'users': 0},
+                        'S2':{
+                            'users': 0}
+        }
+        
+        #Attributes used by only RR_NQ strategy
         self.frame_counter = 0
         self.frame_loops = self.Slices[self._URLLC].get_node(0).deadline / self.frame_length
         self.node_pointer = 0
@@ -107,8 +128,20 @@ class Simulation:
             # Initialize nodes and their arrival times
             self.__initialize_nodes(s)
 
-        # Initialize departure and measurement event
+        # Initialize departure event
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length)
+        self.event_heap.push(self._REPORT, self.time + self.sampling)
+        #The first decision will arrive after the report with a delay of RTT&Exec
+        self.event_heap.push(self._DECISION, self.time + self.sampling + self.get_delay())
+        
+    def get_delay(self):
+        ##
+        #Generate the delay value between PHY and MAC from a log-normal distribution
+        #
+        mu, sigma = 2.26, 0.02
+        delay = np.random.lognormal(mu, sigma, 1)
+        return delay
+    
 
     def __initialize_nodes(self, _slice):
         nodes = _slice.pool
@@ -229,8 +262,6 @@ class Simulation:
     ##
     #Desision will arrival every smapling time, which descision the number of users every sampling time and the schduler to use
     ##
-        mu, sigma = 2.26, 0.02
-        delay = np.random.lognormal(mu, sigma, 1)
         
         self.event_heap.push(self.DE\\_DECISION_ARRIVAL, self.time + self.sampling + delay)
 
