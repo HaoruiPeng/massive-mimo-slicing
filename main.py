@@ -40,6 +40,7 @@ if __name__ == '__main__':
     parser.add_argument('--deadline', action="store", default=None)
     parser.add_argument('--urllc_nodes', action="store", type=int, default=None)
     parser.add_argument('--mmtc_nodes', action="store", type=int, default=None)
+    parser.add_argument('--mu', action="store", type=float, default=None)
     parser.add_argument('--seed', action="store", type=int, default=1)
 
     args = parser.parse_args()
@@ -50,6 +51,7 @@ if __name__ == '__main__':
     # Initialize stats and logger
     stats = Stats(stats_file_path)
     seed = args.seed
+    mu = float(args.mu)
 
     try:
         file = open(log_file_path, 'a')
@@ -87,17 +89,17 @@ if __name__ == '__main__':
 
     if args.s1 is not None:
         if args.reliability is not None and args.deadline is not None:
-            simulation = Simulation(config, stats, trace, no_urllc, no_mmtc,
+            simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu,
                                     args.s1, args.s2,
                                     (args.reliability, args.deadline))
             file.write(args.s1 + '-' + args.s2 + ',' + args.reliability + ',' + args.deadline + ','
                        + str(no_urllc) + ',' + str(no_mmtc) + ',' + str(seed) + '\n')
         else:
-            simulation = Simulation(config, stats, trace,  no_urllc, no_mmtc,
+            simulation = Simulation(config, stats, trace,  no_urllc, no_mmtc, mu,
                                     args.s1, args.s2)
             file.write(args.s1 + '-' + args.s2 + ',' + str(no_urllc) + ',' + str(no_mmtc) + ',' + str(seed) + '\n')
     else:
-        simulation = Simulation(config, stats, trace, no_urllc, no_mmtc)
+        simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu)
         file.write(str(no_urllc) + ',' + str(no_mmtc) + ',' + str(seed) + '\n')
 
     simulation.run()
