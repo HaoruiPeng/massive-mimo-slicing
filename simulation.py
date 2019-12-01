@@ -184,11 +184,11 @@ class Simulation:
         event_actions[event.type](event)
 
     def __handle_urllc_arrival(self, event):
-        self.arrival_mapping[self.Slices[self._URLLC].strategy](event)
+        self.arrival_mapping[self.Decision['S1']['strategy']](event)
         # Handle an alarm arrival event
 
     def __handle_mmtc_arrival(self, event):
-        self.arrival_mapping[self.Slices[self._mMTC].strategy](event)
+        self.arrival_mapping[self.Decision['S2']['strategy']](event)
         # Handle a control arrival event
 
     def __arrival_queue(self, event):
@@ -261,7 +261,7 @@ class Simulation:
                              event.node_id, self.stats.stats[no_arrivals[event.type]])
 
     
-    def __handle_report(self, event)
+    def __handle_report(self, event):
         """
         Report is sent every sampling time
         """
@@ -406,7 +406,8 @@ class Simulation:
 
     
     def __update_decision(self):
-        """Process the information and Send out the decision""""
+        """Process the information and Send out the decision"""
+        
         interval = self.Report_prev['time'] - self.Report['time']
         urllc_arrivals  = self.Report_prev['S1']['users'] - self.Report['S1']['users']
         mmtc_arrivals  = self.Report_prev['S2']['users'] - self.Report['S2']['users']
@@ -430,11 +431,11 @@ class Simulation:
 
     def __assign_urllc_pilots(self):
         no_urllc = self.Decision['S1']['users']
-        self.strategy_mapping[self.Slices[self._URLLC].strategy](self._URLLC, no_urllc)
+        self.strategy_mapping[self.Decision['S1']['strategy']](self._URLLC, no_urllc)
 
     def __assign_mmtc_pilots(self):
         no_mmtc = self.Decision['S2']['users']
-        self.strategy_mapping[self.Slices[self._mMTC].strategy](self._mMTC, no_mmtc)
+        self.strategy_mapping[self.Decision['S2']['strategy']](self._mMTC, no_mmtc)
 
     def __fist_come_first_served(self, slice_type, requests):
         no_pilots = self.no_pilots
@@ -541,7 +542,7 @@ class Simulation:
         print('\n[Time {}] Simulation complete.'.format(self.time))
 
     def write_result(self):
-        result_dir = "results/" + self.s1_strategy + "_" + self.s2_strategy
+        result_dir = "results/" + self.Decision['S1']['strategy'] + "_" + self.Decision['S2']['strategy']
         reliability = self.Slices[self._URLLC].get_node(0).reliability_profile
         deadline = self.Slices[self._URLLC].get_node(0).deadline_profile
         urllc_file_name = result_dir + "/" + reliability + "_" + deadline + "_" + str(self.mu)+"_URLLC.csv"
