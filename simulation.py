@@ -306,7 +306,7 @@ class Simulation:
         remove the expired events in the send_queue
         """
         
-        pilot_strategy = self.Slices[self._URLLC].strategy
+        pilot_strategy = self.Decision['S1']['strategy']
         if pilot_strategy == "FCFS":
             self.__handle_station_node_queue(self._URLLC)
         if pilot_strategy == "RR_Q":
@@ -316,7 +316,7 @@ class Simulation:
 
 
     def __handle_mmtc_expired_events(self):
-        pilot_strategy = self.Slices[self._mMTC].strategy
+        pilot_strategy = self.Decision['S2']['strategy']
         if pilot_strategy == "FCFS":
             self.__handle_station_node_queue(self._mMTC)
         if pilot_strategy == "RR_Q":
@@ -420,28 +420,34 @@ class Simulation:
                             'users': round(mmtc_arrivals / (self.sampling / self.frame_length))}
         }
         
-    
+        # Update the previous report
+        self.Report_prev = self.Report
+        
     def __assign_pilots(self):
         self.__assign_urllc_pilots()
         if self.no_pilots > 0:
             self.__assign_mmtc_pilots()
 
     def __assign_urllc_pilots(self):
-        self.strategy_mapping[self.Slices[self._URLLC].strategy](self._URLLC)
+        no_urllc = self.Decision['S1']['users']
+        self.strategy_mapping[self.Slices[self._URLLC].strategy](self._URLLC, no_urllc)
 
     def __assign_mmtc_pilots(self):
-        self.strategy_mapping[self.Slices[self._mMTC].strategy](self._mMTC)
+        no_mmtc = self.Decision['S2']['users']
+        self.strategy_mapping[self.Slices[self._mMTC].strategy](self._mMTC, no_mmtc)
 
-    def __fist_come_first_served(self, slice_type):
+    def __fist_come_first_served(self, slice_type, requests):
         no_pilots = self.no_pilots
         key = ['_URLLC', '_mMTC']
         events = self.send_queue[key[slice_type]].copy()
         events.sort(key=lambda x: x.dead_time)
+        counter = requests
         for event in events:
             node = self.Slices[slice_type].get_node(event.node_id)
             required_pilots = node.pilot_samples
             no_pilots -= required_pilots
-            if no_pilots >= 0:
+            counter -= 1
+            if no_pilots >= 0 and counter >= 0:
                 # remove the event that assigned the pilots from the list
                 entry = event.get_entry(self.time, True)
                 # print(entry)
@@ -456,15 +462,17 @@ class Simulation:
                 return
         self.no_pilots = no_pilots
 
-    def __round_robin_queue_info(self, slice_type):
+    def __round_robin_queue_info(self, slice_type, requests):
         no_pilots = self.no_pilots
         _nodes = self.Slices[slice_type].pool
+        counter = requests
         for _node in self.Slices[slice_type].pool:
             if _node.active:
                 for event in _node.request_queue:
                     no_pilots -= _node.pilot_samples
-                    if no_pilots >= 0:
+                    if no_pilots >= 0 and counter >= 0:
                         entry = event.get_entry(self.time, True)
+                        counter -= 1
                         self.trace.write_trace(entry)
                         _node.remove_event(event)
                         del event
@@ -476,19 +484,21 @@ class Simulation:
                         return
         self.no_pilots = no_pilots
 
-    def __round_robin_no_queue_info(self, slice_type):
+    def __round_robin_no_queue_info(self, slice_type, requests):
         assert slice_type == self._URLLC, "Method only applicable for slice 1"
         self.frame_counter = (self.frame_counter + 1) % self.frame_loops
         if self.frame_counter == 1:
             self.node_pointer = 0
         start_ind = self.node_pointer
         no_pilots = self.no_pilots
+        counter = requests
         for i in range(start_ind, len(self.Slices[self._URLLC].pool)):
             _node = self.Slices[self._URLLC].get_node(i)
             no_pilots -= _node.pilot_samples
-            if no_pilots >= 0:
+            if no_pilots >= 0 and counter >= 0:
                 self.node_pointer += 1
                 if len(_node.request_queue) > 0:
+                    counter -= 1
                     event = self.Slices[self._URLLC].get_node(i).request_queue.pop(0)
                     entry = event.get_entry(self.time, True)
                     self.trace.write_trace(entry)
