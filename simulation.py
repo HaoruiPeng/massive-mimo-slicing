@@ -26,8 +26,9 @@ class Simulation:
     _URLLC_ARRIVAL = 3
     _mMTC_ARRIVAL = 4
     _REPORT = 5
-    _DECISION = 6
-
+    _DECISION_MAKE = 6
+    _DECISION_ARRIVAL = 7
+    
     def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic=None):
         """
         Initialize simulation object
@@ -103,10 +104,14 @@ class Simulation:
         
         #Decision : A dict with all the decisicion that the actuator look up every coherence interval
         #TODO:The initial number of users should follow the traffic distributtion of each slice
+        
+        self.report_counter = 0
+        self.decision_counter = 0
         self.Decision = {
+                        'counter': self.decision_counter,
                         'S1':{
                             'strategy': s1_strategy,
-                            'users': round(no_urllc * 0.5)},
+                            'users': round(no_urllc * 0.05)},
                         'S2':{
                             'strategy': s2_strategy,
                             'users': round(no_mmtc * 0.01)}
@@ -114,6 +119,7 @@ class Simulation:
         #TODO:Report should be the infomation of all the previous information since last report
         self.Report = {
                         'time': self.time,
+                        'counter': self.report_counter,
                         'S1':{
                             'users': 0},
                         'S2':{
@@ -122,11 +128,17 @@ class Simulation:
         
         self.Report_prev = {
                             'time': self.time,
+                            'counter': self.report_counter,
                             'S1':{
                                 'users': 0},
                             'S2':{
                                 'users': 0}
         }
+        
+        self.report_queue = []
+        
+        self.Decision_prev = 0
+   
         
         #Attributes used by only RR_NQ strategy
         self.frame_counter = 0
@@ -139,16 +151,27 @@ class Simulation:
 
         # Initialize departure event
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length)
-        self.event_heap.push(self._REPORT, self.time + self.sampling)
+        first_send = self.time + self.sampling
+        print("[Event] --> Schedule Report No.1 send at {}".format(first_send))
+        self.event_heap.push(self._REPORT, first_send)
+        
+        first_report_arrival = first_send + self.get_delay()
+        print("[Event] --> Schedule Report No.1 arrival at MAC layer at {}".format(first_report_arrival))
         #The first decision will arrive after the report with a delay of RTT&Exec
-        self.event_heap.push(self._DECISION, self.time + self.sampling + self.get_delay())
+        self.event_heap.push(self._DECISION_MAKE, first_report_arrival)
+        
+#        first_decision_arrival = first_report_arrival + self.get_delay()
+#        print("[Event] --> Schedule Decision No.1 arrival at PHY layer at {}".format(first_decision_arrival))
+#        self.event_heap.push(self._DECISION_ARRIVAL,first_decision_arrival)
+
         
     def get_delay(self):
         ##
         #Generate the delay value between PHY and MAC from a log-normal distribution
         #
         mu, sigma = 2.26, 0.02
-        delay = np.random.lognormal(mu, sigma, 1)
+        delay = np.random.lognormal(mu, sigma, 1) / 2.
+
         return delay
     
 
@@ -179,7 +202,8 @@ class Simulation:
             self._mMTC_ARRIVAL: self.__handle_mmtc_arrival,
             self._DEPARTURE: self.__handle_departure,
             self._REPORT: self.__handle_report,
-            self._DECISION: self.__handle_departure
+            self._DECISION_MAKE: self.__handle_decision_make,
+            self._DECISION_ARRIVAL: self.__handle_decision_arrival
         }
         event_actions[event.type](event)
 
@@ -267,17 +291,23 @@ class Simulation:
         """
         del event
         self.__send_report()
-        self.event_heap.push(self._REPORT, self.time + self.sampling)
-        self.event_heap.push(self._DECISION, self.time + self.sampling + self.get_delay())
+#        self.event_heap.push(self._REPORT, self.time + self.sampling)
+#        self.event_heap.push(self._DECISION_MAKE, self.time + self.sampling + self.get_delay())
         
 
-    def __handle_decision(self, event):
+    def __handle_decision_make(self, event):
         """
         Descision is always passive and only triggered by a report
         """
         del event
+        self.__update_report()
+#        self.event_heap.push(self._DECISION_ARRIVAL, self.time + self.get_delay())
+#        print("Handle decsion")
+
+    
+    def __handle_decision_arrival(self, event):
         self.__update_decision()
-        
+
     
     def __handle_departure(self, event):
         """
@@ -345,6 +375,7 @@ class Simulation:
             node.remove_event(event)
             self.stats.stats[no_missed_event[slice_type]] += 1
             entry = event.get_entry(self.time, False)
+#            print("deadline missed")
             self.trace.write_trace(entry)
             del event
             del self.send_queue[key[slice_type]][i]
@@ -387,8 +418,10 @@ class Simulation:
     
     def __send_report(self):
         """
-        Update the report every sampling time, read the time of the old report
+        Send the report every sampling time, read the time of the old report
         """
+        self.report_counter += 1
+        print("[PHY]{} --> Report No.{} sent".format(self.time, self.report_counter))
         no_arrivals = {
             self._URLLC_ARRIVAL: 'no_urllc_arrivals',
             self._mMTC_ARRIVAL: 'no_mmtc_arrivals'
@@ -397,32 +430,64 @@ class Simulation:
         report_urllc = self.stats.stats[no_arrivals[self._URLLC_ARRIVAL]]
         report_mmtc = self.stats.stats[no_arrivals[self._mMTC_ARRIVAL]]
         
-        self.Report = { 'time': self.time,
+        Report_Sending = {'time': self.time,
+                        'counter': self.report_counter,
                         'S1':{
                             'users': report_urllc},
                         'S2':{
                             'users': report_mmtc}
         }
+        self.report_queue.append(Report_Sending)
+        next_send = self.time + self.sampling
+        print("[Event] --> Schedule the next Report No.{} send at {}".format(Report_Sending['counter']+1, next_send))
+        self.event_heap.push(self._REPORT, next_send)
+        next_report_arrive = next_send +  self.get_delay()
+        print("[Event] --> Schedule the next Report No.{} arrive at the MAC layer at {}".format(Report_Sending['counter']+1, next_report_arrive))
+        self.event_heap.push(self._DECISION_MAKE, next_report_arrive)
 
     
-    def __update_decision(self):
-        """Process the information and Send out the decision"""
+    def __update_report(self):
+        """Process the decision on the MAC and send out"""
+        self.Report = self.report_queue.pop(0)
+        print("[MAC]{} --> Report No.{} arrives".format(self.time, self.Report['counter']))
+        interval = self.Report['time'] - self.Report_prev['time']
+        print("[MAC]{} --> Last Report time: {}, This Report time: {}, report interval: {}".format(self.time, self.Report_prev['time'], self.Report['time'], interval))
+        print("[MAC]{} --> Last Respot urllc {}, this Respot urllc {}".format(self.time, self.Report_prev['S1']['users'], self.Report['S1']['users']))
         
-        interval = self.Report_prev['time'] - self.Report['time']
-        urllc_arrivals  = self.Report_prev['S1']['users'] - self.Report['S1']['users']
-        mmtc_arrivals  = self.Report_prev['S2']['users'] - self.Report['S2']['users']
-        
-        self.Decision = {
-                        'S1':{
-                            'strategy': 'FCFS',
-                            'users': round(urllc_arrivals / (self.sampling / self.frame_length))},
-                        'S2':{
-                            'strategy': 'FCFS',
-                            'users': round(mmtc_arrivals / (self.sampling / self.frame_length))}
+        urllc_arrivals  = self.Report['S1']['users'] - self.Report_prev['S1']['users']
+        mmtc_arrivals  = self.Report['S2']['users'] - self.Report_prev['S2']['users']
+
+        urllc_schedule = round(urllc_arrivals / (interval / self.frame_length))
+        mmtc_schedule =  round(mmtc_arrivals / (interval / self.frame_length))
+        self.decision_counter += 1
+        self.Decision_Sending = {
+                                'counter': self.decision_counter,
+                                'S1':{
+                                  'strategy': 'FCFS',
+                                  'users': urllc_schedule},
+                                'S2':{
+                                  'strategy': 'FCFS',
+                                  'users': mmtc_schedule}
         }
+        self.Report_prev = self.Report
+        decision_arrival = self.time + self.get_delay()
+        print("[Event] --> Schedule the Decision No.{} arrive at the PHY layer at {}".format(self.Decision_Sending['counter'], decision_arrival))
+        self.event_heap.push(self._DECISION_ARRIVAL, decision_arrival)
+
+        
+        
+    def __update_decision(self):
+        """Update the decision on the PHY"""
+        
+        self.Decision = self.Decision_Sending
+
+        print("[PHY]{} --> Decision No.{} arrives".format(self.time, self.Decision['counter']))
+        print("[PHY]{} --> Last decision arrives at {}, This decision arrives at: {}".format(self.time, self.Decision_prev, self.time))
+        
+        print("[PHY]{} --> New Decision: Scheduled URLLC:{} | Scheduled mMTC {}\n".format(self.time, self.Decision['S1']['users'], self.Decision['S2']['users']))
         
         # Update the previous report
-        self.Report_prev = self.Report
+        self.Decision_prev = self.time
         
     def __assign_pilots(self):
         self.__assign_urllc_pilots()
@@ -521,21 +586,20 @@ class Simulation:
 #        print("Size: {}".format(self.event_heap.get_size()))
         # for k in self.event_heap.get_heap():
         #     print(k)
-        while self.time < self.simulation_length:
+        while self.time <= self.simulation_length:
 #            print("[Time {}] Event heap size {}".format(self.time, self.event_heap.size()))
             next_event = self.event_heap.pop()[3]
             # print("Handle event: {} generated at time {}".format(next_event.type, next_event.time))
 
             # Advance time before handling event
             self.time = next_event.time
-
             progress = np.round(100 * self.time / self.simulation_length)
 
             if progress > current_progress:
                 current_progress = progress
-                str1 = "\rProgress: {0}%".format(progress)
-                sys.stdout.write(str1)
-                sys.stdout.flush()
+#                str1 = "\rProgress: {0}%".format(progress)
+#                sys.stdout.write(str)
+#                sys.stdout.flush()
 
             self.__handle_event(next_event)
 
