@@ -84,7 +84,7 @@ if __name__ == '__main__':
             sampling += 1
     
     # print(sampling)
-    trace_file_path = 'trace/' + args.deadline + '_' + args.reliability + '-' + args.s1 + '_' +args.s2 + '_' +str(no_urllc) + '_' + str(no_mmtc) + '_' + str(round(time.time())) '_event_trace.csv'
+    trace_file_path = 'trace/' + args.deadline + '_' + args.reliability + '-' + args.s1 + '_' +args.s2 + '_' +str(no_urllc) + '_' + str(no_mmtc) + '_' + str(round(time.time())) + '_event_trace.csv'
     trace = Trace(trace_file_path, sampling, log=True)
 
     if args.s1 is not None:
