@@ -3,8 +3,8 @@ import scipy.stats as st
 
 
 class Trace:
-    _URLLC_ARRIVAL = 3
-    _mMTC_ARRIVAL = 4
+    _URLLC_ARRIVAL = 6
+    _mMTC_ARRIVAL = 7
 
     def __init__(self, trace_file_path, sampling, log=False):
         self.log = log
@@ -72,6 +72,7 @@ class Trace:
         arrival_time = self.urllc['arrival_time']
         departure_time = self.urllc['departure_time']
         pilots = self.urllc['pilot']
+        print(len(pilots))
         wait_time = np.array(departure_time) - np.array(arrival_time)
 
         for ind in range(len(pilots)):
@@ -96,6 +97,7 @@ class Trace:
 
     def __get_urllc_loss(self):
         pilots = self.urllc['pilot']
+        print(len(pilots))
         loss_counter = 0
         for ind in range(len(pilots)):
             if not pilots[ind]:
