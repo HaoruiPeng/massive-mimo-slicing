@@ -370,8 +370,8 @@ class Simulation:
             if event.dead_time < self.time:
                 remove_indices.append(i)
         print("{} {} requests expired, remove.".format(len(remove_indices), key[slice_type]))
-#        if slice_type == self._URLLC and len(remove_indices) > 0:
-#            k = input("URLLC loss, pause for observe!")
+        if slice_type == self._URLLC and len(remove_indices) > 0:
+            k = input("URLLC loss, pause for observe!")
         # Remove the events in reversed order to not shift subsequent indices
         for i in sorted(remove_indices, reverse=True):
             event = queue[i]
@@ -493,7 +493,7 @@ class Simulation:
         self.Decision = self.Decision_Sending
 
         print("[PHY]{} --> Decision No.{} arrives".format(self.time, self.Decision['counter']))
-        print("[PHY]{} --> Last decision arrives at {}, This decision arrives at: {}".format(self.time, self.Decision_prev, self.time))
+        print("[PHY]{} --> Last decision arrives at {}, This decision arrives at: {}. Decision arrival  interval: {}".format(self.time, self.Decision_prev, self.time, self.Decision_prev - self.time))
         
         print("[PHY]{} --> New Decision: Scheduled URLLC:{} | Scheduled mMTC {}\n".format(self.time, self.Decision['S1']['users'], self.Decision['S2']['users']))
         
