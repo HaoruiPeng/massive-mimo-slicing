@@ -111,3 +111,6 @@ venv.bak/
 /binary
 .DS_Store
 */tmp*
+
+#Experiments files
+experiments/
