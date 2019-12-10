@@ -26,7 +26,8 @@ class Stats:
         # Write the headers to the csv files
 
         self.stats = {'config_no': 0, 'no_urllc_arrivals': 0, 'no_mmtc_arrivals': 0,
-                      'no_missed_urllc': 0, 'no_missed_mmtc': 0}
+                      'no_missed_urllc': 0, 'no_missed_mmtc': 0,
+                      'no_pilots': 0, 'no_waste_pilots': 0}
 
     def print_stats(self):
         """ Print the results to the terminal """
@@ -34,6 +35,9 @@ class Stats:
         print('mMTC arrivals: ' + str(self.stats['no_mmtc_arrivals']))
         print('Missed URLLC: ' + str(self.stats['no_missed_urllc']))
         print('Missed mMTC: ' + str(self.stats['no_missed_mmtc']))
+        print('Total pilots: ' + str(self.stats['no_pilots']))
+        print('Waste pilots: ' + str(self.stats['no_waste_pilots']))
+
 
     def save_stats(self):
         """ Save the results to file """

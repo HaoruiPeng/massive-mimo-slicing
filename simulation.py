@@ -320,6 +320,7 @@ class Simulation:
         del event
         self.__handle_expired_events()
         self.no_pilots = 12
+        self.stats.stats['no_pilots'] += 12
         self.__assign_pilots()
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length)
 
@@ -379,7 +380,7 @@ class Simulation:
             node.remove_event(event)
             self.stats.stats[no_missed_event[slice_type]] += 1
             entry = event.get_entry(self.time, False)
-            print("[Event] {} Request expired, arrive at {}, deadline {}".format(self.time, entry['arrival_time'], entry['dead_time']))
+            print("[Event][{}] {} request expired, arrive at {}, deadline {}".format(self.time, key[slice_type], entry['arrival_time'], entry['dead_time']))
             self.trace.write_trace(entry)
             del event
             del self.send_queue[key[slice_type]][i]
@@ -522,25 +523,38 @@ class Simulation:
         print("[PHY] Number of active {} request in the queue: {}".format(key[slice_type], len(events)))
         events.sort(key=lambda x: x.dead_time)
         counter = requests
-        for event in events:
-            node = self.Slices[slice_type].get_node(event.node_id)
-            required_pilots = node.pilot_samples
-            no_pilots -= required_pilots
-            counter -= 1
-            if no_pilots >= 0 and counter >= 0:
-                # remove the event that assigned the pilots from the list
-                entry = event.get_entry(self.time, True)
-                print("[Event][{}] {} Request allocated, arrive at {}, deadline {}".format(self.time, key[slice_type] , entry['arrival_time'], entry['dead_time']))
-                # print(entry)
-                self.trace.write_trace(entry)
-                self.send_queue[key[slice_type]].remove(event)
-                self.Slices[slice_type].get_node(event.node_id).remove_event(event)
-                # print(no_pilots, len(self.send_queue['_URLLC']), len(urllc_events))
-            else:
-                # print("pilot not enough")
-                no_pilots += required_pilots
-                self.no_pilots = no_pilots
-                return
+        while counter > 0 and no_pilots > 0:
+            required_pilots = 1
+            try:
+                event = events.pop(0)
+                node = self.Slices[slice_type].get_node(event.node_id)
+                required_pilots = node.pilot_samples
+                no_pilots -= required_pilots
+                counter -= 1
+                if no_pilots >= 0:
+                    # remove the event that assigned the pilots from the list
+                    entry = event.get_entry(self.time, True)
+                    print("[Event][{}] {} Request allocated, arrive at {}, deadline {}".format(self.time, key[slice_type] , entry['arrival_time'], entry['dead_time']))
+                    # print(entry)
+                    self.trace.write_trace(entry)
+                    self.send_queue[key[slice_type]].remove(event)
+                    self.Slices[slice_type].get_node(event.node_id).remove_event(event)
+                    # print(no_pilots, len(self.send_queue['_URLLC']), len(urllc_events))
+                else:
+                    # print("pilot not enough")
+                    no_pilots += required_pilots
+                    self.no_pilots = no_pilots
+                    return
+            except:
+                counter -= 1
+                no_pilots -= required_pilots
+                if no_pilots >= 0:
+                    print("[Event][{}] No {} requests in the queue, {} pilots wastes".format(self.time, key[slice_type], required_pilots))
+                    self.stats.stats['no_waste_pilots'] += required_pilots
+                else:
+                    no_pilots += required_pilots
+                    self.no_pilots = 0
+                    return
         self.no_pilots = no_pilots
 
     def __round_robin_queue_info(self, slice_type, requests):
@@ -637,6 +651,7 @@ class Simulation:
         mmtc_file_name = result_dir + "/" + reliability + "_" + deadline + "_" + str(self.mu)+"_mMTC.csv"
 
         data = self.trace.get_waiting_time()
+        waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
 
         try:
             os.mkdir(result_dir)
@@ -652,19 +667,21 @@ class Simulation:
                        + str(data[0][1]) + ','
                        + str(data[0][2]) + ','
                        + str(data[0][3]) + ','
-                       + str(self.trace.get_loss_rate()[0]) + '\n'
+                       + str(self.trace.get_loss_rate()[0]) + ','
+                       + str(waste) + '\n'
                        )
         except FileNotFoundError:
             print("No file found, create the file first")
             file = open(urllc_file_name, 'w+')
-            file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
+            file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss,waste\n")
             file.write(str(self.Slices[0].no_nodes) + ','
                        + str(self.Slices[1].no_nodes) + ','
                        + str(data[0][0]) + ','
                        + str(data[0][1]) + ','
                        + str(data[0][2]) + ','
                        + str(data[0][3]) + ','
-                       + str(self.trace.get_loss_rate()[0]) + '\n'
+                       + str(self.trace.get_loss_rate()[0]) + ','
+                       + str(waste) + '\n'
                        )
         file.close()
         try:
@@ -675,7 +692,8 @@ class Simulation:
                        + str(data[1][1]) + ','
                        + str(data[1][2]) + ','
                        + str(data[1][3]) + ','
-                       + str(self.trace.get_loss_rate()[1]) + '\n'
+                       + str(self.trace.get_loss_rate()[1]) + ','
+                       + str(waste) + '\n'
                        )
         except FileNotFoundError:
             print("No file found, create the file first")
@@ -687,7 +705,8 @@ class Simulation:
                        + str(data[1][1]) + ','
                        + str(data[1][2]) + ','
                        + str(data[1][3]) + ','
-                       + str(self.trace.get_loss_rate()[1]) + '\n'
+                       + str(self.trace.get_loss_rate()[1]) + ','
+                       + str(waste) + '\n'
                        )
         file.close()
 
