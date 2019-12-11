@@ -29,7 +29,7 @@ class Simulation:
     _URLLC_ARRIVAL = 6
     _mMTC_ARRIVAL = 7
     
-    def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic=None):
+    def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None):
         """
         Initialize simulation object
 
@@ -71,7 +71,7 @@ class Simulation:
         self.frame_length = config.get('frame_length')
         self.sampling = config.get('sampling')
         self.no_pilots = config.get('no_pilots')
-        
+        self.traffic_var = traffic_var
         
         #Initial strategy of both slices, will be changed be the decisions
         if s1 is not None:
@@ -99,8 +99,8 @@ class Simulation:
         self.event_heap = EventHeap()
         self.send_queue = {'_URLLC': [], '_mMTC': []}
    
-        
-        self.Slices = [Slice(self._URLLC, no_urllc, traffic), Slice(self._mMTC, no_mmtc)]
+        # TODO: Here the traffic is canceled from taking new variables
+        self.Slices = [Slice(self._URLLC, no_urllc, traffic_var), Slice(self._mMTC, no_mmtc)]
         
         #Decision : A dict with all the decisicion that the actuator look up every coherence interval
         #TODO:The initial number of users should follow the traffic distributtion of each slice
@@ -192,7 +192,7 @@ class Simulation:
             self.event_heap.push(_slice.type+6,
                                  self.time + next_arrival, self.time + next_arrival + _node.deadline,
                                  nodes.index(_node), counter)
-
+        input("Pause")
 #################################################################################################################
 ## Evnets Handling
 #################################################################################################################
@@ -371,8 +371,8 @@ class Simulation:
             if event.dead_time < self.time:
                 remove_indices.append(i)
         print("{} {} requests expired, remove.".format(len(remove_indices), key[slice_type]))
-        if slice_type == self._URLLC and len(remove_indices) > 0:
-            k = input("URLLC loss, pause for observe!")
+#        if slice_type == self._URLLC and len(remove_indices) > 0:
+#            k = input("URLLC loss, pause for observe!")
         # Remove the events in reversed order to not shift subsequent indices
         for i in sorted(remove_indices, reverse=True):
             event = queue[i]
@@ -645,8 +645,8 @@ class Simulation:
 
     def write_result(self):
         result_dir = "results/" + self.Decision['S1']['strategy'] + "_" + self.Decision['S2']['strategy']
-        reliability = self.Slices[self._URLLC].get_node(0).reliability_profile
-        deadline = self.Slices[self._URLLC].get_node(0).deadline_profile
+        reliability = str(self.traffic_var[0])
+        deadline = str(self.traffic_var[1])
         urllc_file_name = result_dir + "/" + reliability + "_" + deadline + "_" + str(self.mu)+"_URLLC.csv"
         mmtc_file_name = result_dir + "/" + reliability + "_" + deadline + "_" + str(self.mu)+"_mMTC.csv"
 
@@ -684,30 +684,30 @@ class Simulation:
                        + str(waste) + '\n'
                        )
         file.close()
-        try:
-            file = open(mmtc_file_name, 'a')
-            file.write(str(self.Slices[0].no_nodes) + ','
-                       + str(self.Slices[1].no_nodes) + ','
-                       + str(data[1][0]) + ','
-                       + str(data[1][1]) + ','
-                       + str(data[1][2]) + ','
-                       + str(data[1][3]) + ','
-                       + str(self.trace.get_loss_rate()[1]) + ','
-                       + str(waste) + '\n'
-                       )
-        except FileNotFoundError:
-            print("No file found, create the file first")
-            file = open(mmtc_file_name, 'w+')
-            file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
-            file.write(str(self.Slices[0].no_nodes) + ','
-                       + str(self.Slices[1].no_nodes) + ','
-                       + str(data[1][0]) + ','
-                       + str(data[1][1]) + ','
-                       + str(data[1][2]) + ','
-                       + str(data[1][3]) + ','
-                       + str(self.trace.get_loss_rate()[1]) + ','
-                       + str(waste) + '\n'
-                       )
-        file.close()
+#        try:
+#            file = open(mmtc_file_name, 'a')
+#            file.write(str(self.Slices[0].no_nodes) + ','
+#                       + str(self.Slices[1].no_nodes) + ','
+#                       + str(data[1][0]) + ','
+#                       + str(data[1][1]) + ','
+#                       + str(data[1][2]) + ','
+#                       + str(data[1][3]) + ','
+#                       + str(self.trace.get_loss_rate()[1]) + ','
+#                       + str(waste) + '\n'
+#                       )
+#        except FileNotFoundError:
+#            print("No file found, create the file first")
+#            file = open(mmtc_file_name, 'w+')
+#            file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
+#            file.write(str(self.Slices[0].no_nodes) + ','
+#                       + str(self.Slices[1].no_nodes) + ','
+#                       + str(data[1][0]) + ','
+#                       + str(data[1][1]) + ','
+#                       + str(data[1][2]) + ','
+#                       + str(data[1][3]) + ','
+#                       + str(self.trace.get_loss_rate()[1]) + ','
+#                       + str(waste) + '\n'
+#                       )
+#        file.close()
 
 

@@ -36,8 +36,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--s1', action="store", default=None)
     parser.add_argument('--s2', action="store", default=None)
-    parser.add_argument('--reliability', action="store", default=None)
-    parser.add_argument('--deadline', action="store", default=None)
+    parser.add_argument('--variance_var', action="store", default=None)
+    parser.add_argument('--period_var', action="store", default=None)
     parser.add_argument('--urllc_nodes', action="store", type=int, default=None)
     parser.add_argument('--mmtc_nodes', action="store", type=int, default=None)
     parser.add_argument('--mu', action="store", type=float, default=None)
@@ -52,7 +52,10 @@ if __name__ == '__main__':
     stats = Stats(stats_file_path)
     seed = args.seed
     mu = float(args.mu)
-
+    
+    period_var = float(args.period_var)
+    variance_var = float(args.variance_var)
+    
     try:
         file = open(log_file_path, 'a')
     except FileNotFoundError:
@@ -84,15 +87,15 @@ if __name__ == '__main__':
             sampling += 1
     
     # print(sampling)
-    trace_file_path = 'trace/' + args.deadline + '_' + args.reliability + '-' + args.s1 + '_' +args.s2 + '_' +str(no_urllc) + '_' + str(no_mmtc) + '_' + str(round(time.time())) + '_event_trace.csv'
+    trace_file_path = 'trace/' + args.period_var + '_' + args.variance_var + '-' + args.s1 + '_' +args.s2 + '_' +str(no_urllc) + '_' + str(no_mmtc) + '_' + str(round(time.time())) + '_event_trace.csv'
     trace = Trace(trace_file_path, sampling, log=True)
 
     if args.s1 is not None:
-        if args.reliability is not None and args.deadline is not None:
+        if args.period_var is not None and args.variance_var is not None:
             simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu,
                                     args.s1, args.s2,
-                                    (args.reliability, args.deadline))
-            file.write(args.s1 + '-' + args.s2 + ',' + args.reliability + ',' + args.deadline + ','
+                                    (period_var, variance_var))
+            file.write(args.s1 + '-' + args.s2 + ',' + args.period_var + ',' + args.variance_var + ','
                        + str(no_urllc) + ',' + str(no_mmtc) + ',' + str(seed) + '\n')
         else:
             simulation = Simulation(config, stats, trace,  no_urllc, no_mmtc, mu,

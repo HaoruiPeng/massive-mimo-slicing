@@ -75,8 +75,11 @@ class EventGenerator:
 
     def __constant(self):
         # Returns a float from a constant distribution with noise
-        return self.__settings * np.random.normal(1, 0.05)
+        period = self.__settings[0]
+        var_std = np.sqrt(abs(self.__settings[1]))
+        return period + np.random.normal(0, var_std)
 
     def __constant_init(self):
-        return abs(np.random.normal(0, 0.5))
+    # TODO: Maybe change the initial
+        return abs(np.random.normal(0.5, 1))
 

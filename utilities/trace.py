@@ -60,13 +60,13 @@ class Trace:
 
     def get_waiting_time(self):
         urllc_wait = self.__get_urllc_wait()
-        mmtc_wait = self.__get_mmtc_wait()
-        return urllc_wait, mmtc_wait
+#        mmtc_wait = self.__get_mmtc_wait()
+        return urllc_wait, 0
 
     def get_loss_rate(self):
         urllc_loss = self.__get_urllc_loss()
-        mmtc_loss = self.__get_mmtc_loss()
-        return urllc_loss, mmtc_loss
+#        mmtc_loss = self.__get_mmtc_loss()
+        return urllc_loss, 0
 
     def __get_urllc_wait(self):
         arrival_time = self.urllc['arrival_time']
