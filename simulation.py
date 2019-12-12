@@ -194,7 +194,6 @@ class Simulation:
             self.event_heap.push(_slice.type+6,
                                  self.time + next_arrival, self.time + next_arrival + _node.deadline,
                                  nodes.index(_node), counter)
-        input("Pause")
 #################################################################################################################
 ## Evnets Handling
 #################################################################################################################
