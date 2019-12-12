@@ -170,12 +170,13 @@ class Simulation:
         ##
         #Generate the delay value between PHY and MAC from a log-normal distribution
         #
-        mu, sigma = 2.26, 0.02
+        sigma = 0.02
+        if self.mu <= 0:
+            delay = 0
+        else:
 #        mu, sigma = 1.56, 0.05
-        delay = np.random.lognormal(mu, sigma, 1) / 2.
-#        delay = 0
+            delay = np.random.lognormal(self.mu, sigma, 1) / 2.
         return delay
-    
 
     def __initialize_nodes(self, _slice):
         nodes = _slice.pool
@@ -644,13 +645,14 @@ class Simulation:
         print('\n[Time {}] Simulation complete.'.format(self.time))
 
     def write_result(self):
-        result_dir = "results/" + self.Decision['S1']['strategy'] + "_" + self.Decision['S2']['strategy']
-        reliability = str(self.traffic_var[0])
-        deadline = str(self.traffic_var[1])
-        urllc_file_name = result_dir + "/" + reliability + "_" + deadline + "_" + str(self.mu)+"_URLLC.csv"
-        mmtc_file_name = result_dir + "/" + reliability + "_" + deadline + "_" + str(self.mu)+"_mMTC.csv"
+#        result_dir = "results/" + self.Decision['S1']['strategy'] + "_" + self.Decision['S2']['strategy']
+        result_dir = "results/"
+        period = str(self.traffic_var[0])
+        variance = str(self.traffic_var[1])
+        delay_mu = str(self.mu)
+        urllc_file_name = result_dir + "/" + "simulation_resultes.csv"
 
-        data = self.trace.get_waiting_time()
+#        data = self.trace.get_waiting_time()
         waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
 
         try:
@@ -662,52 +664,23 @@ class Simulation:
         try:
             file = open(urllc_file_name, 'a')
             file.write(str(self.Slices[0].no_nodes) + ','
-                       + str(self.Slices[1].no_nodes) + ','
-                       + str(data[0][0]) + ','
-                       + str(data[0][1]) + ','
-                       + str(data[0][2]) + ','
-                       + str(data[0][3]) + ','
+                       + delay_mu + ','
+                       + period + ','
+                       + variance + ','
                        + str(self.trace.get_loss_rate()[0]) + ','
                        + str(waste) + '\n'
                        )
         except FileNotFoundError:
             print("No file found, create the file first")
             file = open(urllc_file_name, 'w+')
-            file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss,waste\n")
+            file.write("No.URLLC,delay_mu,period_var,variance_var,loss,waste\n")
             file.write(str(self.Slices[0].no_nodes) + ','
-                       + str(self.Slices[1].no_nodes) + ','
-                       + str(data[0][0]) + ','
-                       + str(data[0][1]) + ','
-                       + str(data[0][2]) + ','
-                       + str(data[0][3]) + ','
-                       + str(self.trace.get_loss_rate()[0]) + ','
-                       + str(waste) + '\n'
-                       )
+                        + delay_mu + ','
+                        + period + ','
+                        + variance + ','
+                        + str(self.trace.get_loss_rate()[0]) + ','
+                        + str(waste) + '\n'
+                        )
         file.close()
-#        try:
-#            file = open(mmtc_file_name, 'a')
-#            file.write(str(self.Slices[0].no_nodes) + ','
-#                       + str(self.Slices[1].no_nodes) + ','
-#                       + str(data[1][0]) + ','
-#                       + str(data[1][1]) + ','
-#                       + str(data[1][2]) + ','
-#                       + str(data[1][3]) + ','
-#                       + str(self.trace.get_loss_rate()[1]) + ','
-#                       + str(waste) + '\n'
-#                       )
-#        except FileNotFoundError:
-#            print("No file found, create the file first")
-#            file = open(mmtc_file_name, 'w+')
-#            file.write("No.URLLC,No.mMTC,mean,var,conf_inter_up,conf_inter_low,loss\n")
-#            file.write(str(self.Slices[0].no_nodes) + ','
-#                       + str(self.Slices[1].no_nodes) + ','
-#                       + str(data[1][0]) + ','
-#                       + str(data[1][1]) + ','
-#                       + str(data[1][2]) + ','
-#                       + str(data[1][3]) + ','
-#                       + str(self.trace.get_loss_rate()[1]) + ','
-#                       + str(waste) + '\n'
-#                       )
-#        file.close()
 
 
