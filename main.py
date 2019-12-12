@@ -33,12 +33,10 @@ if __name__ == '__main__':
     simulation_name = config.get('simulation_name')
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--s1', action="store", default=None)
-    parser.add_argument('--s2', action="store", default=None)
+    
     parser.add_argument('--variance_var', action="store", type=float, default=None)
     parser.add_argument('--period_var', action="store", type=float, default=None)
     parser.add_argument('--urllc_nodes', action="store", type=int, default=None)
-    parser.add_argument('--mmtc_nodes', action="store", type=int, default=None)
     parser.add_argument('--mu', action="store", type=float, default=None)
     parser.add_argument('--seed', action="store", type=int, default=None)
 
@@ -51,6 +49,9 @@ if __name__ == '__main__':
     
     seed = int(args.seed)
     mu = float(args.mu)
+    
+    s1 = "FCFS"
+    s2 = "FCFS"
     
     period_var = float(args.period_var)
     variance_var = float(args.variance_var)
@@ -74,7 +75,7 @@ if __name__ == '__main__':
     trace_file_path = 'trace/' + 'Trace_' + str(args.period_var) + '_' + str(args.variance_var) + '-' + str(args.mu) + '_' + str(args.urllc_nodes) + '_' + str(round(time.time())) + '_event_trace.csv'
     
     trace = Trace(trace_file_path, sampling, log=True)
-    simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, args.s1, args.s2, (period_var, variance_var), seed)
+    simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (period_var, variance_var), seed)
     
     simulation.run()
     stats.save_stats()
