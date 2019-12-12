@@ -7,7 +7,7 @@ class Stats:
 
     """
 
-    def __init__(self, stats_file_path):
+    def __init__(self, stats_file_path, log=False):
         """
         Initialize a new statistics and logging object
 
@@ -18,10 +18,13 @@ class Stats:
         log_file_path : str
             Path to logging file
         """
-        try:
-            self.__stats_file = open(stats_file_path, 'a')
-        except FileNotFoundError:
-            self.__stats_file = open(stats_file_path, 'w+')
+        
+        self.log = log
+        if self.log is True:
+            try:
+                self.__stats_file = open(stats_file_path, 'a')
+            except FileNotFoundError:
+                self.__stats_file = open(stats_file_path, 'w+')
 
         # Write the headers to the csv files
 
@@ -41,16 +44,19 @@ class Stats:
 
     def save_stats(self):
         """ Save the results to file """
+        if self.log is True:
+            stats_str = ''
 
-        stats_str = ''
+            for key in self.stats:
+                stats_str += str(self.stats[key]) + ','
 
-        for key in self.stats:
-            stats_str += str(self.stats[key]) + ','
+            stats_str = stats_str[:-1]
+            stats_str += '\n'
 
-        stats_str = stats_str[:-1]
-        stats_str += '\n'
-
-        self.__stats_file.write(stats_str)
+            self.__stats_file.write(stats_str)
+        else:
+            pass
+            
 
     def clear_stats(self):
         """ Clear the stats for the current simulation """
@@ -61,7 +67,9 @@ class Stats:
 
     def close(self):
         """ Close stats and log file """
-
-        self.__stats_file.close()
-
+        if self.log is True:
+            self.__stats_file.close()
+        else:
+            pass
+    
 
