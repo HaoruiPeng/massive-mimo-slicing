@@ -29,7 +29,7 @@ class Simulation:
     _URLLC_ARRIVAL = 6
     _mMTC_ARRIVAL = 7
     
-    def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None):
+    def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):
         """
         Initialize simulation object
 
@@ -66,6 +66,7 @@ class Simulation:
         self.trace = trace
         self.mu = mu
         self.time = 0.0
+        self.seed = seed
         
         self.simulation_length = config.get('simulation_length')
         self.frame_length = config.get('frame_length')
@@ -664,6 +665,7 @@ class Simulation:
         try:
             file = open(urllc_file_name, 'a')
             file.write(str(self.Slices[0].no_nodes) + ','
+                       + str(self.seed) + ','
                        + delay_mu + ','
                        + period + ','
                        + variance + ','
@@ -673,8 +675,9 @@ class Simulation:
         except FileNotFoundError:
             print("No file found, create the file first")
             file = open(urllc_file_name, 'w+')
-            file.write("No.URLLC,delay_mu,period_var,variance_var,loss,waste\n")
+            file.write("No.URLLC,seed,delay_mu,period_var,variance_var,loss,waste\n")
             file.write(str(self.Slices[0].no_nodes) + ','
+                        + str(self.seed) + ','
                         + delay_mu + ','
                         + period + ','
                         + variance + ','
