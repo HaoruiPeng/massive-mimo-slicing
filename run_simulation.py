@@ -20,14 +20,15 @@ s1 = "FCFS"
 period_vars = np.linspace(0.01, 0.15, 15)
 variance_vars = np.linspace(0.05, 0.5, 15)
 
-no_urllc = 120
+no_urllc_list = [60, 90, 150]
 
-for period_var in period_vars:
-    for variance_var in variance_vars:
-        SEED += np.random.randint(100)
-        simulations.append("python3 main.py  --period_var {} --variance_var {} \
-                            --urllc_node {} \
-                            --mu {} --seed {}".format(period_var, variance_var, no_urllc, mu, SEED))
+for no_urllc in no_urllc_list:
+    for period_var in period_vars:
+        for variance_var in variance_vars:
+            SEED += np.random.randint(100)
+            simulations.append("python3 main.py  --period_var {} --variance_var {} \
+                                --urllc_node {} \
+                                --mu {} --seed {}".format(period_var, variance_var, no_urllc, mu, SEED))
 
 
 pool = Pool(processes=PROCESSES)
