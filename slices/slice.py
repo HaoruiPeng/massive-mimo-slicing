@@ -30,7 +30,6 @@ class Slice:
     def __init__(self, slice_type, no_nodes, traffic_var=None):
         self.type = slice_type
         self.no_nodes = no_nodes
-        # TODO: Taffic is taken
         pilot_rq = 1
         if traffic_var is not None:
             a, b = self.Beta_shape(0.5, traffic_var[0])
@@ -43,7 +42,8 @@ class Slice:
             self.pool = [Node(self.type, pilot_rq, deadline[i] + 1, var_var[i]) for i in range(self.no_nodes)]
 
         else:
-            self.pool = [Node(self.type, pilot_rq, 50, 1) for i in range(self.no_nodes)] # mMTC type, not considered
+            # When no period variance, all the node have the same deadline, there should no variance as well
+            self.pool = [Node(self.type, pilot_rq, 8.5, 0) for i in range(self.no_nodes)]
 
         
         
