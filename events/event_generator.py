@@ -77,8 +77,13 @@ class EventGenerator:
         # Returns a float from a constant distribution with noise
         period = self.__settings[0]
         var_std = np.sqrt(abs(self.__settings[1]))
-        return period + np.random.normal(0, var_std)
-
+        # Case when has variance in the period
+        if var_std > 0:
+            return period + np.random.normal(0, var_std)
+        else:
+        # Deterministic case
+            return period
+        
     def __constant_init(self):
     # TODO: Maybe change the initial
         return abs(np.random.normal(4.5, 2))
