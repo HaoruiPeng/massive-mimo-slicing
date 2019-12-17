@@ -185,6 +185,7 @@ class Simulation:
         # print("[Time {}] Initial {} nodes.".format(self.time, len(nodes)))
         for _node in nodes:
             next_arrival = _node.event_generator.get_init()
+            input(next_arrival)
             if _slice.type == self._URLLC:
                 self.stats.stats['no_urllc_arrivals'] += 1
                 counter = self.stats.stats['no_urllc_arrivals']
@@ -323,6 +324,7 @@ class Simulation:
         self.no_pilots = 12
         self.stats.stats['no_pilots'] += 12
         self.__assign_pilots()
+#        input("handle departure!")
         self.event_heap.push(self._DEPARTURE, self.time + self.frame_length)
 
 
@@ -372,8 +374,8 @@ class Simulation:
             if event.dead_time < self.time:
                 remove_indices.append(i)
         print("{} {} requests expired, remove.".format(len(remove_indices), key[slice_type]))
-#        if slice_type == self._URLLC and len(remove_indices) > 0:
-#            k = input("URLLC loss, pause for observe!")
+        if slice_type == self._URLLC and len(remove_indices) > 0:
+            k = input("URLLC loss, pause for observe!")
         # Remove the events in reversed order to not shift subsequent indices
         for i in sorted(remove_indices, reverse=True):
             event = queue[i]
@@ -521,7 +523,9 @@ class Simulation:
         no_pilots = self.no_pilots
         key = ['_URLLC', '_mMTC']
         events = self.send_queue[key[slice_type]].copy()
-        print("[PHY] Number of active {} request in the queue: {}".format(key[slice_type], len(events)))
+        if slice_type == 0:
+            print("[PHY] Number of active {} request in the queue: {}".format(key[slice_type], len(events)))
+            self.trace.write_queue_length(len(events))
         events.sort(key=lambda x: x.dead_time)
         counter = requests
         while counter > 0 and no_pilots > 0:
@@ -647,10 +651,14 @@ class Simulation:
     def write_result(self):
 #        result_dir = "results/" + self.Decision['S1']['strategy'] + "_" + self.Decision['S2']['strategy']
         result_dir = "results/"
-        period = str(self.traffic_var[0])
-        variance = str(self.traffic_var[1])
+        if self.traffic_var is not None:
+            period = str(self.traffic_var[0])
+            variance = str(self.traffic_var[1])
+        else:
+            period = "0"
+            variance = "0"
         delay_mu = str(self.mu)
-        urllc_file_name = result_dir + "/" + "simulation_resultes.csv"
+        urllc_file_name = result_dir + "/" + "simulation_results.csv"
 
 #        data = self.trace.get_waiting_time()
         waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
@@ -684,5 +692,9 @@ class Simulation:
                         + str(waste) + '\n'
                         )
         file.close()
+        
+        with open("test.txt", 'w+') as f:
+            for d in self.trace.queue_length:
+                f.write(str(int(d))+"\n")
 
 

@@ -19,6 +19,9 @@ class Trace:
         self.urllc = {}
         self.mmtc = {}
         self.sampling = sampling
+        
+        self.queue_length = np.array([])
+        self.waste_trace
 
     def close(self):
         if self.log is True:
@@ -36,6 +39,9 @@ class Trace:
         for i in range(len(entry)):
             k = self.keys[i]
             self.Dict[k] = np.append(self.Dict[k], entry[k])
+    
+    def write_queue_length(self, queue_len):
+        self.queue_length = np.append(self.queue_length, queue_len)
 
     def process(self):
         keys = ['arrival_time', 'dead_time', 'departure_time', 'pilot']
