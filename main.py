@@ -53,8 +53,11 @@ if __name__ == '__main__':
     s1 = "FCFS"
     s2 = "FCFS"
     
-    period_var = float(args.period_var)
-    variance_var = float(args.variance_var)
+    if args.period_var is not None:
+        period_var = float(args.period_var)
+    
+    if args.variance_var is not None:
+        variance_var = float(args.variance_var)
     
     if seed is None:
         seed = round(time.time() / 10)
@@ -75,7 +78,10 @@ if __name__ == '__main__':
     trace_file_path = 'trace/' + 'Trace_' + str(args.period_var) + '_' + str(args.variance_var) + '-' + str(args.mu) + '_' + str(args.urllc_nodes) + '_' + str(round(time.time())) + '_event_trace.csv'
     
     trace = Trace(trace_file_path, sampling, log=True)
-    simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (period_var, variance_var), seed)
+    if args.period_var is not None:
+        simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (period_var, variance_var), seed)
+    else:
+        simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, seed=seed)
     
     simulation.run()
     stats.save_stats()
