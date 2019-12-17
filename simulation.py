@@ -22,10 +22,10 @@ class Simulation:
     _URLLC = 0
     _mMTC = 1
 
-    _REPORT = 2
-    _DECISION_MAKE = 3
-    _DECISION_ARRIVAL = 4
-    _DEPARTURE = 5
+    _DECISION_MAKE = 2
+    _DECISION_ARRIVAL = 3
+    _DEPARTURE = 4
+    _REPORT = 5
     _URLLC_ARRIVAL = 6
     _mMTC_ARRIVAL = 7
     

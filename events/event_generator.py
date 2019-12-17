@@ -81,5 +81,5 @@ class EventGenerator:
 
     def __constant_init(self):
     # TODO: Maybe change the initial
-        return abs(np.random.normal(0.5, 1))
+        return abs(np.random.normal(4.5, 2))
 
