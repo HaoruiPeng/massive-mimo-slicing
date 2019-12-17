@@ -74,7 +74,11 @@ class Simulation:
         self.frame_length = config.get('frame_length')
         self.sampling = config.get('sampling')
         self.no_pilots = config.get('no_pilots')
-        self.traffic_var = traffic_var
+        
+        if traffic_var is not None and len(traffic_var)==4:
+            self.traffic_var = traffic_var
+        else:
+            self.traffic_var = (1, 0, 0, 0)
         
         #Initial strategy of both slices, will be changed be the decisions
         if s1 is not None:
@@ -103,7 +107,7 @@ class Simulation:
         self.send_queue = {'_URLLC': [], '_mMTC': []}
    
         # TODO: Here the traffic is canceled from taking new variables
-        self.Slices = [Slice(self._URLLC, no_urllc, traffic_var), Slice(self._mMTC, no_mmtc)]
+        self.Slices = [Slice(self._URLLC, no_urllc,  self.traffic_var), Slice(self._mMTC, no_mmtc, (1, 0, 0, 0))]
         
         #Decision : A dict with all the decisicion that the actuator look up every coherence interval
         #TODO:The initial number of users should follow the traffic distributtion of each slice
@@ -188,7 +192,7 @@ class Simulation:
         # print("[Time {}] Initial {} nodes.".format(self.time, len(nodes)))
         for _node in nodes:
             next_arrival = _node.event_generator.get_init()
-            input(next_arrival)
+#            input(next_arrival)
             if _slice.type == self._URLLC:
                 self.stats.stats['no_urllc_arrivals'] += 1
                 counter = self.stats.stats['no_urllc_arrivals']
@@ -364,8 +368,8 @@ class Simulation:
             if event.dead_time < self.time:
                 remove_indices.append(i)
         print("{} {} requests expired, remove.".format(len(remove_indices), key[slice_type]))
-        if slice_type == self._URLLC and len(remove_indices) > 0:
-            k = input("URLLC loss, pause for observe!")
+#        if slice_type == self._URLLC and len(remove_indices) > 0:
+#            k = input("URLLC loss, pause for observe!")
         self.trace.write_loss(self.time, len(remove_indices))
         # Remove the events in reversed order to not shift subsequent indices
         for i in sorted(remove_indices, reverse=True):
@@ -649,12 +653,11 @@ class Simulation:
     def write_result(self):
 #        result_dir = "results/" + self.Decision['S1']['strategy'] + "_" + self.Decision['S2']['strategy']
         result_dir = "results/"
-        if self.traffic_var is not None:
-            period = str(self.traffic_var[0])
-            variance = str(self.traffic_var[1])
-        else:
-            period = "0"
-            variance = "0"
+        ratio = str(self.traffic_var[0])
+        period = str(self.traffic_var[1])
+        deadline = str(self.traffic_var[2])
+        variance = str(self.traffic_var[3])
+
         delay_mu = str(self.mu)
         urllc_file_name = result_dir + "/" + "simulation_results.csv"
 
@@ -665,30 +668,25 @@ class Simulation:
             os.mkdir(result_dir)
         except OSError:
             pass
-            # print("Directory exists")
 
         try:
-            file = open(urllc_file_name, 'a')
-            file.write(str(self.Slices[0].no_nodes) + ','
-                       + str(self.seed) + ','
-                       + delay_mu + ','
-                       + period + ','
-                       + variance + ','
-                       + str(self.trace.get_loss_rate()[0]) + ','
-                       + str(waste) + '\n'
-                       )
+            file = open(urllc_file_name, 'r+')
         except FileNotFoundError:
             print("No file found, create the file first")
-            file = open(urllc_file_name, 'w+')
-            file.write("No.URLLC,seed,delay_mu,period_var,variance_var,loss,waste\n")
-            file.write(str(self.Slices[0].no_nodes) + ','
-                        + str(self.seed) + ','
-                        + delay_mu + ','
-                        + period + ','
-                        + variance + ','
-                        + str(self.trace.get_loss_rate()[0]) + ','
-                        + str(waste) + '\n'
-                        )
+            file = open(urllc_file_name, 'w')
+            file.write("No.URLLC,seed,delay_mu,ratio,period_var,deadline_var,variance_var,loss,waste\n")
+        
+        file.write(str(self.Slices[0].no_nodes) + ','
+                   + str(self.seed) + ','
+                   + delay_mu + ','
+                   + ratio + ','
+                   + period + ','
+                   + deadline + ','
+                   + variance + ','
+                   + str(self.trace.get_loss_rate()[0]) + ','
+                   + str(waste) + '\n'
+                   )
+
         file.close()
         
         

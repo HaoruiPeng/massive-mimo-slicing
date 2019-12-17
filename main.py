@@ -36,6 +36,8 @@ if __name__ == '__main__':
     
     parser.add_argument('--variance_var', action="store", type=float, default=None)
     parser.add_argument('--period_var', action="store", type=float, default=None)
+    parser.add_argument('--deadline_var', action="store", type=float, default=None)
+    parser.add_argument('--ratio', action="store", type=float, default=None)
     parser.add_argument('--urllc_nodes', action="store", type=int, default=None)
     parser.add_argument('--mu', action="store", type=float, default=None)
     parser.add_argument('--seed', action="store", type=int, default=None)
@@ -53,6 +55,12 @@ if __name__ == '__main__':
     s1 = "FCFS"
     s2 = "FCFS"
     
+    if args.ratio is not None:
+        ratio = args.ratio
+        
+    if args.deadline_var is not None:
+        deadline_var = args.deadline_var
+    
     if args.period_var is not None:
         period_var = float(args.period_var)
     
@@ -64,7 +72,7 @@ if __name__ == '__main__':
 
     np.random.seed(seed)
 
-    no_urllc = int(args.urllc_nodes)
+    no_urllc = args.urllc_nodes
     no_mmtc = 0
     sampling=no_urllc
 
@@ -79,7 +87,7 @@ if __name__ == '__main__':
     
     trace = Trace(trace_file_path, sampling, log=True)
     if args.period_var is not None:
-        simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (period_var, variance_var), seed)
+        simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (ratio, period_var, deadline_var, variance_var), seed)
     else:
         simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, seed=seed)
     

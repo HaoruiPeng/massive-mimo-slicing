@@ -20,34 +20,47 @@ class Slice:
     ----------
     type : URLLC or mMTC
     no_nodes : The number of UEs subscribed to the slice
-    traffic : traffic varianes, variace variances
+    traffic_var : dealine mean to priod mean ratio, period varianes, deadline variance, variace variances
 
     """
 
     _URLLC = 0
     _mMTC = 1
 
-    def __init__(self, slice_type, no_nodes, traffic_var=None):
+    def __init__(self, slice_type, no_nodes, traffic_var):
         self.type = slice_type
         self.no_nodes = no_nodes
         pilot_rq = 1
-        if traffic_var is not None:
-            a, b = self.Beta_shape(0.5, traffic_var[0])
-            n = 15
-            
-            deadline = self.Beta_Binomial(a, b, n, size=no_nodes)
-            print(deadline)
-            var_var = abs(np.random.normal(0, np.sqrt(traffic_var[1]), size=no_nodes))
-            print(var_var)
-            self.pool = [Node(self.type, pilot_rq, deadline[i] + 1, var_var[i]) for i in range(self.no_nodes)]
-
+        n_period = 15
+        
+        ratio = traffic_var[0]
+        period_var = traffic_var[1]
+        deadline_var = traffic_var[2]
+        variance_var = traffic_var[3]
+        
+        if period_var > 0:
+            a, b = self.Beta_shape(0.5, period_var)
+            period = self.Beta_Binomial(a, b, n_period, size=no_nodes)   #array mean = 7.5
         else:
-            deadline = 8.5
-            # When no period variance, all the node have the same deadline, there should no variance as well
-            self.pool = [Node(self.type, pilot_rq, deadline, 0) for i in range(self.no_nodes)]
+            period = np.repeat(n_period/2, no_nodes)   #array of 7.5
 
+        n_deadline = round(n_period * ratio)
+        if deadline_var > 0:
+            a, b = self.Beta_shape(0.5, deadline_var)
+            deadline = self.Beta_Binomial(a, b, n_deadline, size=no_nodes)
+        else:
+            deadline = period * ratio
         
-        
+        if variance_var > 0:
+            var_var = abs(np.random.normal(0, np.sqrt(variance_var), size=no_nodes))
+        else:
+            var_var = np.zeros(no_nodes)
+            
+        print(period)
+        print(deadline)
+        print(var_var)
+        self.pool = [Node(self.type, pilot_rq, period[i] + 1, deadline[i] + 1, var_var[i]) for i in range(self.no_nodes)]
+
 
     def get_node(self, node_id):
         return self.pool[node_id]

@@ -26,7 +26,7 @@ class Node:
     _mMTC = 1
 
     # the nodes generator the event periodically
-    def __init__(self, slice_id, pilots, deadline, var_variance):
+    def __init__(self, slice_id, pilots, period, deadline, var_variance):
 #        with open('nodes/node_config.json') as config_file:
 #            config = json.load(config_file)
         self.slice = slice_id
@@ -42,8 +42,10 @@ class Node:
 #            'distribution')
         self.arrival = "constant"
         
-        self.deadline = deadline
+        self.period = period
         self.var_variance = var_variance
+        
+        self.deadline = deadline
         
         self.pilot_samples =  pilots
         
@@ -53,7 +55,7 @@ class Node:
 #        if len(self.arrival_parameter) == 0:
 #            self.arrival_parameter = self.deadline
 
-        self.event_generator = EventGenerator(self.arrival, (self.deadline, self.var_variance))
+        self.event_generator = EventGenerator(self.arrival, (self.period, self.var_variance))
         self.active = False
         self.assigned = False
 
