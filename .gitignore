@@ -114,3 +114,4 @@ venv.bak/
 
 #Experiments files
 experiments/
+*.txt

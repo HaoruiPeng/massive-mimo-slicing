@@ -10,7 +10,7 @@ PROCESSES = 4
 simulations = []
 
 
-mu = 2.26
+mu = 2.99
 
 SEED = round(time.time() / 10)
 
@@ -18,17 +18,23 @@ s2 = "FCFS"
 s1 = "FCFS"
 
 period_vars = np.linspace(0.01, 0.15, 15)
+deadline_vars = np.linspace(0.01, 0.15, 15)
+ratios = np.linspace(0.3, 1.7, 15)
 variance_vars = np.linspace(0.05, 0.5, 15)
 
 no_urllc_list = [60, 90, 150]
 
-for no_urllc in no_urllc_list:
-    for period_var in period_vars:
-        for variance_var in variance_vars:
-            SEED += np.random.randint(100)
-            simulations.append("python3 main.py  --period_var {} --variance_var {} \
-                                --urllc_node {} \
-                                --mu {} --seed {}".format(period_var, variance_var, no_urllc, mu, SEED))
+for deadline_vars in deadline_vars:
+    for ratio in ratios:
+        for no_urllc in no_urllc_list:
+            for period_var in period_vars:
+                for variance_var in variance_vars:
+                    SEED += np.random.randint(100)
+                    simulations.append("python3 main.py \
+                                        --ratio {} --deadline_var {} \
+                                        --period_var {} --variance_var {} \
+                                        --urllc_node {} \
+                                        --mu {} --seed {}".format(ratio, deadline_var, period_var, variance_var, no_urllc, mu, SEED))
 
 
 pool = Pool(processes=PROCESSES)
