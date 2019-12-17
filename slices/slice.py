@@ -42,8 +42,9 @@ class Slice:
             self.pool = [Node(self.type, pilot_rq, deadline[i] + 1, var_var[i]) for i in range(self.no_nodes)]
 
         else:
+            deadline = 8.5
             # When no period variance, all the node have the same deadline, there should no variance as well
-            self.pool = [Node(self.type, pilot_rq, 8.5, 0) for i in range(self.no_nodes)]
+            self.pool = [Node(self.type, pilot_rq, deadline, 0) for i in range(self.no_nodes)]
 
         
         

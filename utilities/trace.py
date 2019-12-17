@@ -3,8 +3,8 @@ import scipy.stats as st
 
 
 class Trace:
-    _URLLC_ARRIVAL = 6
-    _mMTC_ARRIVAL = 7
+    _URLLC_ARRIVAL = 7
+    _mMTC_ARRIVAL = 8
 
     def __init__(self, trace_file_path, sampling, log=False):
         self.log = log
@@ -20,8 +20,11 @@ class Trace:
         self.mmtc = {}
         self.sampling = sampling
         
-        self.queue_length = np.array([])
-        self.waste_trace
+        self.queue_length = np.empty((0,2), int)
+        self.waste_trace = np.empty((0,2), int)
+        self.loss_trace = np.empty((0,2), int)
+        self.decision_trace = np.empty((0,2), int)
+
 
     def close(self):
         if self.log is True:
@@ -40,8 +43,18 @@ class Trace:
             k = self.keys[i]
             self.Dict[k] = np.append(self.Dict[k], entry[k])
     
-    def write_queue_length(self, queue_len):
-        self.queue_length = np.append(self.queue_length, queue_len)
+    def write_queue_length(self, time_sp, queue_len):
+        self.queue_length = np.append(self.queue_length, np.array([[time_sp, queue_len]]), axis=0)
+    
+    def write_loss(self, time_sp, no_loss):
+        self.loss_trace = np.append(self.loss_trace, np.array([[time_sp, no_loss]]), axis=0)
+    
+    def write_waste(self, time_sp, no_waste):
+        self.waste_trace = np.append(self.waste_trace, np.array([[time_sp, no_waste]]), axis=0)
+    
+    def write_decision(self, time_sp, decision):
+        self.decision_trace = np.append(self.decision_trace, np.array([[time_sp, decision]]), axis=0)
+
 
     def process(self):
         keys = ['arrival_time', 'dead_time', 'departure_time', 'pilot']
