@@ -13,6 +13,8 @@ from utilities.stats import Stats
 from utilities.trace import Trace
 from simulation import Simulation
 
+sys.path.append(os.path.abspath('../'))
+
 def isprime(N):
     if N<=1 or N==4:
         return False
