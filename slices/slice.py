@@ -7,9 +7,6 @@ __author__ = "Haorui Peng"
 from nodes.node import Node
 import json
 import numpy as np
-import scipy.stats as stats
-from scipy.stats import beta
-from scipy.stats import binom
 
 
 class Slice:
@@ -55,7 +52,10 @@ class Slice:
             var_var = abs(np.random.normal(0, np.sqrt(variance_var), size=no_nodes))
         else:
             var_var = np.zeros(no_nodes)
-       
+            
+        print(period)
+        print(deadline)
+        print(var_var)
         self.pool = [Node(self.type, pilot_rq, period[i] + 1, deadline[i] + 1, var_var[i]) for i in range(self.no_nodes)]
 
 
@@ -67,8 +67,8 @@ class Slice:
 
     
     def Beta_Binomial(self, a, b, n, size=None):
-        p = beta.rvs(a, b, size=size)
-        r = binom.rvs(n, p, size=size)
+        p = np.random.beta(a, b, size=size)
+        r = np.random.binomial(n, p, size=size)
 
         return r
 
