@@ -8,11 +8,10 @@ import time
 import sys
 import os
 import numpy as np
+from flask import request
 from utilities.stats import Stats
 from utilities.trace import Trace
 from simulation import Simulation
-import argparse
-sys.path.append(os.path.abspath('../'))
 
 def isprime(N):
     if N<=1 or N==4:
@@ -24,49 +23,30 @@ def isprime(N):
         return True
 
 
-if __name__ == '__main__':
+def main():
     # Load simulation parameters
-    parser = argparse.ArgumentParser()
+    keys = ["urllc_nodes","seed", "mu", "ratio" ,"period_var", "deadline_var", "variance_var"]
     
-    parser.add_argument('--variance_var', action="store", type=float, default=None)
-    parser.add_argument('--period_var', action="store", type=float, default=None)
-    parser.add_argument('--deadline_var', action="store", type=float, default=None)
-    parser.add_argument('--ratio', action="store", type=float, default=None)
-    parser.add_argument('--urllc_nodes', action="store", type=int, default=None)
-    parser.add_argument('--mu', action="store", type=float, default=None)
-    parser.add_argument('--seed', action="store", type=int, default=None)
+    data = request.get_json(force=True)
+    if data is None:
+        return "Bad Request"
+    else:
+        pass
+    
+    no_urllc = int(data["urllc_nodes"])
+    no_mmtc = 0
+    seed = int(data["seed"])
+    mu = float(data["mu"])
+    ratio = float(data["ratio"])
+    period_var = float(data["period_var"])
+    deadline_var = float(data["deadline_var"])
+    variance_var = float(data["variance_var"])
+    report_sampling = 0.5
 
-    args = parser.parse_args()
-    # print(args.scheduler)
-
-    # Initialize stats and logger
     stats = Stats()
-    
-    seed = int(args.seed)
-    mu = float(args.mu)
     
     s1 = "FCFS"
     s2 = "FCFS"
-    
-    if args.ratio is not None:
-        ratio = args.ratio
-        
-    if args.deadline_var is not None:
-        deadline_var = args.deadline_var
-    
-    if args.period_var is not None:
-        period_var = float(args.period_var)
-    
-    if args.variance_var is not None:
-        variance_var = float(args.variance_var)
-    
-    if seed is None:
-        seed = round(time.time() / 10)
-
-    np.random.seed(seed)
-
-    no_urllc = args.urllc_nodes
-    no_mmtc = 0
     
     sampling=no_urllc
 
@@ -78,14 +58,10 @@ if __name__ == '__main__':
     
     trace = Trace(sampling)
     
-    report_sampling = 0.5
-    
-#    keys = ["No.URLLC","seed", "delay_mu", "ratio" ,"period_var", "deadline_var", "variance_var","loss","waste"]s
-
-    
     simulation = Simulation(report_sampling, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (ratio, period_var, deadline_var, variance_var), seed)
 
     
     results = simulation.run()
+    results_js = json.dumps(results).encode()
     
-    print(results)
+    return results_js
