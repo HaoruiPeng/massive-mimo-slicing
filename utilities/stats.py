@@ -7,24 +7,10 @@ class Stats:
 
     """
 
-    def __init__(self, stats_file_path, log=False):
+    def __init__(self):
         """
         Initialize a new statistics and logging object
-
-        Parameters
-        ----------
-        stats_file_path : str
-            Path to stats file
-        log_file_path : str
-            Path to logging file
         """
-        
-        self.log = log
-        if self.log is True:
-            try:
-                self.__stats_file = open(stats_file_path, 'a')
-            except FileNotFoundError:
-                self.__stats_file = open(stats_file_path, 'w+')
 
         # Write the headers to the csv files
 
@@ -42,34 +28,9 @@ class Stats:
         print('Waste pilots: ' + str(self.stats['no_waste_pilots']))
 
 
-    def save_stats(self):
-        """ Save the results to file """
-        if self.log is True:
-            stats_str = ''
-
-            for key in self.stats:
-                stats_str += str(self.stats[key]) + ','
-
-            stats_str = stats_str[:-1]
-            stats_str += '\n'
-
-            self.__stats_file.write(stats_str)
-        else:
-            pass
-            
-
     def clear_stats(self):
         """ Clear the stats for the current simulation """
 
         for key in self.stats:
             if not key == 'config_no':
                 self.stats[key] = 0
-
-    def close(self):
-        """ Close stats and log file """
-        if self.log is True:
-            self.__stats_file.close()
-        else:
-            pass
-    
-
