@@ -14,9 +14,6 @@ from simulation import Simulation
 import argparse
 sys.path.append(os.path.abspath('../'))
 
-with open('default_config.json') as config_file:
-    config = json.load(config_file)
-
 def isprime(N):
     if N<=1 or N==4:
         return False
@@ -29,9 +26,6 @@ def isprime(N):
 
 if __name__ == '__main__':
     # Load simulation parameters
-    time_string = time.strftime('%Y%m%d_%H%M%S')
-    simulation_name = config.get('simulation_name')
-
     parser = argparse.ArgumentParser()
     
     parser.add_argument('--variance_var', action="store", type=float, default=None)
@@ -45,9 +39,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # print(args.scheduler)
 
-    stats_file_path = 'stats/simulation_stats.csv'
     # Initialize stats and logger
-    stats = Stats(stats_file_path, log= False)
+    stats = Stats()
     
     seed = int(args.seed)
     mu = float(args.mu)
@@ -74,6 +67,7 @@ if __name__ == '__main__':
 
     no_urllc = args.urllc_nodes
     no_mmtc = 0
+    
     sampling=no_urllc
 
     while True:
@@ -82,21 +76,16 @@ if __name__ == '__main__':
         else:
             sampling += 1
     
-    # print(sampling)
-    trace_file_path = 'trace/' + 'Trace_' + str(args.period_var) + '_' + str(args.variance_var) + '-' + str(args.mu) + '_' + str(args.urllc_nodes) + '_' + str(round(time.time())) + '_event_trace.csv'
+    trace = Trace(sampling)
     
-    trace = Trace(trace_file_path, sampling, log=True)
-    if args.period_var is not None:
-        simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (ratio, period_var, deadline_var, variance_var), seed)
-    else:
-        simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, seed=seed)
+    report_sampling = 0.5
     
-    simulation.run()
-    stats.save_stats()
+#    keys = ["No.URLLC","seed", "delay_mu", "ratio" ,"period_var", "deadline_var", "variance_var","loss","waste"]s
 
-    # Close files
-    stats.close()
-    trace.close()
+    
+    simulation = Simulation(report_sampling, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (ratio, period_var, deadline_var, variance_var), seed)
 
-    trace.process()
-    simulation.write_result()
+    
+    results = simulation.run()
+    
+    print(results)

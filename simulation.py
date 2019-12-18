@@ -1,10 +1,10 @@
 import sys
 import os
-from events.event_heap import EventHeap
-import numpy as np
 import time
+import json
+import numpy as np
+from events.event_heap import EventHeap
 from slices.slice import Slice
-
 
 class Simulation:
     """
@@ -31,7 +31,7 @@ class Simulation:
     _URLLC_ARRIVAL = 7
     _mMTC_ARRIVAL = 8
     
-    def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):
+    def __init__(self, report_sampling, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):
         """
         Initialize simulation object
 
@@ -70,10 +70,10 @@ class Simulation:
         self.time = 0.0
         self.seed = seed
         
-        self.simulation_length = config.get('simulation_length')
-        self.frame_length = config.get('frame_length')
-        self.sampling = config.get('sampling')
-        self.no_pilots = config.get('no_pilots')
+        self.simulation_length = 5000
+        self.frame_length = 0.5
+        self.sampling = report_sampling
+        self.no_pilots = 12
         
         if traffic_var is not None and len(traffic_var)==4:
             self.traffic_var = traffic_var
@@ -625,7 +625,7 @@ class Simulation:
             self._DECISION_ARRIVAL:"DECISION_ARRIVAL"
         }
         current_progress = 0
-        print("\n[Time {}] Simulation start.".format(self.time))
+#        print("\n[Time {}] Simulation start.".format(self.time))
 #        print("Size: {}".format(self.event_heap.get_size()))
         # for k in self.event_heap.get_heap():
         #     print(k)
@@ -640,69 +640,29 @@ class Simulation:
 
             if progress > current_progress:
                 current_progress = progress
-#                str1 = "\rProgress: {0}%".format(progress)
-#                sys.stdout.write(str)
-#                sys.stdout.flush()
-#            if next_event.type not in [self._URLLC_ARRIVAL, self._mMTC_ARRIVAL]:
-#                print("[Event]{} New {} event, press any key to handle".format(self.time, event_map[next_event.type]))
-#                input()
+
             self.__handle_event(next_event)
+        
+        self.trace.process()
 
-        print('\n[Time {}] Simulation complete.'.format(self.time))
 
-    def write_result(self):
-#        result_dir = "results/" + self.Decision['S1']['strategy'] + "_" + self.Decision['S2']['strategy']
-        result_dir = "results/"
-        ratio = str(self.traffic_var[0])
-        period = str(self.traffic_var[1])
-        deadline = str(self.traffic_var[2])
-        variance = str(self.traffic_var[3])
+        ratio = self.traffic_var[0]
+        period = self.traffic_var[1]
+        deadline = self.traffic_var[2]
+        variance = self.traffic_var[3]
+        delay_mu = self.mu
 
-        delay_mu = str(self.mu)
-        urllc_file_name = result_dir + "/" + "simulation_results.csv"
-
-#        data = self.trace.get_waiting_time()
         waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
-
-        try:
-            os.mkdir(result_dir)
-        except OSError:
-            pass
-
-        try:
-            file = open(urllc_file_name, 'r+')
-        except FileNotFoundError:
-            print("No file found, create the file first")
-            file = open(urllc_file_name, 'w')
-            file.write("No.URLLC,seed,delay_mu,ratio,period_var,deadline_var,variance_var,loss,waste\n")
         
-        file.write(str(self.Slices[0].no_nodes) + ','
-                   + str(self.seed) + ','
-                   + delay_mu + ','
-                   + ratio + ','
-                   + period + ','
-                   + deadline + ','
-                   + variance + ','
-                   + str(self.trace.get_loss_rate()[0]) + ','
-                   + str(waste) + '\n'
-                   )
-
-        file.close()
+        output_dict = { "No.URLLC": self.Slices[0].no_nodes,
+                        "seed": self.seed,
+                        "delay_mu": delay_mu,
+                        "ratio": ratio,
+                        "period_var": deadline,
+                        "deadline_var": variance,
+                        "variance_var": self.trace.get_loss_rate()[0],
+                        "loss","waste": waste
+                      }
+        return output_dict
         
-        
-        with open("queue_length.txt", 'w+') as f:
-            for d in self.trace.queue_length:
-                f.write(str(d[0]) + "," + str(d[1]) +"\n")
-        
-        with open("waste.txt", 'w+') as f:
-            for d in self.trace.waste_trace:
-                f.write(str(d[0]) + "," + str(d[1]) +"\n")
-                                   
-        with open("loss.txt", 'w+') as f:
-            for d in self.trace.loss_trace:
-                f.write(str(d[0]) + "," + str(d[1]) +"\n")
-                
-        with open("decision.txt", 'w+') as f:
-            for d in self.trace.decision_trace:
-                f.write(str(d[0]) + "," + str(d[1]) +"\n")
 
