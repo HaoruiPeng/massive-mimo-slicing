@@ -70,7 +70,7 @@ class Simulation:
         self.time = 0.0
         self.seed = seed
         
-        self.simulation_length = 5000
+        self.simulation_length = 10000
         self.frame_length = 0.5
         self.sampling = report_sampling
         self.no_pilots = 12
@@ -161,11 +161,11 @@ class Simulation:
         self.event_heap.push(self._ALLOCATE, self.time + self.frame_length)
 
         first_send = self.time + self.sampling
-        print("[Event] --> Schedule Report No.1 send at {}".format(first_send))
+#        print("[Event] --> Schedule Report No.1 send at {}".format(first_send))
         self.event_heap.push(self._REPORT, first_send)
         
         first_report_arrival = first_send + self.get_delay()
-        print("[Event] --> Schedule Report No.1 arrival at MAC layer at {}".format(first_report_arrival))
+#        print("[Event] --> Schedule Report No.1 arrival at MAC layer at {}".format(first_report_arrival))
         #The first decision will arrive after the report with a delay of RTT&Exec
         self.event_heap.push(self._DECISION_MAKE, first_report_arrival)
 
@@ -367,7 +367,7 @@ class Simulation:
             event = queue[i]
             if event.dead_time < self.time:
                 remove_indices.append(i)
-        print("{} {} requests expired, remove.".format(len(remove_indices), key[slice_type]))
+#        print("{} {} requests expired, remove.".format(len(remove_indices), key[slice_type]))
 #        if slice_type == self._URLLC and len(remove_indices) > 0:
 #            k = input("URLLC loss, pause for observe!")
         self.trace.write_loss(self.time, len(remove_indices))
@@ -378,7 +378,7 @@ class Simulation:
             node.remove_event(event)
             self.stats.stats[no_missed_event[slice_type]] += 1
             entry = event.get_entry(self.time, False)
-            print("[Event][{}] {} request expired, arrive at {}, deadline {}".format(self.time, key[slice_type], entry['arrival_time'], entry['dead_time']))
+#            print("[Event][{}] {} request expired, arrive at {}, deadline {}".format(self.time, key[slice_type], entry['arrival_time'], entry['dead_time']))
             self.trace.write_trace(entry)
             del event
             del self.send_queue[key[slice_type]][i]
@@ -432,7 +432,7 @@ class Simulation:
         Send the report every sampling time, read the time of the old report
         """
         self.report_counter += 1
-        print("[PHY]{} --> Report No.{} sent".format(self.time, self.report_counter))
+#        print("[PHY]{} --> Report No.{} sent".format(self.time, self.report_counter))
         no_arrivals = {
             self._URLLC_ARRIVAL: 'no_urllc_arrivals',
             self._mMTC_ARRIVAL: 'no_mmtc_arrivals'
@@ -453,20 +453,20 @@ class Simulation:
         }
         self.report_queue.append(Report_Sending)
         next_send = self.time + self.sampling
-        print("[Event] --> Schedule the next Report No.{} send at {}".format(Report_Sending['counter']+1, next_send))
+#        print("[Event] --> Schedule the next Report No.{} send at {}".format(Report_Sending['counter']+1, next_send))
         self.event_heap.push(self._REPORT, next_send)
         next_report_arrive = next_send +  self.get_delay()
-        print("[Event] --> Schedule the next Report No.{} arrive at the MAC layer at {}".format(Report_Sending['counter']+1, next_report_arrive))
+#        print("[Event] --> Schedule the next Report No.{} arrive at the MAC layer at {}".format(Report_Sending['counter']+1, next_report_arrive))
         self.event_heap.push(self._DECISION_MAKE, next_report_arrive)
 
     
     def __update_report(self):
         """Process the decision on the MAC and send out"""
         self.Report = self.report_queue.pop(0)
-        print("[MAC]{} --> Report No.{} arrives".format(self.time, self.Report['counter']))
+#        print("[MAC]{} --> Report No.{} arrives".format(self.time, self.Report['counter']))
         interval = self.Report['time'] - self.Report_prev['time']
-        print("[MAC]{} --> Last Report time: {}, This Report time: {}, report interval: {}".format(self.time, self.Report_prev['time'], self.Report['time'], interval))
-        print("[MAC]{} --> Last Respot urllc {}, this Report urllc {}".format(self.time, self.Report_prev['S1']['users'], self.Report['S1']['users']))
+#        print("[MAC]{} --> Last Report time: {}, This Report time: {}, report interval: {}".format(self.time, self.Report_prev['time'], self.Report['time'], interval))
+#        print("[MAC]{} --> Last Respot urllc {}, this Report urllc {}".format(self.time, self.Report_prev['S1']['users'], self.Report['S1']['users']))
         
         urllc_arrivals  = self.Report['S1']['users'] - self.Report_prev['S1']['users']
         mmtc_arrivals  = self.Report['S2']['users'] - self.Report_prev['S2']['users']
@@ -489,7 +489,7 @@ class Simulation:
         }
         self.Report_prev = self.Report
         decision_arrival = self.time + self.get_delay()
-        print("[Event] --> Schedule the Decision No.{} arrive at the PHY layer at {}".format(self.Decision_Sending['counter'], decision_arrival))
+#        print("[Event] --> Schedule the Decision No.{} arrive at the PHY layer at {}".format(self.Decision_Sending['counter'], decision_arrival))
         self.event_heap.push(self._DECISION_ARRIVAL, decision_arrival)
 
         
@@ -499,10 +499,10 @@ class Simulation:
         
         self.Decision = self.Decision_Sending
 
-        print("[PHY]{} --> Decision No.{} arrives".format(self.time, self.Decision['counter']))
-        print("[PHY]{} --> Last decision arrives at {}, This decision arrives at: {}. Decision arrival  interval: {}".format(self.time, self.Decision_prev, self.time, self.Decision_prev - self.time))
+#        print("[PHY]{} --> Decision No.{} arrives".format(self.time, self.Decision['counter']))
+#        print("[PHY]{} --> Last decision arrives at {}, This decision arrives at: {}. Decision arrival  interval: {}".format(self.time, self.Decision_prev, self.time, self.Decision_prev - self.time))
         
-        print("[PHY]{} --> New Decision: Scheduled URLLC:{} | Scheduled mMTC {}\n".format(self.time, self.Decision['S1']['users'], self.Decision['S2']['users']))
+#        print("[PHY]{} --> New Decision: Scheduled URLLC:{} | Scheduled mMTC {}\n".format(self.time, self.Decision['S1']['users'], self.Decision['S2']['users']))
         
         # Update the previous report
         self.Decision_prev = self.time
@@ -510,13 +510,13 @@ class Simulation:
 
     def __assign_urllc_pilots(self):
         no_urllc = self.Decision['S1']['users']
-        print("[PHY] Take Decision No. {}. Assigned {} URLLC requests".format(self.Decision['counter'], no_urllc))
+#        print("[PHY] Take Decision No. {}. Assigned {} URLLC requests".format(self.Decision['counter'], no_urllc))
         self.trace.write_decision(self.time, no_urllc)
         self.strategy_mapping[self.Decision['S1']['strategy']](self._URLLC, no_urllc)
 
     def __assign_mmtc_pilots(self):
         no_mmtc = self.Decision['S2']['users']
-        print("[PHY] Take Decision No. {}. Assigned {} mMTC requests".format(self.Decision['counter'], no_mmtc))
+#        print("[PHY] Take Decision No. {}. Assigned {} mMTC requests".format(self.Decision['counter'], no_mmtc))
         self.strategy_mapping[self.Decision['S2']['strategy']](self._mMTC, no_mmtc)
 
     def __fist_come_first_served(self, slice_type, requests):
@@ -525,7 +525,7 @@ class Simulation:
         waste_count = 0
         events = self.send_queue[key[slice_type]].copy()
         if slice_type == 0:
-            print("[PHY] Number of active {} request in the queue: {}".format(key[slice_type], len(events)))
+#            print("[PHY] Number of active {} request in the queue: {}".format(key[slice_type], len(events)))
             self.trace.write_queue_length(self.time, len(events))
         events.sort(key=lambda x: x.dead_time)
         counter = requests
@@ -540,7 +540,7 @@ class Simulation:
                 if no_pilots >= 0:
                     # remove the event that assigned the pilots from the list
                     entry = event.get_entry(self.time, True)
-                    print("[Event][{}] {} Request allocated, arrive at {}, deadline {}".format(self.time, key[slice_type] , entry['arrival_time'], entry['dead_time']))
+#                    print("[Event][{}] {} Request allocated, arrive at {}, deadline {}".format(self.time, key[slice_type] , entry['arrival_time'], entry['dead_time']))
                     # print(entry)
                     self.trace.write_trace(entry)
                     self.send_queue[key[slice_type]].remove(event)
@@ -554,7 +554,7 @@ class Simulation:
                 counter -= 1
                 no_pilots -= required_pilots
                 if no_pilots >= 0:
-                    print("[Event][{}] No {} requests in the queue, {} pilots wastes".format(self.time, key[slice_type], required_pilots))
+#                    print("[Event][{}] No {} requests in the queue, {} pilots wastes".format(self.time, key[slice_type], required_pilots))
                     self.stats.stats['no_waste_pilots'] += required_pilots
                     waste_count += required_pilots
                 else:
@@ -658,10 +658,11 @@ class Simulation:
                         "seed": self.seed,
                         "delay_mu": delay_mu,
                         "ratio": ratio,
-                        "period_var": deadline,
-                        "deadline_var": variance,
-                        "variance_var": self.trace.get_loss_rate()[0],
-                        "loss","waste": waste
+                        "period_var": period,
+                        "deadline_var": deadline,
+                        "variance_var": variance,
+                        "loss": self.trace.get_loss_rate()[0],
+                        "waste": waste
                       }
         return output_dict
         

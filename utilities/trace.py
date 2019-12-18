@@ -18,6 +18,11 @@ class Trace:
         self.waste_trace = np.empty((0,2), int)
         self.loss_trace = np.empty((0,2), int)
         self.decision_trace = np.empty((0,2), int)
+
+    def write_trace(self, entry):
+        for i in range(len(entry)):
+            k = self.keys[i]
+            self.Dict[k] = np.append(self.Dict[k], entry[k])
     
     def write_queue_length(self, time_sp, queue_len):
         self.queue_length = np.append(self.queue_length, np.array([[time_sp, queue_len]]), axis=0)

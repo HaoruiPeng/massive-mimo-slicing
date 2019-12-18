@@ -30,7 +30,6 @@ class Stats:
 
     def clear_stats(self):
         """ Clear the stats for the current simulation """
-
         for key in self.stats:
             if not key == 'config_no':
                 self.stats[key] = 0
