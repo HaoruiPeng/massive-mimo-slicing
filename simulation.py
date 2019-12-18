@@ -70,7 +70,7 @@ class Simulation:
         self.time = 0.0
         self.seed = seed
         
-        self.simulation_length = 10000
+        self.simulation_length = 5000
         self.frame_length = 0.5
         self.sampling = report_sampling
         self.no_pilots = 12
