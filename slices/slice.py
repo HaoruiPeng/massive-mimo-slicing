@@ -7,9 +7,9 @@ __author__ = "Haorui Peng"
 from nodes.node import Node
 import json
 import numpy as np
-import scipy.stats as stats
-from scipy.stats import beta
-from scipy.stats import binom
+#import scipy.stats as stats
+#from scipy.stats import beta
+#from scipy.stats import binom
 
 
 class Slice:
@@ -70,8 +70,8 @@ class Slice:
 
     
     def Beta_Binomial(self, a, b, n, size=None):
-        p = beta.rvs(a, b, size=size)
-        r = binom.rvs(n, p, size=size)
+        p = np.random.beta(a, b, size=size)
+        r = np.random.binomial(n, p, size=size)
 
         return r
 
