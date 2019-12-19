@@ -30,7 +30,7 @@ class Simulation:
     _ALLOCATE = 6
     _URLLC_ARRIVAL = 7
     _mMTC_ARRIVAL = 8
-    
+
     def __init__(self, report_sampling, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):
         """
         Initialize simulation object
@@ -61,7 +61,7 @@ class Simulation:
         traffic : tube of string
             TODO: will be sperated to the UE function
             Traffic type of the slice 1
-        
+
         """
 
         self.stats = stats
@@ -69,27 +69,21 @@ class Simulation:
         self.mu = mu
         self.time = 0.0
         self.seed = seed
-        
-        self.simulation_length = 5000
+
+        self.simulation_length = 6000
         self.frame_length = 0.5
         self.sampling = report_sampling
         self.no_pilots = 12
-        
+
         if traffic_var is not None and len(traffic_var)==4:
             self.traffic_var = traffic_var
         else:
             self.traffic_var = (1, 0, 0, 0)
-        
-        #Initial strategy of both slices, will be changed be the decisions
-        if s1 is not None:
-            s1_strategy = s1
-        else:
-            s1_strategy = config.get('strategy_s1')
 
-        if s2 is not None:
-            s2_strategy = s2
-        else:
-            s1_strategy = config.get('strategy_s2')
+        #Initial strategy of both slices, will be changed be the decisions
+        s1_strategy = s1
+        s2_strategy = s2
+
 
         self.strategy_mapping = {
             'FCFS': self.__fist_come_first_served,
@@ -102,16 +96,16 @@ class Simulation:
             'RR_Q': self.__arrival_signal,
             'RR_NQ': self.__arrival_no_queue,
         }
-        
+
         self.event_heap = EventHeap()
         self.send_queue = {'_URLLC': [], '_mMTC': []}
-   
+
         # TODO: Here the traffic is canceled from taking new variables
         self.Slices = [Slice(self._URLLC, no_urllc,  self.traffic_var), Slice(self._mMTC, no_mmtc, (1, 0, 0, 0))]
-        
+
         #Decision : A dict with all the decisicion that the actuator look up every coherence interval
         #TODO:The initial number of users should follow the traffic distributtion of each slice
-        
+
         self.report_counter = 0
         self.decision_counter = 0
         self.Decision = {
@@ -132,7 +126,7 @@ class Simulation:
                         'S2':{
                             'users': 0}
         }
-        
+
         self.Report_prev = {
                             'time': self.time,
                             'counter': self.report_counter,
@@ -141,12 +135,12 @@ class Simulation:
                             'S2':{
                                 'users': 0}
         }
-        
+
         self.report_queue = []
-        
+
         self.Decision_prev = 0
-   
-        
+
+
         #Attributes used by only RR_NQ strategy
         self.frame_counter = 0
         self.frame_loops = self.Slices[self._URLLC].get_node(0).deadline / self.frame_length
@@ -163,7 +157,7 @@ class Simulation:
         first_send = self.time + self.sampling
 #        print("[Event] --> Schedule Report No.1 send at {}".format(first_send))
         self.event_heap.push(self._REPORT, first_send)
-        
+
         first_report_arrival = first_send + self.get_delay()
 #        print("[Event] --> Schedule Report No.1 arrival at MAC layer at {}".format(first_report_arrival))
         #The first decision will arrive after the report with a delay of RTT&Exec
@@ -173,7 +167,7 @@ class Simulation:
 #        print("[Event] --> Schedule Decision No.1 arrival at PHY layer at {}".format(first_decision_arrival))
 #        self.event_heap.push(self._DECISION_ARRIVAL,first_decision_arrival)
 
-        
+
     def get_delay(self):
         ##
         #Generate the delay value between PHY and MAC from a log-normal distribution
@@ -205,7 +199,7 @@ class Simulation:
 #################################################################################################################
 ## Evnets Handling
 #################################################################################################################
-    
+
     def __handle_event(self, event):
         # Event switcher to determine correct action for an event
         event_actions = {
@@ -296,7 +290,7 @@ class Simulation:
                              self.time + next_arrival, self.time + next_arrival + node.deadline,
                              event.node_id, self.stats.stats[no_arrivals[event.type]])
 
-    
+
     def __handle_report(self, event):
         """
         Report is sent every sampling time
@@ -305,7 +299,7 @@ class Simulation:
         self.__send_report()
 #        self.event_heap.push(self._REPORT, self.time + self.sampling)
 #        self.event_heap.push(self._DECISION_MAKE, self.time + self.sampling + self.get_delay())
-        
+
 
     def __handle_decision_make(self, event):
         """
@@ -316,11 +310,11 @@ class Simulation:
 #        self.event_heap.push(self._DECISION_ARRIVAL, self.time + self.get_delay())
 #        print("Handle decsion")
 
-    
+
     def __handle_decision_arrival(self, event):
         self.__update_decision()
 
-    
+
     def __handle_expired_events(self, event):
         """
         Handle all the expired requests during the previous coherence interval
@@ -335,7 +329,7 @@ class Simulation:
         """
         remove the expired events in the send_queue
         """
-        
+
         pilot_strategy = self.Decision['S1']['strategy']
         if pilot_strategy == "FCFS":
             self.__handle_station_node_queue(self._URLLC)
@@ -370,7 +364,6 @@ class Simulation:
 #        print("{} {} requests expired, remove.".format(len(remove_indices), key[slice_type]))
 #        if slice_type == self._URLLC and len(remove_indices) > 0:
 #            k = input("URLLC loss, pause for observe!")
-        self.trace.write_loss(self.time, len(remove_indices))
         # Remove the events in reversed order to not shift subsequent indices
         for i in sorted(remove_indices, reverse=True):
             event = queue[i]
@@ -379,7 +372,7 @@ class Simulation:
             self.stats.stats[no_missed_event[slice_type]] += 1
             entry = event.get_entry(self.time, False)
 #            print("[Event][{}] {} request expired, arrive at {}, deadline {}".format(self.time, key[slice_type], entry['arrival_time'], entry['dead_time']))
-            self.trace.write_trace(entry)
+            # self.trace.write_trace(entry)
             del event
             del self.send_queue[key[slice_type]][i]
 
@@ -397,7 +390,7 @@ class Simulation:
                         node.remove_event(event)
                         self.stats.stats[no_missed_event[slice_type]] += 1
                         entry = event.get_entry(self.time, False)
-                        self.trace.write_trace(entry)
+                        # self.trace.write_trace(entry)
                         del event
             if len(node.request_queue) == 0:
                 node.active = False
@@ -412,9 +405,9 @@ class Simulation:
                         node.remove_event(event)
                         self.stats.stats[no_missed_event[slice_type]] += 1
                         entry = event.get_entry(self.time, False)
-                        self.trace.write_trace(entry)
+                        # self.trace.write_trace(entry)
                         del event
-    
+
     def __assign_pilots(self, event):
         del event;
         self.no_pilots = 12
@@ -422,11 +415,11 @@ class Simulation:
         self.__assign_urllc_pilots()
         self.event_heap.push(self._ALLOCATE, self.time + self.frame_length)
 
-                        
+
 #################################################################################################################
 ## Methods
 #################################################################################################################
-    
+
     def __send_report(self):
         """
         Send the report every sampling time, read the time of the old report
@@ -437,13 +430,13 @@ class Simulation:
             self._URLLC_ARRIVAL: 'no_urllc_arrivals',
             self._mMTC_ARRIVAL: 'no_mmtc_arrivals'
         }
-        
+
 #        report_urllc = self.stats.stats[no_arrivals[self._URLLC_ARRIVAL]]
 #        report_mmtc = self.stats.stats[no_arrivals[self._mMTC_ARRIVAL]]
-        
+
         report_urllc = len(self.send_queue['_URLLC'])
         report_mmtc = len(self.send_queue['_mMTC'])
-        
+
         Report_Sending = {'time': self.time,
                         'counter': self.report_counter,
                         'S1':{
@@ -459,7 +452,7 @@ class Simulation:
 #        print("[Event] --> Schedule the next Report No.{} arrive at the MAC layer at {}".format(Report_Sending['counter']+1, next_report_arrive))
         self.event_heap.push(self._DECISION_MAKE, next_report_arrive)
 
-    
+
     def __update_report(self):
         """Process the decision on the MAC and send out"""
         self.Report = self.report_queue.pop(0)
@@ -467,16 +460,16 @@ class Simulation:
         interval = self.Report['time'] - self.Report_prev['time']
 #        print("[MAC]{} --> Last Report time: {}, This Report time: {}, report interval: {}".format(self.time, self.Report_prev['time'], self.Report['time'], interval))
 #        print("[MAC]{} --> Last Respot urllc {}, this Report urllc {}".format(self.time, self.Report_prev['S1']['users'], self.Report['S1']['users']))
-        
+
         urllc_arrivals  = self.Report['S1']['users'] - self.Report_prev['S1']['users']
         mmtc_arrivals  = self.Report['S2']['users'] - self.Report_prev['S2']['users']
 
 #        urllc_schedule = round(urllc_arrivals / (interval / self.frame_length))
 #        mmtc_schedule =  round(mmtc_arrivals / (interval / self.frame_length))
-        
+
         urllc_schedule = self.Report['S1']['users']
         mmtc_schedule = self.Report['S2']['users']
-        
+
         self.decision_counter += 1
         self.Decision_Sending = {
                                 'counter': self.decision_counter,
@@ -492,26 +485,25 @@ class Simulation:
 #        print("[Event] --> Schedule the Decision No.{} arrive at the PHY layer at {}".format(self.Decision_Sending['counter'], decision_arrival))
         self.event_heap.push(self._DECISION_ARRIVAL, decision_arrival)
 
-        
-        
+
+
     def __update_decision(self):
         """Update the decision on the PHY"""
-        
+
         self.Decision = self.Decision_Sending
 
 #        print("[PHY]{} --> Decision No.{} arrives".format(self.time, self.Decision['counter']))
 #        print("[PHY]{} --> Last decision arrives at {}, This decision arrives at: {}. Decision arrival  interval: {}".format(self.time, self.Decision_prev, self.time, self.Decision_prev - self.time))
-        
+
 #        print("[PHY]{} --> New Decision: Scheduled URLLC:{} | Scheduled mMTC {}\n".format(self.time, self.Decision['S1']['users'], self.Decision['S2']['users']))
-        
+
         # Update the previous report
         self.Decision_prev = self.time
-        
+
 
     def __assign_urllc_pilots(self):
         no_urllc = self.Decision['S1']['users']
 #        print("[PHY] Take Decision No. {}. Assigned {} URLLC requests".format(self.Decision['counter'], no_urllc))
-        self.trace.write_decision(self.time, no_urllc)
         self.strategy_mapping[self.Decision['S1']['strategy']](self._URLLC, no_urllc)
 
     def __assign_mmtc_pilots(self):
@@ -524,9 +516,8 @@ class Simulation:
         key = ['_URLLC', '_mMTC']
         waste_count = 0
         events = self.send_queue[key[slice_type]].copy()
-        if slice_type == 0:
+        # if slice_type == 0:
 #            print("[PHY] Number of active {} request in the queue: {}".format(key[slice_type], len(events)))
-            self.trace.write_queue_length(self.time, len(events))
         events.sort(key=lambda x: x.dead_time)
         counter = requests
         while counter > 0 and no_pilots > 0:
@@ -542,7 +533,7 @@ class Simulation:
                     entry = event.get_entry(self.time, True)
 #                    print("[Event][{}] {} Request allocated, arrive at {}, deadline {}".format(self.time, key[slice_type] , entry['arrival_time'], entry['dead_time']))
                     # print(entry)
-                    self.trace.write_trace(entry)
+                    # self.trace.write_trace(entry)
                     self.send_queue[key[slice_type]].remove(event)
                     self.Slices[slice_type].get_node(event.node_id).remove_event(event)
                     # print(no_pilots, len(self.send_queue['_URLLC']), len(urllc_events))
@@ -560,7 +551,6 @@ class Simulation:
                 else:
                     no_pilots += required_pilots
                     break
-        self.trace.write_waste(self.time, waste_count)
         self.no_pilots = no_pilots
 
     def __round_robin_queue_info(self, slice_type, requests):
@@ -574,7 +564,7 @@ class Simulation:
                     if no_pilots >= 0 and counter >= 0:
                         entry = event.get_entry(self.time, True)
                         counter -= 1
-                        self.trace.write_trace(entry)
+                        # self.trace.write_trace(entry)
                         _node.remove_event(event)
                         del event
                         if len(_node.request_queue) == 0:
@@ -602,13 +592,13 @@ class Simulation:
                     counter -= 1
                     event = self.Slices[self._URLLC].get_node(i).request_queue.pop(0)
                     entry = event.get_entry(self.time, True)
-                    self.trace.write_trace(entry)
+                    # self.trace.write_trace(entry)
             else:
                 no_pilots += _node.pilot_samples
                 self.no_pilots = no_pilots
                 return
         self.no_pilots = no_pilots
-        
+
 #################################################################################################################
 ## Simulation Run
 #################################################################################################################
@@ -642,8 +632,8 @@ class Simulation:
                 current_progress = progress
 
             self.__handle_event(next_event)
-        
-        self.trace.process()
+
+        # self.trace.process()
 
 
         ratio = self.traffic_var[0]
@@ -652,8 +642,9 @@ class Simulation:
         variance = self.traffic_var[3]
         delay_mu = self.mu
 
+        loss = self.stats.stats['no_missed_urllc'] / self.stats.stats['no_urllc_arrivals']
         waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
-        
+
         output_dict = { "No.URLLC": self.Slices[0].no_nodes,
                         "seed": self.seed,
                         "delay_mu": delay_mu,
@@ -661,9 +652,7 @@ class Simulation:
                         "period_var": period,
                         "deadline_var": deadline,
                         "variance_var": variance,
-                        "loss": self.trace.get_loss_rate()[0],
+                        "loss": loss,
                         "waste": waste
                       }
         return output_dict
-        
-

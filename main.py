@@ -13,28 +13,19 @@ from utilities.stats import Stats
 from utilities.trace import Trace
 from simulation import Simulation
 
-sys.path.append(os.path.abspath('../'))
-
-def isprime(N):
-    if N<=1 or N==4:
-        return False
-    else:
-        for i in range(2, N//2):
-            if N%i == 0:
-                return False
-        return True
+# sys.path.append(os.path.abspath('../'))
 
 
 def main():
     # Load simulation parameters
     keys = ["urllc_nodes","seed", "mu", "ratio" ,"period_var", "deadline_var", "variance_var"]
-    
+
     data = request.get_json(force=True)
     if data is None:
         return "Bad Request"
     else:
         pass
-    
+
     no_urllc = int(data["urllc_nodes"])
     no_mmtc = 0
     seed = int(data["seed"])
@@ -46,24 +37,18 @@ def main():
     report_sampling = 0.5
 
     stats = Stats()
-    
+    trace = Trace()
+
+    np.random.seed(seed)
+
     s1 = "FCFS"
     s2 = "FCFS"
-    
-    sampling=no_urllc
 
-    while True:
-        if isprime(sampling):
-            break
-        else:
-            sampling += 1
-    
-    trace = Trace(sampling)
-    
     simulation = Simulation(report_sampling, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (ratio, period_var, deadline_var, variance_var), seed)
 
-    
     results = simulation.run()
     results_js = json.dumps(results).encode()
-    
+
+    # results_js = json.dumps(data).encode()
+
     return results_js
