@@ -658,6 +658,7 @@ class Simulation:
                         "loss": loss,
                         "waste": waste,
                         "start": start_time,
+                        "end": end_time,
                         "duration": exe_time
                       }
         return output_dict
