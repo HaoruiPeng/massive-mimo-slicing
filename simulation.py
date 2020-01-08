@@ -70,7 +70,7 @@ class Simulation:
         self.time = 0.0
         self.seed = seed
 
-        self.simulation_length = 6000
+        self.simulation_length = 10000
         self.frame_length = 0.5
         self.sampling = report_sampling
         self.no_pilots = 12
@@ -619,6 +619,7 @@ class Simulation:
 #        print("Size: {}".format(self.event_heap.get_size()))
         # for k in self.event_heap.get_heap():
         #     print(k)
+        start_time = time.time()
         while self.time <= self.simulation_length:
 #            print("[Time {}] Event heap size {}".format(self.time, self.event_heap.size()))
             next_event = self.event_heap.pop()[3]
@@ -633,6 +634,7 @@ class Simulation:
 
             self.__handle_event(next_event)
 
+        end_time = time.time()
         # self.trace.process()
 
 
@@ -644,6 +646,7 @@ class Simulation:
 
         loss = self.stats.stats['no_missed_urllc'] / self.stats.stats['no_urllc_arrivals']
         waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
+        exe_time = end_time - start_time
 
         output_dict = { "No.URLLC": self.Slices[0].no_nodes,
                         "seed": self.seed,
@@ -653,6 +656,8 @@ class Simulation:
                         "deadline_var": deadline,
                         "variance_var": variance,
                         "loss": loss,
-                        "waste": waste
+                        "waste": waste,
+                        "start": start_time,
+                        "duration": exe_time
                       }
         return output_dict
