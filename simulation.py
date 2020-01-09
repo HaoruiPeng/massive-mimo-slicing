@@ -3,6 +3,7 @@ import os
 from events.event_heap import EventHeap
 import numpy as np
 import time
+import csv
 from slices.slice import Slice
 
 
@@ -30,7 +31,7 @@ class Simulation:
     _ALLOCATE = 6
     _URLLC_ARRIVAL = 7
     _mMTC_ARRIVAL = 8
-    
+
     def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):
         """
         Initialize simulation object
@@ -61,7 +62,7 @@ class Simulation:
         traffic : tube of string
             TODO: will be sperated to the UE function
             Traffic type of the slice 1
-        
+
         """
 
         self.stats = stats
@@ -69,27 +70,20 @@ class Simulation:
         self.mu = mu
         self.time = 0.0
         self.seed = seed
-        
+
         self.simulation_length = config.get('simulation_length')
         self.frame_length = config.get('frame_length')
         self.sampling = config.get('sampling')
         self.no_pilots = config.get('no_pilots')
-        
+
         if traffic_var is not None and len(traffic_var)==4:
             self.traffic_var = traffic_var
         else:
             self.traffic_var = (1, 0, 0, 0)
-        
-        #Initial strategy of both slices, will be changed be the decisions
-        if s1 is not None:
-            s1_strategy = s1
-        else:
-            s1_strategy = config.get('strategy_s1')
 
-        if s2 is not None:
-            s2_strategy = s2
-        else:
-            s1_strategy = config.get('strategy_s2')
+        #Initial strategy of both slices, will be changed be the decisions
+        s1_strategy = s1
+        s2_strategy = s2
 
         self.strategy_mapping = {
             'FCFS': self.__fist_come_first_served,
@@ -102,16 +96,16 @@ class Simulation:
             'RR_Q': self.__arrival_signal,
             'RR_NQ': self.__arrival_no_queue,
         }
-        
+
         self.event_heap = EventHeap()
         self.send_queue = {'_URLLC': [], '_mMTC': []}
-   
+
         # TODO: Here the traffic is canceled from taking new variables
         self.Slices = [Slice(self._URLLC, no_urllc,  self.traffic_var), Slice(self._mMTC, no_mmtc, (1, 0, 0, 0))]
-        
+
         #Decision : A dict with all the decisicion that the actuator look up every coherence interval
         #TODO:The initial number of users should follow the traffic distributtion of each slice
-        
+
         self.report_counter = 0
         self.decision_counter = 0
         self.Decision = {
@@ -132,7 +126,7 @@ class Simulation:
                         'S2':{
                             'users': 0}
         }
-        
+
         self.Report_prev = {
                             'time': self.time,
                             'counter': self.report_counter,
@@ -141,12 +135,12 @@ class Simulation:
                             'S2':{
                                 'users': 0}
         }
-        
+
         self.report_queue = []
-        
+
         self.Decision_prev = 0
-   
-        
+
+
         #Attributes used by only RR_NQ strategy
         self.frame_counter = 0
         self.frame_loops = self.Slices[self._URLLC].get_node(0).deadline / self.frame_length
@@ -163,7 +157,7 @@ class Simulation:
         first_send = self.time + self.sampling
         print("[Event] --> Schedule Report No.1 send at {}".format(first_send))
         self.event_heap.push(self._REPORT, first_send)
-        
+
         first_report_arrival = first_send + self.get_delay()
         print("[Event] --> Schedule Report No.1 arrival at MAC layer at {}".format(first_report_arrival))
         #The first decision will arrive after the report with a delay of RTT&Exec
@@ -173,7 +167,7 @@ class Simulation:
 #        print("[Event] --> Schedule Decision No.1 arrival at PHY layer at {}".format(first_decision_arrival))
 #        self.event_heap.push(self._DECISION_ARRIVAL,first_decision_arrival)
 
-        
+
     def get_delay(self):
         ##
         #Generate the delay value between PHY and MAC from a log-normal distribution
@@ -205,7 +199,7 @@ class Simulation:
 #################################################################################################################
 ## Evnets Handling
 #################################################################################################################
-    
+
     def __handle_event(self, event):
         # Event switcher to determine correct action for an event
         event_actions = {
@@ -296,7 +290,7 @@ class Simulation:
                              self.time + next_arrival, self.time + next_arrival + node.deadline,
                              event.node_id, self.stats.stats[no_arrivals[event.type]])
 
-    
+
     def __handle_report(self, event):
         """
         Report is sent every sampling time
@@ -305,7 +299,7 @@ class Simulation:
         self.__send_report()
 #        self.event_heap.push(self._REPORT, self.time + self.sampling)
 #        self.event_heap.push(self._DECISION_MAKE, self.time + self.sampling + self.get_delay())
-        
+
 
     def __handle_decision_make(self, event):
         """
@@ -316,11 +310,11 @@ class Simulation:
 #        self.event_heap.push(self._DECISION_ARRIVAL, self.time + self.get_delay())
 #        print("Handle decsion")
 
-    
+
     def __handle_decision_arrival(self, event):
         self.__update_decision()
 
-    
+
     def __handle_expired_events(self, event):
         """
         Handle all the expired requests during the previous coherence interval
@@ -335,7 +329,7 @@ class Simulation:
         """
         remove the expired events in the send_queue
         """
-        
+
         pilot_strategy = self.Decision['S1']['strategy']
         if pilot_strategy == "FCFS":
             self.__handle_station_node_queue(self._URLLC)
@@ -414,7 +408,7 @@ class Simulation:
                         entry = event.get_entry(self.time, False)
                         self.trace.write_trace(entry)
                         del event
-    
+
     def __assign_pilots(self, event):
         del event;
         self.no_pilots = 12
@@ -422,11 +416,11 @@ class Simulation:
         self.__assign_urllc_pilots()
         self.event_heap.push(self._ALLOCATE, self.time + self.frame_length)
 
-                        
+
 #################################################################################################################
 ## Methods
 #################################################################################################################
-    
+
     def __send_report(self):
         """
         Send the report every sampling time, read the time of the old report
@@ -437,13 +431,13 @@ class Simulation:
             self._URLLC_ARRIVAL: 'no_urllc_arrivals',
             self._mMTC_ARRIVAL: 'no_mmtc_arrivals'
         }
-        
+
 #        report_urllc = self.stats.stats[no_arrivals[self._URLLC_ARRIVAL]]
 #        report_mmtc = self.stats.stats[no_arrivals[self._mMTC_ARRIVAL]]
-        
+
         report_urllc = len(self.send_queue['_URLLC'])
         report_mmtc = len(self.send_queue['_mMTC'])
-        
+
         Report_Sending = {'time': self.time,
                         'counter': self.report_counter,
                         'S1':{
@@ -459,7 +453,7 @@ class Simulation:
         print("[Event] --> Schedule the next Report No.{} arrive at the MAC layer at {}".format(Report_Sending['counter']+1, next_report_arrive))
         self.event_heap.push(self._DECISION_MAKE, next_report_arrive)
 
-    
+
     def __update_report(self):
         """Process the decision on the MAC and send out"""
         self.Report = self.report_queue.pop(0)
@@ -467,16 +461,16 @@ class Simulation:
         interval = self.Report['time'] - self.Report_prev['time']
         print("[MAC]{} --> Last Report time: {}, This Report time: {}, report interval: {}".format(self.time, self.Report_prev['time'], self.Report['time'], interval))
         print("[MAC]{} --> Last Respot urllc {}, this Report urllc {}".format(self.time, self.Report_prev['S1']['users'], self.Report['S1']['users']))
-        
+
         urllc_arrivals  = self.Report['S1']['users'] - self.Report_prev['S1']['users']
         mmtc_arrivals  = self.Report['S2']['users'] - self.Report_prev['S2']['users']
 
 #        urllc_schedule = round(urllc_arrivals / (interval / self.frame_length))
 #        mmtc_schedule =  round(mmtc_arrivals / (interval / self.frame_length))
-        
+
         urllc_schedule = self.Report['S1']['users']
         mmtc_schedule = self.Report['S2']['users']
-        
+
         self.decision_counter += 1
         self.Decision_Sending = {
                                 'counter': self.decision_counter,
@@ -492,21 +486,21 @@ class Simulation:
         print("[Event] --> Schedule the Decision No.{} arrive at the PHY layer at {}".format(self.Decision_Sending['counter'], decision_arrival))
         self.event_heap.push(self._DECISION_ARRIVAL, decision_arrival)
 
-        
-        
+
+
     def __update_decision(self):
         """Update the decision on the PHY"""
-        
+
         self.Decision = self.Decision_Sending
 
         print("[PHY]{} --> Decision No.{} arrives".format(self.time, self.Decision['counter']))
         print("[PHY]{} --> Last decision arrives at {}, This decision arrives at: {}. Decision arrival  interval: {}".format(self.time, self.Decision_prev, self.time, self.Decision_prev - self.time))
-        
+
         print("[PHY]{} --> New Decision: Scheduled URLLC:{} | Scheduled mMTC {}\n".format(self.time, self.Decision['S1']['users'], self.Decision['S2']['users']))
-        
+
         # Update the previous report
         self.Decision_prev = self.time
-        
+
 
     def __assign_urllc_pilots(self):
         no_urllc = self.Decision['S1']['users']
@@ -608,7 +602,7 @@ class Simulation:
                 self.no_pilots = no_pilots
                 return
         self.no_pilots = no_pilots
-        
+
 #################################################################################################################
 ## Simulation Run
 #################################################################################################################
@@ -640,42 +634,50 @@ class Simulation:
 
             if progress > current_progress:
                 current_progress = progress
-#                str1 = "\rProgress: {0}%".format(progress)
-#                sys.stdout.write(str)
-#                sys.stdout.flush()
-#            if next_event.type not in [self._URLLC_ARRIVAL, self._mMTC_ARRIVAL]:
-#                print("[Event]{} New {} event, press any key to handle".format(self.time, event_map[next_event.type]))
-#                input()
             self.__handle_event(next_event)
 
         print('\n[Time {}] Simulation complete.'.format(self.time))
 
     def write_result(self):
-#        result_dir = "results/" + self.Decision['S1']['strategy'] + "_" + self.Decision['S2']['strategy']
         result_dir = "results/"
         ratio = str(self.traffic_var[0])
         period = str(self.traffic_var[1])
         deadline = str(self.traffic_var[2])
         variance = str(self.traffic_var[3])
 
+        ts_dir = "time_series/" + str(self.Slices[0].no_nodes) + '-'
+                + str(self.seed) + '-'
+                + delay_mu + '-'
+                + ratio + '-'
+                + period + '-'
+                + deadline + '-'
+                + variance
+
         delay_mu = str(self.mu)
         urllc_file_name = result_dir + "/" + "simulation_results.csv"
 
-#        data = self.trace.get_waiting_time()
+        loss = self.stats.stats['no_missed_urllc'] / self.stats.stats['no_urllc_arrivals']
         waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
 
         try:
             os.mkdir(result_dir)
         except OSError:
             pass
+        try:
+            os.mkdirs(ts_dir)
+        except OSError:
+            pass
 
+        keys = ["No.URLLC","seed","delay_mu","ratio","period_var","deadline_var","variance_var","loss","waste"]
         try:
             file = open(urllc_file_name, 'r+')
         except FileNotFoundError:
             print("No file found, create the file first")
             file = open(urllc_file_name, 'w')
-            file.write("No.URLLC,seed,delay_mu,ratio,period_var,deadline_var,variance_var,loss,waste\n")
-        
+
+        writer = csv.DictWriter(file, fieldnames=keys)
+        writer.writeheader()
+
         file.write(str(self.Slices[0].no_nodes) + ','
                    + str(self.seed) + ','
                    + delay_mu + ','
@@ -683,26 +685,24 @@ class Simulation:
                    + period + ','
                    + deadline + ','
                    + variance + ','
-                   + str(self.trace.get_loss_rate()[0]) + ','
+                   + str(loss) + ','
                    + str(waste) + '\n'
                    )
-
         file.close()
-        
-        
-        with open("queue_length.txt", 'w+') as f:
+
+
+        with open(ts_dir + "queue_length.txt", 'w+') as f:
             for d in self.trace.queue_length:
                 f.write(str(d[0]) + "," + str(d[1]) +"\n")
-        
-        with open("waste.txt", 'w+') as f:
+
+        with open(ts_dir + "waste.txt", 'w+') as f:
             for d in self.trace.waste_trace:
                 f.write(str(d[0]) + "," + str(d[1]) +"\n")
-                                   
-        with open("loss.txt", 'w+') as f:
+
+        with open(ts_dir + "loss.txt", 'w+') as f:
             for d in self.trace.loss_trace:
                 f.write(str(d[0]) + "," + str(d[1]) +"\n")
-                
-        with open("decision.txt", 'w+') as f:
+
+        with open(ts_dir + "decision.txt", 'w+') as f:
             for d in self.trace.decision_trace:
                 f.write(str(d[0]) + "," + str(d[1]) +"\n")
-
