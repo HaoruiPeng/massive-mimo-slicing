@@ -137,6 +137,7 @@ class Simulation:
         }
 
         self.report_queue = []
+        self.decision_queue = []
 
         self.Decision_prev = 0
 
@@ -481,6 +482,7 @@ class Simulation:
                                   'users': mmtc_schedule}
         }
         self.Report_prev = self.Report
+        self.decision_queue.append(self.Decision_Sending)
         decision_arrival = self.time + self.get_delay()
 #        print("[Event] --> Schedule the Decision No.{} arrive at the PHY layer at {}".format(self.Decision_Sending['counter'], decision_arrival))
         self.event_heap.push(self._DECISION_ARRIVAL, decision_arrival)
@@ -490,7 +492,7 @@ class Simulation:
     def __update_decision(self):
         """Update the decision on the PHY"""
 
-        self.Decision = self.Decision_Sending
+        self.Decision = self.decision_queue.pop(0)
 
 #        print("[PHY]{} --> Decision No.{} arrives".format(self.time, self.Decision['counter']))
 #        print("[PHY]{} --> Last decision arrives at {}, This decision arrives at: {}. Decision arrival  interval: {}".format(self.time, self.Decision_prev, self.time, self.Decision_prev - self.time))
