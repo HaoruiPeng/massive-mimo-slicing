@@ -48,7 +48,7 @@ if __name__ == '__main__':
     stats = Stats(stats_file_path, log= False)
 
     seed = args.seed
-    mu = rgs.mu
+    mu = args.mu
 
     s1 = "FCFS"
     s2 = "FCFS"

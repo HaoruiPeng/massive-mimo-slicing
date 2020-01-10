@@ -115,3 +115,4 @@ venv.bak/
 #Experiments files
 experiments/
 *.txt
+time_series/

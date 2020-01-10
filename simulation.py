@@ -137,6 +137,7 @@ class Simulation:
         }
 
         self.report_queue = []
+        self.decision_queue = []
 
         self.Decision_prev = 0
 
@@ -483,6 +484,7 @@ class Simulation:
         }
         self.Report_prev = self.Report
         decision_arrival = self.time + self.get_delay()
+        self.decision_queue.append(self.Decision_Sending)
         print("[Event] --> Schedule the Decision No.{} arrive at the PHY layer at {}".format(self.Decision_Sending['counter'], decision_arrival))
         self.event_heap.push(self._DECISION_ARRIVAL, decision_arrival)
 
@@ -491,10 +493,10 @@ class Simulation:
     def __update_decision(self):
         """Update the decision on the PHY"""
 
-        self.Decision = self.Decision_Sending
+        self.Decision = self.decision_queue.pop(0)
 
         print("[PHY]{} --> Decision No.{} arrives".format(self.time, self.Decision['counter']))
-        print("[PHY]{} --> Last decision arrives at {}, This decision arrives at: {}. Decision arrival  interval: {}".format(self.time, self.Decision_prev, self.time, self.Decision_prev - self.time))
+        print("[PHY]{} --> Last decision arrives at {}, This decision arrives at: {}. Decision arrival  interval: {}".format(self.time, self.Decision_prev, self.time, self.time - self.Decision_prev))
 
         print("[PHY]{} --> New Decision: Scheduled URLLC:{} | Scheduled mMTC {}\n".format(self.time, self.Decision['S1']['users'], self.Decision['S2']['users']))
 
@@ -534,7 +536,7 @@ class Simulation:
                 if no_pilots >= 0:
                     # remove the event that assigned the pilots from the list
                     entry = event.get_entry(self.time, True)
-                    print("[Event][{}] {} Request allocated, arrive at {}, deadline {}".format(self.time, key[slice_type] , entry['arrival_time'], entry['dead_time']))
+                    # print("[Event][{}] {} Request allocated, arrive at {}, deadline {}".format(self.time, key[slice_type] , entry['arrival_time'], entry['dead_time']))
                     # print(entry)
                     self.trace.write_trace(entry)
                     self.send_queue[key[slice_type]].remove(event)
@@ -548,7 +550,7 @@ class Simulation:
                 counter -= 1
                 no_pilots -= required_pilots
                 if no_pilots >= 0:
-                    print("[Event][{}] No {} requests in the queue, {} pilots wastes".format(self.time, key[slice_type], required_pilots))
+                    # print("[Event][{}] No {} requests in the queue, {} pilots wastes".format(self.time, key[slice_type], required_pilots))
                     self.stats.stats['no_waste_pilots'] += required_pilots
                     waste_count += required_pilots
                 else:
@@ -644,16 +646,10 @@ class Simulation:
         period = str(self.traffic_var[1])
         deadline = str(self.traffic_var[2])
         variance = str(self.traffic_var[3])
-
-        ts_dir = "time_series/" + str(self.Slices[0].no_nodes) + '-'
-                + str(self.seed) + '-'
-                + delay_mu + '-'
-                + ratio + '-'
-                + period + '-'
-                + deadline + '-'
-                + variance
-
         delay_mu = str(self.mu)
+
+        ts_dir = "time_series/" + str(self.Slices[0].no_nodes) + '-' + str(self.seed) + '-' + delay_mu + '-' + ratio + '-' + period + '-' + deadline + '-' + variance + "/"
+
         urllc_file_name = result_dir + "/" + "simulation_results.csv"
 
         loss = self.stats.stats['no_missed_urllc'] / self.stats.stats['no_urllc_arrivals']
@@ -664,19 +660,18 @@ class Simulation:
         except OSError:
             pass
         try:
-            os.mkdirs(ts_dir)
+            os.makedirs(ts_dir)
         except OSError:
             pass
 
         keys = ["No.URLLC","seed","delay_mu","ratio","period_var","deadline_var","variance_var","loss","waste"]
         try:
-            file = open(urllc_file_name, 'r+')
+            file = open(urllc_file_name, 'a+')
         except FileNotFoundError:
             print("No file found, create the file first")
             file = open(urllc_file_name, 'w')
-
-        writer = csv.DictWriter(file, fieldnames=keys)
-        writer.writeheader()
+            writer = csv.DictWriter(file, fieldnames=keys)
+            writer.writeheader()
 
         file.write(str(self.Slices[0].no_nodes) + ','
                    + str(self.seed) + ','
