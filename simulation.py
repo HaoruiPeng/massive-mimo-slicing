@@ -23,15 +23,15 @@ class Simulation:
     _URLLC = 0
     _mMTC = 1
 
-    _DECISION_MAKE = 2
-    _DECISION_ARRIVAL = 3
-    _EXPIRE = 4
-    _REPORT = 5
+    _DECISION_ARRIVAL = 2
+    _EXPIRE = 3
+    _REPORT = 4
+    _DECISION_MAKE = 5
     _ALLOCATE = 6
     _URLLC_ARRIVAL = 7
     _mMTC_ARRIVAL = 8
 
-    def __init__(self, report_sampling, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):
+    def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):
         """
         Initialize simulation object
 
@@ -112,10 +112,10 @@ class Simulation:
                         'counter': self.decision_counter,
                         'S1':{
                             'strategy': s1_strategy,
-                            'users': round(no_urllc * 0.05)},
+                            'users': round(no_urllc * 0.0)},
                         'S2':{
                             'strategy': s2_strategy,
-                            'users': round(no_mmtc * 0.01)}
+                            'users': round(no_mmtc * 0.00)}
         }
         #TODO:Report should be the infomation of all the previous information since last report
         self.Report = {
@@ -650,6 +650,9 @@ class Simulation:
         waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
         exe_time = end_time - start_time
 
+        p_mean, d_mean = self.Slices[0].get_means()
+        mean_ratio = d_mean / p_mean
+
         output_dict = { "No.URLLC": self.Slices[0].no_nodes,
                         "seed": self.seed,
                         "delay_mu": delay_mu,
@@ -659,6 +662,9 @@ class Simulation:
                         "variance_var": variance,
                         "loss": loss,
                         "waste": waste,
+                        "period_mean": p_mean,
+                        "dealine_mean": d_mean,
+                        "mean_ratio": mean_ratio,
                         "start": start_time,
                         "end": end_time,
                         "duration": exe_time
