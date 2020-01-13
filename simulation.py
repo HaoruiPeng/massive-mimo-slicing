@@ -31,7 +31,7 @@ class Simulation:
     _URLLC_ARRIVAL = 7
     _mMTC_ARRIVAL = 8
 
-    def __init__(self, config, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):
+    def __init__(self, report_sampling, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):        
         """
         Initialize simulation object
 
@@ -72,7 +72,7 @@ class Simulation:
 
         self.simulation_length = 6000
         self.frame_length = 0.5
-        self.sampling = report_sampling
+        self.sampling = 0.5
         self.no_pilots = 12
 
         if traffic_var is not None and len(traffic_var)==4:
