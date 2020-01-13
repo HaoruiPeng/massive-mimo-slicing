@@ -24,10 +24,10 @@ class Simulation:
     _URLLC = 0
     _mMTC = 1
 
-    _DECISION_MAKE = 2
-    _DECISION_ARRIVAL = 3
-    _EXPIRE = 4
-    _REPORT = 5
+    _DECISION_ARRIVAL = 2
+    _EXPIRE = 3
+    _REPORT = 4
+    _DECISION_MAKE = 5
     _ALLOCATE = 6
     _URLLC_ARRIVAL = 7
     _mMTC_ARRIVAL = 8
@@ -112,10 +112,10 @@ class Simulation:
                         'counter': self.decision_counter,
                         'S1':{
                             'strategy': s1_strategy,
-                            'users': round(no_urllc * 0.05)},
+                            'users': round(no_urllc * 0.0)},
                         'S2':{
                             'strategy': s2_strategy,
-                            'users': round(no_mmtc * 0.01)}
+                            'users': round(no_mmtc * 0.00)}
         }
         #TODO:Report should be the infomation of all the previous information since last report
         self.Report = {
@@ -654,6 +654,8 @@ class Simulation:
 
         loss = self.stats.stats['no_missed_urllc'] / self.stats.stats['no_urllc_arrivals']
         waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
+        p_mean, d_mean = self.Slices[0].get_means()
+        mean_ratio = d_mean / p_mean
 
         try:
             os.mkdir(result_dir)
@@ -664,7 +666,7 @@ class Simulation:
         except OSError:
             pass
 
-        keys = ["No.URLLC","seed","delay_mu","ratio","period_var","deadline_var","variance_var","loss","waste"]
+        keys = ["No.URLLC","seed","delay_mu","ratio","period_var","deadline_var","period_mean","deadline_mean","mean_ratio","variance_var","loss","waste"]
         try:
             file = open(urllc_file_name, 'a+')
         except FileNotFoundError:
@@ -680,6 +682,9 @@ class Simulation:
                    + period + ','
                    + deadline + ','
                    + variance + ','
+                   + str(p_mean) + ','
+                   + str(d_mean) + ','
+                   + str(mean_ratio) + ','
                    + str(loss) + ','
                    + str(waste) + '\n'
                    )
