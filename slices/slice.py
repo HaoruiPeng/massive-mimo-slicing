@@ -29,6 +29,8 @@ class Slice:
         self.no_nodes = no_nodes
         pilot_rq = 1
         n_period = 15
+        self.deadline = []
+        self.period = []
 
         ratio = traffic_var[0]
         period_var = traffic_var[1]
@@ -37,24 +39,31 @@ class Slice:
 
         if period_var > 0:
             a, b = self.Beta_shape(0.5, period_var)
-            period = self.Beta_Binomial(a, b, n_period, size=no_nodes)   #array mean = 7.5
+            self.period = self.Beta_Binomial(a, b, n_period, size=no_nodes)   #array mean = 7.5
         else:
-            period = np.repeat(n_period/2, no_nodes)   #array of 7.5
+            self.period = np.repeat(n_period/2, no_nodes)   #array of 7.5
 
         n_deadline = round(n_period * ratio)
         if deadline_var > 0:
             a, b = self.Beta_shape(0.5, deadline_var)
-            deadline = self.Beta_Binomial(a, b, n_deadline, size=no_nodes)
+            self.deadline = self.Beta_Binomial(a, b, n_deadline, size=no_nodes)
         else:
-            deadline = period * ratio
+            self.deadline = self.period * ratio
 
         if variance_var > 0:
             var_var = abs(np.random.normal(0, np.sqrt(variance_var), size=no_nodes))
         else:
             var_var = np.zeros(no_nodes)
 
-        self.pool = [Node(self.type, pilot_rq, period[i] + 1, deadline[i] + 1, var_var[i]) for i in range(self.no_nodes)]
 
+
+        self.pool = [Node(self.type, pilot_rq, self.period[i] + 1, self.deadline[i] + 1, var_var[i]) for i in range(self.no_nodes)]
+
+    def get_means(self):
+        period_mean = np.mean(self.period)
+        deadline_mean = np.mean(self.deadline)
+
+        return period_mean, deadline_mean
 
     def get_node(self, node_id):
         return self.pool[node_id]
