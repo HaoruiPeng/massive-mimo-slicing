@@ -31,7 +31,7 @@ class Simulation:
     _URLLC_ARRIVAL = 7
     _mMTC_ARRIVAL = 8
 
-    def __init__(self, report_sampling, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):        
+    def __init__(self, report_sampling, stats, trace, no_urllc, no_mmtc, mu, s1=None, s2=None, traffic_var=None, seed=None):
         """
         Initialize simulation object
 
@@ -663,7 +663,7 @@ class Simulation:
                         "loss": loss,
                         "waste": waste,
                         "period_mean": p_mean,
-                        "dealine_mean": d_mean,
+                        "deadline_mean": d_mean,
                         "mean_ratio": mean_ratio,
                         "start": start_time,
                         "end": end_time,
