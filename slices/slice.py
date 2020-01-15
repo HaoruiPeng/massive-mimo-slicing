@@ -55,7 +55,9 @@ class Slice:
         else:
             var_var = np.zeros(no_nodes)
 
-
+        print(self.period)
+        print(self.deadline)
+        input()
 
         self.pool = [Node(self.type, pilot_rq, self.period[i] + 1, self.deadline[i] + 1, var_var[i]) for i in range(self.no_nodes)]
 

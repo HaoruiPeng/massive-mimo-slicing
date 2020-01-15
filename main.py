@@ -70,7 +70,7 @@ if __name__ == '__main__':
     no_urllc = args.urllc_nodes
     no_mmtc = 0
 
-    trace_file_path = 'trace/' + 'Trace_' + str(args.period_var) + '_' + str(args.variance_var) + '-' + str(args.mu) + '_' + str(args.urllc_nodes) + '_' + str(round(time.time())) + '_event_trace.csv'
+    trace_file_path = 'trace/' + 'Trace_' + str(ratio) + '_' + str(args.period_var) + '_' + str(args.variance_var) + '-' + str(args.mu) + '_' + str(args.urllc_nodes) + '_' + str(round(time.time())) + '_event_trace.csv'
 
     trace = Trace(trace_file_path, log=True)
     simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (ratio, period_var, deadline_var, variance_var), seed)
