@@ -100,6 +100,9 @@ class Simulation:
         self.event_heap = EventHeap()
         self.send_queue = {'_URLLC': [], '_mMTC': []}
 
+        self.ignore = {'_URLLC': 0, '_mMTC': 0}
+
+
         # TODO: Here the traffic is canceled from taking new variables
         self.Slices = [Slice(self._URLLC, no_urllc,  self.traffic_var), Slice(self._mMTC, no_mmtc, (1, 0, 0, 0))]
 
@@ -235,7 +238,12 @@ class Simulation:
             self._URLLC_ARRIVAL: self._URLLC,
             self._mMTC_ARRIVAL: self._mMTC
         }
+
         self.stats.stats[no_arrivals[event.type]] += 1
+
+        if self.Decision['counter'] == 0:
+            # self.ignore[queue_type[event.type]] = self.stats.stats[no_arrivals[event.type]]
+            self.ignore[queue_type[event.type]] = self.time
         # print("[Time {}] No. of urllc_arrivals: {}".format(self.time, self.stats.stats['no_urllc_arrivals']))
 
         # Store event in send queue until departure (as LIFO)
@@ -259,6 +267,10 @@ class Simulation:
             self._mMTC_ARRIVAL: self._mMTC
         }
         self.stats.stats[no_arrivals[event.type]] += 1
+
+        if self.Decision['counter'] == 0:
+            self.ignore[queue_type[event.type]] = self.stats.stats[no_arrivals[event.type]]
+
         # print("[Time {}] No. of mmtc_arrivals: {}".format(self.time, self.stats.stats['no_mmtc_arrivals']))
         node = self.Slices[slice_type[event.type]].get_node(event.node_id)
         node.active = True
@@ -280,6 +292,9 @@ class Simulation:
             self._mMTC_ARRIVAL: self._mMTC
         }
         self.stats.stats[no_arrivals[event.type]] += 1
+
+        if self.Decision['counter'] == 0:
+            self.ignore[queue_type[event.type]] = self.stats.stats[no_arrivals[event.type]]
         # print("[Time {}] No. of mmtc_arrivals: {}".format(self.time, self.stats.stats['no_mmtc_arrivals']))
         # Store event in send queue until departure (as LIFO)
         node = self.Slices[slice_type[event.type]].get_node(event.node_id)
@@ -371,7 +386,8 @@ class Simulation:
             event = queue[i]
             node = self.Slices[slice_type].get_node(event.node_id)
             node.remove_event(event)
-            self.stats.stats[no_missed_event[slice_type]] += 1
+            if self.Decision['counter'] > 0:
+                self.stats.stats[no_missed_event[slice_type]] += 1
             entry = event.get_entry(self.time, False)
             print("[Event][{}] {} request expired, arrive at {}, deadline {}".format(self.time, key[slice_type], entry['arrival_time'], entry['dead_time']))
             self.trace.write_trace(entry)
@@ -390,7 +406,8 @@ class Simulation:
                 for event in node.request_queue:
                     if event.dead_time < self.time:
                         node.remove_event(event)
-                        self.stats.stats[no_missed_event[slice_type]] += 1
+                        if self.Decision['counter'] > 0:
+                            self.stats.stats[no_missed_event[slice_type]] += 1
                         entry = event.get_entry(self.time, False)
                         self.trace.write_trace(entry)
                         del event
@@ -405,7 +422,8 @@ class Simulation:
                 for event in node.request_queue:
                     if event.dead_time < self.time:
                         node.remove_event(event)
-                        self.stats.stats[no_missed_event[slice_type]] += 1
+                        if self.Decision['counter'] > 0:
+                            self.stats.stats[no_missed_event[slice_type]] += 1
                         entry = event.get_entry(self.time, False)
                         self.trace.write_trace(entry)
                         del event
@@ -551,13 +569,18 @@ class Simulation:
                 no_pilots -= required_pilots
                 if no_pilots >= 0:
                     # print("[Event][{}] No {} requests in the queue, {} pilots wastes".format(self.time, key[slice_type], required_pilots))
-                    self.stats.stats['no_waste_pilots'] += required_pilots
+                    if self.Decision['counter'] > 0:
+                        self.stats.stats['no_waste_pilots'] += required_pilots
+                        # input("Use Decision")
                     waste_count += required_pilots
                 else:
                     no_pilots += required_pilots
                     break
         self.trace.write_waste(self.time, waste_count)
         self.no_pilots = no_pilots
+        if self.Decision['counter'] == 0:
+            self.stats.stats['no_pilots'] = 0
+        # input("total no.pilots {}".format(self.stats.stats['no_pilots']))
 
     def __round_robin_queue_info(self, slice_type, requests):
         no_pilots = self.no_pilots
@@ -652,8 +675,11 @@ class Simulation:
 
         urllc_file_name = result_dir + "/" + "simulation_results.csv"
 
-        loss = self.stats.stats['no_missed_urllc'] / self.stats.stats['no_urllc_arrivals']
+        # loss = self.stats.stats['no_missed_urllc'] / (self.stats.stats['no_urllc_arrivals'] - self.ignore['_URLLC'])
+        loss = self.trace.get_loss_rate(self.ignore['_URLLC'])[0]
         waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
+        # print(self.stats.stats['no_waste_pilots'],self.stats.stats['no_pilots'])
+
         p_mean, d_mean = self.Slices[0].get_means()
         mean_ratio = d_mean / p_mean
 

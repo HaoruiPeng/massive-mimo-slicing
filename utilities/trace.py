@@ -54,28 +54,14 @@ class Trace:
         self.decision_trace = np.append(self.decision_trace, np.array([[time_sp, decision]]), axis=0)
 
 
-    def process(self):
-        keys = ['arrival_time', 'dead_time', 'departure_time', 'pilot']
-        self.urllc = dict((key, []) for key in keys)
-        event_type = self.Dict['event_type']
-        arrivals = self.Dict[keys[0]]
-        dead = self.Dict[keys[1]]
-        departure = self.Dict[keys[2]]
-        pilots = self.Dict[keys[3]]
-        for i in range(np.size(event_type)):
-            self.urllc[keys[0]] = np.append(self.urllc[keys[0]], arrivals[i])
-            self.urllc[keys[1]] = np.append(self.urllc[keys[1]], dead[i])
-            self.urllc[keys[2]] = np.append(self.urllc[keys[2]], departure[i])
-            self.urllc[keys[3]] = np.append(self.urllc[keys[3]], pilots[i])
-
-
-    def get_loss_rate(self):
-        urllc_loss = self.__get_urllc_loss()
+    def get_loss_rate(self, time):
+        urllc_loss = self.__get_urllc_loss(time)
         return urllc_loss, 0
 
-    def __get_urllc_loss(self):
-        pilots = self.urllc['pilot']
-        print(len(pilots))
+    def __get_urllc_loss(self, time):
+        inds = np.where(self.Dict['departure_time'] <= time)
+        pilots = np.delete(self.Dict['pilot'], inds)
+        # print(len(pilots), len(self.Dict['pilot']))
         loss_counter = 0
         for ind in range(len(pilots)):
             if not pilots[ind]:
