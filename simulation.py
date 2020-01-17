@@ -694,7 +694,7 @@ class Simulation:
 
         keys = ["No.URLLC","seed","delay_mu","ratio","period_var","deadline_var","period_mean","deadline_mean","mean_ratio","variance_var","loss","waste"]
         try:
-            file = open(urllc_file_name, 'a+')
+            file = open(urllc_file_name, 'a')
         except FileNotFoundError:
             print("No file found, create the file first")
             file = open(urllc_file_name, 'w')
