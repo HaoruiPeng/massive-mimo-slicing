@@ -3,7 +3,7 @@
   "no_pilots": 12,
   "frame_length": 0.5,
   "sampling": 0.5,
-  "simulation_length": 6000,
+  "simulation_length": 50000,
   "strategy_s1": "FCFS",
   "strategy_s2": "FCFS"
 }

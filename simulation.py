@@ -115,7 +115,7 @@ class Simulation:
                         'counter': self.decision_counter,
                         'S1':{
                             'strategy': s1_strategy,
-                            'users': round(no_urllc * 0.0)},
+                            'users': round(no_urllc * 0.5/8.5)},
                         'S2':{
                             'strategy': s2_strategy,
                             'users': round(no_mmtc * 0.00)}
@@ -241,9 +241,9 @@ class Simulation:
 
         self.stats.stats[no_arrivals[event.type]] += 1
 
-        if self.Decision['counter'] == 0:
-            # self.ignore[queue_type[event.type]] = self.stats.stats[no_arrivals[event.type]]
-            self.ignore[queue_type[event.type]] = self.time
+        if self.Decision['counter'] <= 2000:
+            self.ignore[queue_type[event.type]] = self.stats.stats[no_arrivals[event.type]]
+            # self.ignore[queue_type[event.type]] = self.time
         # print("[Time {}] No. of urllc_arrivals: {}".format(self.time, self.stats.stats['no_urllc_arrivals']))
 
         # Store event in send queue until departure (as LIFO)
@@ -293,7 +293,7 @@ class Simulation:
         }
         self.stats.stats[no_arrivals[event.type]] += 1
 
-        if self.Decision['counter'] == 0:
+        if self.Decision['counter'] <= 2000:
             self.ignore[queue_type[event.type]] = self.stats.stats[no_arrivals[event.type]]
         # print("[Time {}] No. of mmtc_arrivals: {}".format(self.time, self.stats.stats['no_mmtc_arrivals']))
         # Store event in send queue until departure (as LIFO)
@@ -675,8 +675,9 @@ class Simulation:
 
         urllc_file_name = result_dir + "/" + "simulation_results.csv"
 
-        # loss = self.stats.stats['no_missed_urllc'] / (self.stats.stats['no_urllc_arrivals'] - self.ignore['_URLLC'])
-        loss = self.trace.get_loss_rate(self.ignore['_URLLC'])[0]
+        loss = self.stats.stats['no_missed_urllc'] / (self.stats.stats['no_urllc_arrivals'] - self.ignore['_URLLC'])
+        # loss = self.stats.stats['no_missed_urllc'] / (self.stats.stats['no_urllc_arrivals'])
+        # loss = self.trace.get_loss_rate(self.ignore['_URLLC'])[0]
         waste = self.stats.stats['no_waste_pilots'] / self.stats.stats['no_pilots']
         # print(self.stats.stats['no_waste_pilots'],self.stats.stats['no_pilots'])
 
@@ -716,6 +717,22 @@ class Simulation:
                    )
         file.close()
 
+        arrival_trace = self.trace.get_arrivals()
+        departure_trace = self.trace.get_departures()
+
+        with open(ts_dir + "arrivals.txt", 'w+') as f:
+            for d in arrival_trace:
+                f.write(str(d) + "\n")
+
+        with open(ts_dir + "departures.txt", 'w+') as f:
+            for d in departure_trace:
+                f.write(str(d[0]) + "," + str(d[1]) +"\n")
+
+        period_array, dealine_array = self.Slices[0].get_traffics()
+
+        with open(ts_dir + "traffics.txt", 'w+') as f:
+            for i in range(len(period_array)):
+                f.write(str(period_array[i]) + "," + str(dealine_array[i]) +"\n")
 
         with open(ts_dir + "queue_length.txt", 'w+') as f:
             for d in self.trace.queue_length:

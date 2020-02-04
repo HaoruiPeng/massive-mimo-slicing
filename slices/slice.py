@@ -62,11 +62,15 @@ class Slice:
         else:
             var_var = np.zeros(no_nodes)
 
-        print(self.period)
-        print(self.deadline)
-        input()
+        # print(self.period)
+        # print(self.deadline)
+        # input()
 
         self.pool = [Node(self.type, pilot_rq, self.period[i], self.deadline[i], var_var[i]) for i in range(self.no_nodes)]
+
+
+    def get_traffics(self):
+        return self.period, self.deadline
 
     def get_means(self):
         period_mean = np.mean(self.period)

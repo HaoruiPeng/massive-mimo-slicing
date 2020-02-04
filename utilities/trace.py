@@ -53,6 +53,14 @@ class Trace:
     def write_decision(self, time_sp, decision):
         self.decision_trace = np.append(self.decision_trace, np.array([[time_sp, decision]]), axis=0)
 
+    def get_arrivals(self):
+        request_array = self.Dict["arrival_time"]
+        arrivals = np.sort(request_array)
+        return arrivals
+
+    def get_departures(self):
+        departures = np.column_stack((self.Dict['departure_time'], self.Dict['pilot']))
+        return departures
 
     def get_loss_rate(self, time):
         urllc_loss = self.__get_urllc_loss(time)
