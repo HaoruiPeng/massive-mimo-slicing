@@ -241,7 +241,7 @@ class Simulation:
 
         self.stats.stats[no_arrivals[event.type]] += 1
 
-        if self.Decision['counter'] <= 2000:
+        if self.Decision['counter'] <= 10000:
             self.ignore[queue_type[event.type]] = self.stats.stats[no_arrivals[event.type]]
             # self.ignore[queue_type[event.type]] = self.time
         # print("[Time {}] No. of urllc_arrivals: {}".format(self.time, self.stats.stats['no_urllc_arrivals']))
@@ -293,7 +293,7 @@ class Simulation:
         }
         self.stats.stats[no_arrivals[event.type]] += 1
 
-        if self.Decision['counter'] <= 2000:
+        if self.Decision['counter'] <= 10000:
             self.ignore[queue_type[event.type]] = self.stats.stats[no_arrivals[event.type]]
         # print("[Time {}] No. of mmtc_arrivals: {}".format(self.time, self.stats.stats['no_mmtc_arrivals']))
         # Store event in send queue until departure (as LIFO)
