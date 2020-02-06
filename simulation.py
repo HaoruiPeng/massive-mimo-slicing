@@ -541,7 +541,7 @@ class Simulation:
         if slice_type == 0:
             print("[PHY] Number of active {} request in the queue: {}".format(key[slice_type], len(events)))
             self.trace.write_queue_length(self.time, len(events))
-        events.sort(key=lambda x: x.dead_time)
+        # events.sort(key=lambda x: x.dead_time)
         counter = requests
         while counter > 0 and no_pilots > 0:
             required_pilots = 1
