@@ -116,3 +116,4 @@ venv.bak/
 experiments/
 *.txt
 time_series/
+time_series*

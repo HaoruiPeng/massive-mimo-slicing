@@ -32,13 +32,15 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--variance_var', action="store", type=float, default=None)
-    parser.add_argument('--period_var', action="store", type=float, default=None)
-    parser.add_argument('--deadline_var', action="store", type=float, default=None)
-    parser.add_argument('--ratio', action="store", type=float, default=None)
-    parser.add_argument('--urllc_nodes', action="store", type=int, default=None)
-    parser.add_argument('--mu', action="store", type=float, default=None)
+    parser.add_argument('--variance', action="store", type=float, default=None)
+    parser.add_argument('--period', action="store", type=float, default=None)
+    parser.add_argument('--d_on', action="store", type=float, default=None)
+    parser.add_argument('--d_off', action="store", type=float, default=None)
+    parser.add_argument('--no_periodic', action="store", type=int, default=None)
+    parser.add_argument('--no_file', action="store", type=int, default=None)
     parser.add_argument('--seed', action="store", type=int, default=None)
+    parser.add_argument('--mu', action="store", type=float, default=None)
+
 
     args = parser.parse_args()
     # print(args.scheduler)
@@ -49,31 +51,20 @@ if __name__ == '__main__':
 
     seed = args.seed
     mu = args.mu
-
-    s1 = "FCFS"
-    s2 = "FCFS"
-
-    if args.ratio is not None:
-        ratio = args.ratio
-
-    if args.deadline_var is not None:
-        deadline_var = args.deadline_var
-
-    if args.period_var is not None:
-        period_var = args.period_var
-
-    if args.variance_var is not None:
-        variance_var = args.variance_var
+    inner_periods = args.period
+    inner_variance = args.variance
+    t_on = args.d_on
+    t_off = args.d_off
 
     np.random.seed(seed)
 
-    no_urllc = args.urllc_nodes
-    no_mmtc = 0
+    no_file = args.no_file
+    no_periodic = args.no_periodic
 
-    trace_file_path = 'trace/' + 'Trace_' + str(ratio) + '_' + str(args.period_var) + '_' + str(args.variance_var) + '-' + str(args.mu) + '_' + str(args.urllc_nodes) + '_' + str(round(time.time())) + '_event_trace.csv'
+    trace_file_path = 'trace/' + 'Trace_' + str(inner_periods) + '_' + str(inner_variance) + '-' + str(no_file) + '_' + str(no_periodic) + '_' + str(round(time.time())) + '_event_trace.csv'
 
     trace = Trace(trace_file_path, log=True)
-    simulation = Simulation(config, stats, trace, no_urllc, no_mmtc, mu, s1, s2, (ratio, period_var, deadline_var, variance_var), seed)
+    simulation = Simulation(config, stats, trace, no_file, no_periodic, mu, (inner_periods, inner_variance, t_on, t_off), periodic_traffic=None, seed=seed)
 
     simulation.run()
     stats.save_stats()

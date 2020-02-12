@@ -22,7 +22,7 @@ class Stats:
         """
 
         self.log = log
-        headers = ['no_urllc_arrivals', 'no_missed_urllc',
+        headers = ['no_arrivals', 'no_missed',
                    'no_pilots', 'no_waste_pilots']
         self.stats = dict((key, 0) for key in headers)
         self.writer =  None
@@ -37,13 +37,6 @@ class Stats:
             self.writer = csv.DictWriter(self.__stats_file, fieldnames=headers)
             self.writer.writeheader()
 
-
-    def print_stats(self):
-        """ Print the results to the terminal """
-        print('URLLC arrivals: ' + str(self.stats['no_urllc_arrivals']))
-        print('Missed URLLC: ' + str(self.stats['no_missed_urllc']))
-        print('Total pilots: ' + str(self.stats['no_pilots']))
-        print('Waste pilots: ' + str(self.stats['no_waste_pilots']))
 
     def save_stats(self):
         if self.log is True:

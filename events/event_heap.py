@@ -32,7 +32,7 @@ class EventHeap:
         self.__key = 0
         self.__heap = []
 
-    def push(self, event_type, event_time, dead_time=None, node_id=0, counter=0):
+    def push(self, event_type, event_time, dead_time=None, node_id=0, mode=None):
         """
         Inserts a new event at the correct time in the event heap
 
@@ -46,7 +46,7 @@ class EventHeap:
             What node (i.e. machine/device) this event belongs to
         """
 
-        new_event = Event(event_type, event_time, dead_time, node_id, counter)
+        new_event = Event(event_type, event_time, dead_time, node_id, mode)
         heapq.heappush(self.__heap, (event_time, event_type, self.__key, new_event))
         self.__key += 1
 

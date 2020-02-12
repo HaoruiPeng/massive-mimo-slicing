@@ -10,10 +10,10 @@ class Trace:
         self.log = log
         if log is True:
             self.__trace_file = open(trace_file_path, 'w+')
-            self.__trace_file.write('Event,Node,Counter,Arrival,Dead,Departure,Pilot\n')
+            self.__trace_file.write('Event,Node,Arrival,Dead,Departure,Mode,Pilot\n')
         else:
             self.__trace_file = None
-        self.keys = ['event_type', 'node_id', 'counter', 'arrival_time', 'dead_time', 'departure_time', 'pilot']
+        self.keys = ['event_type', 'node_id', 'arrival_time', 'dead_time', 'departure_time', 'pilot', 'mode']
         self.Dict = dict((key, []) for key in self.keys)
         self.plot_path = None
         self.urllc = {}
@@ -63,10 +63,6 @@ class Trace:
         return departures
 
     def get_loss_rate(self, time):
-        urllc_loss = self.__get_urllc_loss(time)
-        return urllc_loss, 0
-
-    def __get_urllc_loss(self, time):
         inds = np.where(self.Dict['departure_time'] <= time)
         pilots = np.delete(self.Dict['pilot'], inds)
         # print(len(pilots), len(self.Dict['pilot']))

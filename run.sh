@@ -1,7 +1,7 @@
 #!/bin/bash
 
 python3 main.py \
-                --urllc_node 180 --mu 2.1 \
-                --ratio 5.0 --deadline_var 0.02 \
-                --period_var 0.04 --variance_var 0.08\
-                --seed 1025
+          --no_file 48 --no_periodic 0\
+          --period 0.5 --variance 0.02 \
+          --d_on 100.0 --d_off 300.0\
+          --seed 1025 --mu 9.3
